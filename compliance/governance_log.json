@@ -1,11 +1,11 @@
 {
-  "report_id": "GOV-20260310-190800-b77ed3a8",
-  "generated_at": "2026-03-10T19:08:00.927206+00:00",
+  "report_id": "GOV-20260310-191359-5d780cf8",
+  "generated_at": "2026-03-10T19:13:59.346577+00:00",
   "repo_root": "D:\\Git-GitHub\\Repositories\\02_business_mein_kuechenexperte\\KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft",
   "summary": {
-    "scanned_files": 122,
-    "total_findings": 22,
-    "kritisch": 3,
+    "scanned_files": 123,
+    "total_findings": 21,
+    "kritisch": 2,
     "hoch": 18,
     "mittel": 1,
     "niedrig": 0,
@@ -15,7 +15,7 @@
   "findings": [
     {
       "id": "GOV-2026-0001",
-      "timestamp": "2026-03-10T19:08:00.865694+00:00",
+      "timestamp": "2026-03-10T19:13:59.291527+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -34,7 +34,7 @@
     },
     {
       "id": "GOV-2026-0002",
-      "timestamp": "2026-03-10T19:08:00.866195+00:00",
+      "timestamp": "2026-03-10T19:13:59.291527+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -53,7 +53,7 @@
     },
     {
       "id": "GOV-2026-0003",
-      "timestamp": "2026-03-10T19:08:00.868695+00:00",
+      "timestamp": "2026-03-10T19:13:59.294026+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -72,7 +72,7 @@
     },
     {
       "id": "GOV-2026-0004",
-      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "timestamp": "2026-03-10T19:13:59.297526+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -91,7 +91,7 @@
     },
     {
       "id": "GOV-2026-0005",
-      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "timestamp": "2026-03-10T19:13:59.297526+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -110,7 +110,7 @@
     },
     {
       "id": "GOV-2026-0006",
-      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "timestamp": "2026-03-10T19:13:59.297526+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -129,7 +129,7 @@
     },
     {
       "id": "GOV-2026-0007",
-      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "timestamp": "2026-03-10T19:13:59.297526+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -148,7 +148,7 @@
     },
     {
       "id": "GOV-2026-0012",
-      "timestamp": "2026-03-10T19:08:00.874694+00:00",
+      "timestamp": "2026-03-10T19:13:59.300029+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -167,7 +167,7 @@
     },
     {
       "id": "GOV-2026-0013",
-      "timestamp": "2026-03-10T19:08:00.876195+00:00",
+      "timestamp": "2026-03-10T19:13:59.301027+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -186,7 +186,7 @@
     },
     {
       "id": "GOV-2026-0014",
-      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "timestamp": "2026-03-10T19:13:59.302023+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -205,7 +205,7 @@
     },
     {
       "id": "GOV-2026-0015",
-      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "timestamp": "2026-03-10T19:13:59.302023+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -224,7 +224,7 @@
     },
     {
       "id": "GOV-2026-0016",
-      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "timestamp": "2026-03-10T19:13:59.302023+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -243,7 +243,7 @@
     },
     {
       "id": "GOV-2026-0017",
-      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "timestamp": "2026-03-10T19:13:59.302023+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -262,7 +262,7 @@
     },
     {
       "id": "GOV-2026-0018",
-      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "timestamp": "2026-03-10T19:13:59.302023+00:00",
       "severity": "HOCH",
       "category": "MULTI_TENANT",
       "subcategory": "5.1_DATEN_ISOLATION",
@@ -281,27 +281,7 @@
     },
     {
       "id": "GOV-2026-0019",
-      "timestamp": "2026-03-10T19:08:00.882194+00:00",
-      "severity": "KRITISCH",
-      "category": "DSGVO",
-      "subcategory": "1.5_EINWILLIGUNG",
-      "regulation": "Art. 6 Abs. 1 + Art. 7 DSGVO + TTDSG § 25",
-      "file": "frontends/widget/src/",
-      "line": null,
-      "finding": "Das Widget enthält keinen erkennbaren Consent-Mechanismus. Der Chat darf erst nach expliziter Einwilligung gestartet werden.",
-      "must_be": "Vor dem ersten Chat-Start muss ein Consent-Banner erscheinen mit: (1) Hinweis auf KI-Verarbeitung, (2) Welche Daten erhoben werden, (3) Speicherdauer, (4) Widerrufsrecht, (5) Link zur Datenschutzerklärung. Der WebSocket-Connect darf NUR nach Zustimmung erfolgen.",
-      "fix_example": "const [consentGiven, setConsentGiven] = useState(false);\n\n// Block WebSocket until consent\nuseEffect(() => {\n  if (consentGiven) connectWebSocket();\n}, [consentGiven]);\n\nif (!consentGiven) return <ConsentBanner onAccept={() => setConsentGiven(true)} />;",
-      "deadline": "Sofort — Muss VOR Go-Live implementiert sein",
-      "auto_fixable": false,
-      "references": [
-        "Art. 6 DSGVO",
-        "Art. 7 DSGVO",
-        "TTDSG § 25"
-      ]
-    },
-    {
-      "id": "GOV-2026-0020",
-      "timestamp": "2026-03-10T19:08:00.883701+00:00",
+      "timestamp": "2026-03-10T19:13:59.306025+00:00",
       "severity": "KRITISCH",
       "category": "DSGVO",
       "subcategory": "1.4_RECHTE_DER_BETROFFENEN",
@@ -318,8 +298,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0021",
-      "timestamp": "2026-03-10T19:08:00.883701+00:00",
+      "id": "GOV-2026-0020",
+      "timestamp": "2026-03-10T19:13:59.306526+00:00",
       "severity": "KRITISCH",
       "category": "DSGVO",
       "subcategory": "1.4_RECHTE_DER_BETROFFENEN",
@@ -336,8 +316,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0022",
-      "timestamp": "2026-03-10T19:08:00.887206+00:00",
+      "id": "GOV-2026-0021",
+      "timestamp": "2026-03-10T19:13:59.309534+00:00",
       "severity": "HOCH",
       "category": "DSGVO",
       "subcategory": "1.3_SPEICHERBEGRENZUNG",
@@ -354,8 +334,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0023",
-      "timestamp": "2026-03-10T19:08:00.890201+00:00",
+      "id": "GOV-2026-0022",
+      "timestamp": "2026-03-10T19:13:59.312533+00:00",
       "severity": "HOCH",
       "category": "EU_AI_ACT",
       "subcategory": "2.4_MENSCHLICHE_AUFSICHT",
@@ -372,8 +352,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0024",
-      "timestamp": "2026-03-10T19:08:00.891207+00:00",
+      "id": "GOV-2026-0023",
+      "timestamp": "2026-03-10T19:13:59.313528+00:00",
       "severity": "HOCH",
       "category": "EU_AI_ACT",
       "subcategory": "3.4_BIAS_FAIRNESS",
@@ -391,8 +371,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0025",
-      "timestamp": "2026-03-10T19:08:00.900704+00:00",
+      "id": "GOV-2026-0024",
+      "timestamp": "2026-03-10T19:13:59.322032+00:00",
       "severity": "MITTEL",
       "category": "SECURITY",
       "subcategory": "4.4_LOGGING_MONITORING",
@@ -410,8 +390,8 @@
       ]
     },
     {
-      "id": "GOV-2026-0026",
-      "timestamp": "2026-03-10T19:08:00.927206+00:00",
+      "id": "GOV-2026-0025",
+      "timestamp": "2026-03-10T19:13:59.346577+00:00",
       "severity": "HOCH",
       "category": "SECURITY",
       "subcategory": "4.3_INPUT_VALIDATION",

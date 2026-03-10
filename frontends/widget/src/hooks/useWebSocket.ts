@@ -1,5 +1,12 @@
 /**
- * useWebSocket Hook — WebSocket-Verbindung mit automatischem Reconnect.
+ * useWebSocket Hook — WebSocket connection with auto-reconnect.
+ *
+ * What:    Manages a WebSocket connection to the chat backend.
+ * Does:    Connects only when `enabled` is true; auto-reconnects on disconnect.
+ * Why:     `enabled` gate ensures WebSocket does NOT connect before DSGVO consent
+ *          is given (Art. 6/7 DSGVO). ChatWindow passes enabled=true after consent.
+ * Who:     ChatWindow.tsx
+ * Depends: React
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,6 +21,8 @@ interface UseWebSocketOptions {
   url: string;
   studio: string;
   visitorId: string;
+  /** Only connect when true — must be false until DSGVO consent is given. */
+  enabled?: boolean;
   onMessage?: (message: Message) => void;
 }
 
@@ -28,6 +37,7 @@ export function useWebSocket({
   url,
   studio,
   visitorId,
+  enabled = true,
   onMessage,
 }: UseWebSocketOptions): UseWebSocketReturn {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,6 +47,7 @@ export function useWebSocket({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
+    if (!enabled) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     setConnecting(true);
@@ -69,22 +80,26 @@ export function useWebSocket({
     ws.onclose = () => {
       setConnected(false);
       setConnecting(false);
-      // Reconnect nach 3 Sekunden
-      reconnectTimeoutRef.current = setTimeout(connect, 3000);
+      if (enabled) {
+        // Reconnect nach 3 Sekunden
+        reconnectTimeoutRef.current = setTimeout(connect, 3000);
+      }
     };
 
     ws.onerror = () => {
       ws.close();
     };
-  }, [url, studio, visitorId, onMessage]);
+  }, [url, studio, visitorId, enabled, onMessage]);
 
   useEffect(() => {
-    connect();
+    if (enabled) {
+      connect();
+    }
     return () => {
       reconnectTimeoutRef.current && clearTimeout(reconnectTimeoutRef.current);
       wsRef.current?.close();
     };
-  }, [connect]);
+  }, [connect, enabled]);
 
   const send = useCallback((text: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

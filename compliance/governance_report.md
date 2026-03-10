@@ -1,51 +1,21 @@
-# Compliance-Report — 10.03.2026 19:08 UTC
+# Compliance-Report — 10.03.2026 19:13 UTC
 
 ## Zusammenfassung
 
 | Kennzahl | Wert |
 | --- | --- |
-| Geprüfte Dateien | 122 |
-| Findings gesamt | 22 |
-| 🔴 KRITISCH | 3 |
+| Geprüfte Dateien | 123 |
+| Findings gesamt | 21 |
+| 🔴 KRITISCH | 2 |
 | 🟠 HOCH | 18 |
 | 🟡 MITTEL | 1 |
 | 🔵 NIEDRIG | 0 |
 | ⚪ HINWEIS | 0 |
-| Auto-fixable | 0 von 22 |
+| Auto-fixable | 0 von 21 |
 
-## 🔴 KRITISCH (3 Findings)
+## 🔴 KRITISCH (2 Findings)
 
-### GOV-2026-0019 — 1.5_EINWILLIGUNG
-
-**Rechtsgrundlage:** Art. 6 Abs. 1 + Art. 7 DSGVO + TTDSG § 25
-**Fundort:** `frontends/widget/src/`
-**Deadline:** Sofort — Muss VOR Go-Live implementiert sein
-**Auto-fixable:** Nein
-
-**Problem:**
-Das Widget enthält keinen erkennbaren Consent-Mechanismus. Der Chat darf erst nach expliziter Einwilligung gestartet werden.
-
-**So muss es sein:**
-Vor dem ersten Chat-Start muss ein Consent-Banner erscheinen mit: (1) Hinweis auf KI-Verarbeitung, (2) Welche Daten erhoben werden, (3) Speicherdauer, (4) Widerrufsrecht, (5) Link zur Datenschutzerklärung. Der WebSocket-Connect darf NUR nach Zustimmung erfolgen.
-
-**Fix-Beispiel:**
-
-```python
-const [consentGiven, setConsentGiven] = useState(false);
-
-// Block WebSocket until consent
-useEffect(() => {
-  if (consentGiven) connectWebSocket();
-}, [consentGiven]);
-
-if (!consentGiven) return <ConsentBanner onAccept={() => setConsentGiven(true)} />;
-```
-
-**Referenzen:** Art. 6 DSGVO, Art. 7 DSGVO, TTDSG § 25
-
----
-
-### GOV-2026-0020 — 1.4_RECHTE_DER_BETROFFENEN
+### GOV-2026-0019 — 1.4_RECHTE_DER_BETROFFENEN
 
 **Rechtsgrundlage:** Art. 15 + Art. 20 DSGVO — Auskunft + Datenportabilität
 **Fundort:** `src/api/routes/`
@@ -77,7 +47,7 @@ async def gdpr_delete(visitor_id: str, session=Depends(get_session)):
 
 ---
 
-### GOV-2026-0021 — 1.4_RECHTE_DER_BETROFFENEN
+### GOV-2026-0020 — 1.4_RECHTE_DER_BETROFFENEN
 
 **Rechtsgrundlage:** Art. 17 DSGVO — Recht auf Löschung
 **Fundort:** `src/api/routes/`
@@ -517,7 +487,7 @@ result = await session.execute(
 
 ---
 
-### GOV-2026-0022 — 1.3_SPEICHERBEGRENZUNG
+### GOV-2026-0021 — 1.3_SPEICHERBEGRENZUNG
 
 **Rechtsgrundlage:** Art. 5 Abs. 1 lit. e DSGVO
 **Fundort:** `src/api/services/scheduler.py`
@@ -548,7 +518,7 @@ async def run_retention_cleanup():
 
 ---
 
-### GOV-2026-0023 — 2.4_MENSCHLICHE_AUFSICHT
+### GOV-2026-0022 — 2.4_MENSCHLICHE_AUFSICHT
 
 **Rechtsgrundlage:** Art. 14 EU AI Act — Human Oversight
 **Fundort:** `src/db/models/studio.py`
@@ -578,7 +548,7 @@ if not studio.is_active:
 
 ---
 
-### GOV-2026-0024 — 3.4_BIAS_FAIRNESS
+### GOV-2026-0023 — 3.4_BIAS_FAIRNESS
 
 **Rechtsgrundlage:** Art. 5 EU AI Act + Art. 22 DSGVO
 **Fundort:** `src/agents/lisa/tools/extract_lead_data.py`
@@ -604,7 +574,7 @@ Score nur nach sachlichen Kriterien: Budget, Zeitrahmen, Küchenstil, Raumgröß
 
 ---
 
-### GOV-2026-0026 — 4.3_INPUT_VALIDATION
+### GOV-2026-0025 — 4.3_INPUT_VALIDATION
 
 **Rechtsgrundlage:** Art. 32 DSGVO + OWASP Top 10 A03
 **Fundort:** `src/api/websocket/__init__.py`
@@ -636,7 +606,7 @@ safe_input = f"<user_message>{user_message}</user_message>"
 
 ## 🟡 MITTEL (1 Finding)
 
-### GOV-2026-0025 — 4.4_LOGGING_MONITORING
+### GOV-2026-0024 — 4.4_LOGGING_MONITORING
 
 **Rechtsgrundlage:** Art. 32 DSGVO + Art. 12 EU AI Act
 **Fundort:** `src/agents/governance/rules/security.py` Zeile 129
@@ -670,4 +640,4 @@ log.info("lead.created", lead_id=str(lead.id))
 3. MITTEL-Findings innerhalb von 30 Tagen
 4. `make compliance` nach jeder Änderung erneut ausführen
 
-*Generiert von DataGovernanceAgent am 10.03.2026 19:08 UTC*
+*Generiert von DataGovernanceAgent am 10.03.2026 19:13 UTC*
