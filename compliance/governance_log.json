@@ -1,0 +1,435 @@
+{
+  "report_id": "GOV-20260310-190800-b77ed3a8",
+  "generated_at": "2026-03-10T19:08:00.927206+00:00",
+  "repo_root": "D:\\Git-GitHub\\Repositories\\02_business_mein_kuechenexperte\\KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft",
+  "summary": {
+    "scanned_files": 122,
+    "total_findings": 22,
+    "kritisch": 3,
+    "hoch": 18,
+    "mittel": 1,
+    "niedrig": 0,
+    "hinweis": 0,
+    "auto_fixable": 0
+  },
+  "findings": [
+    {
+      "id": "GOV-2026-0001",
+      "timestamp": "2026-03-10T19:08:00.865694+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/agents/lisa/agent.py",
+      "line": 135,
+      "finding": "DB-Query in Zeile 135 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0002",
+      "timestamp": "2026-03-10T19:08:00.866195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/agents/lisa/agent.py",
+      "line": 175,
+      "finding": "DB-Query in Zeile 175 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0003",
+      "timestamp": "2026-03-10T19:08:00.868695+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/agents/lisa/tools/extract_lead_data.py",
+      "line": 185,
+      "finding": "DB-Query in Zeile 185 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0004",
+      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/api/routes/google_calendar.py",
+      "line": 54,
+      "finding": "DB-Query in Zeile 54 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0005",
+      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/api/routes/google_calendar.py",
+      "line": 93,
+      "finding": "DB-Query in Zeile 93 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0006",
+      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/api/routes/google_calendar.py",
+      "line": 140,
+      "finding": "DB-Query in Zeile 140 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0007",
+      "timestamp": "2026-03-10T19:08:00.872195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/api/routes/google_calendar.py",
+      "line": 166,
+      "finding": "DB-Query in Zeile 166 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0012",
+      "timestamp": "2026-03-10T19:08:00.874694+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/api/websocket/chat_handler.py",
+      "line": 36,
+      "finding": "DB-Query in Zeile 36 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0013",
+      "timestamp": "2026-03-10T19:08:00.876195+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/google_calendar.py",
+      "line": 159,
+      "finding": "DB-Query in Zeile 159 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0014",
+      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/memory.py",
+      "line": 58,
+      "finding": "DB-Query in Zeile 58 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0015",
+      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/memory.py",
+      "line": 66,
+      "finding": "DB-Query in Zeile 66 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0016",
+      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/memory.py",
+      "line": 77,
+      "finding": "DB-Query in Zeile 77 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0017",
+      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/memory.py",
+      "line": 98,
+      "finding": "DB-Query in Zeile 98 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0018",
+      "timestamp": "2026-03-10T19:08:00.877194+00:00",
+      "severity": "HOCH",
+      "category": "MULTI_TENANT",
+      "subcategory": "5.1_DATEN_ISOLATION",
+      "regulation": "Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+      "file": "src/core/memory.py",
+      "line": 108,
+      "finding": "DB-Query in Zeile 108 ohne erkennbaren studio_id-Filter. Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden.",
+      "must_be": "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS .where(<Model>.studio_id == studio_id) enthalten.",
+      "fix_example": "# VORHER (VERSTOSS):\nresult = await session.execute(select(Lead))\n\n# NACHHER (COMPLIANT):\nresult = await session.execute(\n    select(Lead).where(Lead.studio_id == studio_id)\n)",
+      "deadline": "Vor Go-Live — Datenlecks zwischen Studios verhindern",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. b DSGVO",
+        "Art. 32 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0019",
+      "timestamp": "2026-03-10T19:08:00.882194+00:00",
+      "severity": "KRITISCH",
+      "category": "DSGVO",
+      "subcategory": "1.5_EINWILLIGUNG",
+      "regulation": "Art. 6 Abs. 1 + Art. 7 DSGVO + TTDSG § 25",
+      "file": "frontends/widget/src/",
+      "line": null,
+      "finding": "Das Widget enthält keinen erkennbaren Consent-Mechanismus. Der Chat darf erst nach expliziter Einwilligung gestartet werden.",
+      "must_be": "Vor dem ersten Chat-Start muss ein Consent-Banner erscheinen mit: (1) Hinweis auf KI-Verarbeitung, (2) Welche Daten erhoben werden, (3) Speicherdauer, (4) Widerrufsrecht, (5) Link zur Datenschutzerklärung. Der WebSocket-Connect darf NUR nach Zustimmung erfolgen.",
+      "fix_example": "const [consentGiven, setConsentGiven] = useState(false);\n\n// Block WebSocket until consent\nuseEffect(() => {\n  if (consentGiven) connectWebSocket();\n}, [consentGiven]);\n\nif (!consentGiven) return <ConsentBanner onAccept={() => setConsentGiven(true)} />;",
+      "deadline": "Sofort — Muss VOR Go-Live implementiert sein",
+      "auto_fixable": false,
+      "references": [
+        "Art. 6 DSGVO",
+        "Art. 7 DSGVO",
+        "TTDSG § 25"
+      ]
+    },
+    {
+      "id": "GOV-2026-0020",
+      "timestamp": "2026-03-10T19:08:00.883701+00:00",
+      "severity": "KRITISCH",
+      "category": "DSGVO",
+      "subcategory": "1.4_RECHTE_DER_BETROFFENEN",
+      "regulation": "Art. 15 + Art. 20 DSGVO — Auskunft + Datenportabilität",
+      "file": "src/api/routes/",
+      "line": null,
+      "finding": "Endpoint fehlt: Kunden können ihre Daten nicht abrufen (Art. 15/20 DSGVO).",
+      "must_be": "Implementiere GET /gdpr/export mit vollständiger Funktion: Datenexport als JSON über alle Tabellen (leads, conversations, messages, appointments, followups) gefiltert nach visitor_id oder Lead-ID. Löschung muss kaskadierend über alle Tabellen erfolgen.",
+      "fix_example": "@router.get('/gdpr/export')\nasync def gdpr_export(visitor_id: str, session=Depends(get_session)):\n    # Load all data for this visitor across all tables\n    lead = await get_lead_by_visitor(visitor_id, session)\n    return {'lead': lead, 'conversations': [...], 'messages': [...]}\n\n@router.delete('/gdpr/delete')\nasync def gdpr_delete(visitor_id: str, session=Depends(get_session)):\n    # Cascade delete or anonymise all visitor data\n    await anonymise_visitor(visitor_id, session)",
+      "deadline": "Vor Go-Live — Betroffenenrechte müssen implementiert sein",
+      "auto_fixable": false,
+      "references": [
+        "Art. 15 + Art. 20 DSGVO — Auskunft + Datenportabilität"
+      ]
+    },
+    {
+      "id": "GOV-2026-0021",
+      "timestamp": "2026-03-10T19:08:00.883701+00:00",
+      "severity": "KRITISCH",
+      "category": "DSGVO",
+      "subcategory": "1.4_RECHTE_DER_BETROFFENEN",
+      "regulation": "Art. 17 DSGVO — Recht auf Löschung",
+      "file": "src/api/routes/",
+      "line": null,
+      "finding": "Endpoint fehlt: Kunden können ihre Daten nicht löschen lassen (Art. 17 DSGVO).",
+      "must_be": "Implementiere DELETE /gdpr/delete mit vollständiger Funktion: Datenexport als JSON über alle Tabellen (leads, conversations, messages, appointments, followups) gefiltert nach visitor_id oder Lead-ID. Löschung muss kaskadierend über alle Tabellen erfolgen.",
+      "fix_example": "@router.get('/gdpr/export')\nasync def gdpr_export(visitor_id: str, session=Depends(get_session)):\n    # Load all data for this visitor across all tables\n    lead = await get_lead_by_visitor(visitor_id, session)\n    return {'lead': lead, 'conversations': [...], 'messages': [...]}\n\n@router.delete('/gdpr/delete')\nasync def gdpr_delete(visitor_id: str, session=Depends(get_session)):\n    # Cascade delete or anonymise all visitor data\n    await anonymise_visitor(visitor_id, session)",
+      "deadline": "Vor Go-Live — Betroffenenrechte müssen implementiert sein",
+      "auto_fixable": false,
+      "references": [
+        "Art. 17 DSGVO — Recht auf Löschung"
+      ]
+    },
+    {
+      "id": "GOV-2026-0022",
+      "timestamp": "2026-03-10T19:08:00.887206+00:00",
+      "severity": "HOCH",
+      "category": "DSGVO",
+      "subcategory": "1.3_SPEICHERBEGRENZUNG",
+      "regulation": "Art. 5 Abs. 1 lit. e DSGVO",
+      "file": "src/api/services/scheduler.py",
+      "line": null,
+      "finding": "Kein Retention/Lösch-Mechanismus im Scheduler gefunden. Personenbezogene Daten werden unbegrenzt gespeichert.",
+      "must_be": "Implementiere automatische Lösch-Jobs im Scheduler:\n- Konversations-Rohdaten: 6 Monate → löschen\n- Lead-Daten ohne Konversion: 12 Monate → anonymisieren\n- Feedback-Daten: 24 Monate\n- Events/Audit-Trail: 36 Monate (gesetzliche Aufbewahrungspflicht)",
+      "fix_example": "@scheduler.scheduled_job('cron', hour=2)\nasync def run_retention_cleanup():\n    cutoff = datetime.now(UTC) - timedelta(days=180)\n    await delete_old_conversations(cutoff)\n    await anonymise_unconverted_leads(cutoff)",
+      "deadline": "Vor Go-Live implementieren",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 Abs. 1 lit. e DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0023",
+      "timestamp": "2026-03-10T19:08:00.890201+00:00",
+      "severity": "HOCH",
+      "category": "EU_AI_ACT",
+      "subcategory": "2.4_MENSCHLICHE_AUFSICHT",
+      "regulation": "Art. 14 EU AI Act — Human Oversight",
+      "file": "src/db/models/studio.py",
+      "line": null,
+      "finding": "Studio-Model hat kein is_active-Flag. Es gibt keinen Kill-Switch um Lisa für ein Studio sofort zu deaktivieren.",
+      "must_be": "Studio-Model braucht: is_active: bool = True. Der WebSocket-Handler muss prüfen: if not studio.is_active: reject connection.",
+      "fix_example": "# In src/db/models/studio.py:\nis_active: Mapped[bool] = mapped_column(Boolean, default=True)\n\n# In chat_handler.py:\nif not studio.is_active:\n    await websocket.send_json({\"type\": \"error\", \"message\": \"Service vorübergehend nicht verfügbar\"})\n    await websocket.close()\n    return",
+      "deadline": "Vor Go-Live — Pflicht ab 02.08.2026",
+      "auto_fixable": false,
+      "references": [
+        "Art. 14 EU AI Act"
+      ]
+    },
+    {
+      "id": "GOV-2026-0024",
+      "timestamp": "2026-03-10T19:08:00.891207+00:00",
+      "severity": "HOCH",
+      "category": "EU_AI_ACT",
+      "subcategory": "3.4_BIAS_FAIRNESS",
+      "regulation": "Art. 5 EU AI Act + Art. 22 DSGVO",
+      "file": "src/agents/lisa/tools/extract_lead_data.py",
+      "line": null,
+      "finding": "Lead-Score-Berechnung verwendet möglicherweise den Namen als Input. Scoring nach demographischen Merkmalen ist diskriminierend.",
+      "must_be": "Score nur nach sachlichen Kriterien: Budget, Zeitrahmen, Küchenstil, Raumgröße, Konkretheit der Anfrage. NICHT nach: Name, Sprache, Herkunft, Adresse.",
+      "fix_example": "# COMPLIANT score factors:\n# budget_range: +20, timeline: +15, kitchen_style: +10\n# room_size: +5, email: +20, phone: +15\n# NOT: name origin, language detected, address",
+      "deadline": "Vor Go-Live",
+      "auto_fixable": false,
+      "references": [
+        "Art. 5 EU AI Act",
+        "Art. 22 DSGVO"
+      ]
+    },
+    {
+      "id": "GOV-2026-0025",
+      "timestamp": "2026-03-10T19:08:00.900704+00:00",
+      "severity": "MITTEL",
+      "category": "SECURITY",
+      "subcategory": "4.4_LOGGING_MONITORING",
+      "regulation": "Art. 32 DSGVO + Art. 12 EU AI Act",
+      "file": "src/agents/governance/rules/security.py",
+      "line": 129,
+      "finding": "Log-Statement könnte email address im Klartext ausgeben: 'log.info(\"lead.created\", email=lead.email)\\n\\n'",
+      "must_be": "Personenbezogene Daten (Name, E-Mail, Telefon) dürfen NICHT im Klartext in Logs erscheinen. Nur IDs und anonymisierte Werte loggen.",
+      "fix_example": "# VORHER (VERSTOSS):\nlog.info(\"lead.created\", email=lead.email)\n\n# NACHHER (COMPLIANT):\nlog.info(\"lead.created\", lead_id=str(lead.id))",
+      "deadline": "Innerhalb von 30 Tagen beheben",
+      "auto_fixable": false,
+      "references": [
+        "Art. 32 DSGVO",
+        "Art. 12 EU AI Act"
+      ]
+    },
+    {
+      "id": "GOV-2026-0026",
+      "timestamp": "2026-03-10T19:08:00.927206+00:00",
+      "severity": "HOCH",
+      "category": "SECURITY",
+      "subcategory": "4.3_INPUT_VALIDATION",
+      "regulation": "Art. 32 DSGVO + OWASP Top 10 A03",
+      "file": "src/api/websocket/__init__.py",
+      "line": null,
+      "finding": "Keine erkennbare Längenbegrenzung für User-Input im Chat-Handler. Unbegrenzte Eingaben ermöglichen Prompt-Injection und DoS.",
+      "must_be": "Maximale Nachrichtenlänge von 2.000 Zeichen erzwingen. User-Input in <user_message> Tags wrappen für Prompt-Isolation.",
+      "fix_example": "MAX_MESSAGE_LENGTH = 2000\n\nif len(user_message) > MAX_MESSAGE_LENGTH:\n    await websocket.send_json({'type': 'error', 'message': 'Nachricht zu lang'})\n    return\n\n# Wrap user input to prevent prompt injection\nsafe_input = f\"<user_message>{user_message}</user_message>\"",
+      "deadline": "Vor Go-Live beheben",
+      "auto_fixable": false,
+      "references": [
+        "Art. 32 DSGVO",
+        "OWASP A03:2021"
+      ]
+    }
+  ],
+  "metadata": {
+    "scanner_version": "1.0.0"
+  }
+}

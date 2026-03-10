@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint format migration migrate seed
+.PHONY: setup dev test lint format migration migrate seed compliance compliance-fix
 
 # Komplettes Setup
 setup:
@@ -34,3 +34,11 @@ migrate:
 # Seed-Daten laden
 seed:
 	source venv/bin/activate && python -m src.db.seed
+
+# Governance / Compliance-Scan (DSGVO + EU AI Act)
+compliance:
+	source venv/bin/activate && python -m src.agents.governance.agent --scan-all --report
+
+# Governance auto-fix (nur auto-fixable findings)
+compliance-fix:
+	source venv/bin/activate && python -m src.agents.governance.agent --auto-fix
