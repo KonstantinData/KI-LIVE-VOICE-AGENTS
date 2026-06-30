@@ -17,7 +17,6 @@ class Feedback(UUIDMixin, Base):
     studio_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     message_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("messages.id", ondelete="CASCADE"),

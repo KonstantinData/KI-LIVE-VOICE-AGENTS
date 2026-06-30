@@ -2,9 +2,9 @@
 # Deploy: pnpm run deploy  (oder: wrangler pages deploy dist)
 # Docs:   https://developers.cloudflare.com/pages/
 
-name = "ki-mitarbeiter-team"
+name = "ki-mitarbeiter-widget"
 pages_build_output_dir = "dist"
-compatibility_date = "2025-03-10"
+compatibility_date = "2026-03-10"
 
 # Build-Befehl für Cloudflare Pages CI
 # (wird in der Pages-Einstellung im Dashboard konfiguriert,

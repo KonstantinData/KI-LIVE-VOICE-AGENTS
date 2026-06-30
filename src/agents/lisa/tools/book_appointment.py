@@ -141,6 +141,7 @@ class BookAppointmentTool(BaseTool):
 
         # Google Calendar Termin anlegen falls verfügbar
         if berater_with_calendar:
+            adviser_name = berater_with_calendar.name
             external_calendar_id = await self._try_create_calendar_event(
                 berater=berater_with_calendar,
                 wished_datetime=wished_datetime,
@@ -195,7 +196,7 @@ class BookAppointmentTool(BaseTool):
                 "calendar_booked": True,
                 "message": (
                     f"Terminwunsch für '{wished_datetime}' wurde im Kalender von "
-                    f"{berater_with_calendar.name} eingetragen. "
+                    f"{adviser_name} eingetragen. "
                     "Eine Bestätigung wird versendet."
                 ),
             }
@@ -225,6 +226,8 @@ class BookAppointmentTool(BaseTool):
         from src.core.google_calendar import create_calendar_event, refresh_tokens_if_needed
 
         try:
+            if berater.calendar_tokens is None:
+                return None
             tokens = refresh_tokens_if_needed(berater.calendar_tokens)
             berater.calendar_tokens = tokens
 

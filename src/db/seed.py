@@ -36,10 +36,11 @@ async def seed() -> None:
                 "agent_name": "Lisa",
                 "welcome_message": "Hallo! Ich bin Lisa, Ihre persönliche Küchenberaterin.",
             },
+            is_active=True,
         )
         session.add(studio)
         await session.commit()
-        log.info("seed.studio_created", slug="mein-kuechenexperte", api_key=studio.api_key)
+        log.info("seed.studio_created", slug="mein-kuechenexperte")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,19 @@
+{
+  "report_id": "GOV-20260630-103807-4acadcb7",
+  "generated_at": "2026-06-30T10:38:07.783917+00:00",
+  "repo_root": "D:\\Git-GitHub\\Repositories\\02_mein_kuechenexperte\\KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft",
+  "summary": {
+    "scanned_files": 129,
+    "total_findings": 0,
+    "kritisch": 0,
+    "hoch": 0,
+    "mittel": 0,
+    "niedrig": 0,
+    "hinweis": 0,
+    "auto_fixable": 0
+  },
+  "findings": [],
+  "metadata": {
+    "scanner_version": "1.0.0"
+  }
+}

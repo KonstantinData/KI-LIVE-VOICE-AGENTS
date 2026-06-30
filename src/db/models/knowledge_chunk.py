@@ -1,10 +1,9 @@
 """SQLAlchemy Model für Wissens-Chunks mit Vektoren."""
 
 import uuid
-from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import JSON, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from pgvector.sqlalchemy import Vector
 
@@ -19,7 +18,6 @@ class KnowledgeChunk(UUIDMixin, TimestampMixin, Base):
     studio_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)

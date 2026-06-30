@@ -169,24 +169,52 @@ cd frontends/dashboard && pnpm install && pnpm build
 
 **Required:** Python 3.12+, Node.js 20+, pnpm, PostgreSQL 16 with pgvector
 
+### Production-Relevant Configuration
+
+- `ADMIN_PASSWORD_HASH` must be set in production. The test login `admin / secret` only works when `ALLOW_DEMO_LOGIN=true` and `APP_ENV` is not `production`.
+- `JWT_SECRET` must be a long random value and must never be committed.
+- `ENABLE_EMAIL_SENDING` and `ENABLE_CALENDAR_SYNC` default to `false`. External actions only run when the matching API/OAuth credentials are configured and the feature flags are deliberately enabled.
+- `CORS_ORIGINS` must include the public website and dashboard. WebSocket connections are checked server-side against these origins.
+- The widget connects only after GDPR consent and sends `consent=1` to `/ws/chat`.
+
+### Verification
+
+```bash
+# Backend
+python -m pytest -q
+python -m ruff check src tests
+python -m mypy src
+
+# Check migrations against a temporary SQLite database
+DATABASE_URL=sqlite+aiosqlite:///./tmp_migration_check.sqlite3 alembic upgrade head
+
+# Run frontends through the workspace so pnpm allowBuilds applies
+pnpm --filter ki-team-dashboard lint
+pnpm --filter ki-team-dashboard build
+pnpm --filter ki-team-widget lint
+pnpm --filter ki-team-widget build
+```
+
+The widget production build aliases React to Preact Compat so the bundled `loader.iife.js` stays small enough for website embedding.
+
 ---
 
 ## Project Status
 
 | Area | Status |
 | ---- | ------ |
-| Database schema | Complete |
-| API framework | Complete (endpoints as placeholders) |
-| WebSocket chat | Complete (echo mode, no agent behind it yet) |
+| Database schema | Complete with Alembic migration |
+| API framework | Complete with tenant-scoped MVP routes |
+| WebSocket chat | Complete with consent, origin, and size checks |
 | Agent core (base) | Complete |
 | Agent template | Complete |
-| Chat widget | Complete, live at `widget.mein-kuechenexperte.de` |
-| Admin dashboard | Complete, live at `app.mein-kuechenexperte.de` |
-| Agent Lisa | In planning |
+| Chat widget | Complete with GDPR consent gate and small IIFE bundle |
+| Admin dashboard | Complete as MVP with real API views |
+| Agent Lisa | MVP active for first contact, lead capture, and appointment requests |
 | Agent Max | In planning |
 | Agents Anna, Tom, Sara | In planning |
-| Google Calendar integration | Prepared, not yet activated |
-| Email sending | Prepared, not yet activated |
+| Google Calendar integration | Feature-flagged with secured OAuth routes |
+| Email sending | Feature-flagged through Resend |
 
 ---
 

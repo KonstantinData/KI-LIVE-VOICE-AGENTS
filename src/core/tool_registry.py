@@ -8,7 +8,6 @@ Who:     BaseAgent, ToolRunner, all concrete agents.
 Depends: structlog
 """
 
-from typing import Callable
 
 import structlog
 

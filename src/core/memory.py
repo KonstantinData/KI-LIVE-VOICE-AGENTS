@@ -55,7 +55,9 @@ class MemoryManager:
         """
         # Konversation laden
         conv_result = await self._session.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
+            select(Conversation)
+            .where(Conversation.id == conversation_id)
+            .where(Conversation.studio_id == studio_id)
         )
         conversation = conv_result.scalar_one()
 
@@ -64,6 +66,8 @@ class MemoryManager:
         # This is more efficient than ORDER BY ASC with OFFSET.
         msg_result = await self._session.execute(
             select(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.studio_id == studio_id)
             .where(Message.conversation_id == conversation_id)
             .order_by(Message.created_at.desc())
             .limit(CONTEXT_WINDOW_MESSAGES)
@@ -74,7 +78,9 @@ class MemoryManager:
         lead_summary: str | None = None
         if conversation.lead_id:
             lead_result = await self._session.execute(
-                select(Lead).where(Lead.id == conversation.lead_id)
+                select(Lead)
+                .where(Lead.id == conversation.lead_id)
+                .where(Lead.studio_id == studio_id)
             )
             lead = lead_result.scalar_one_or_none()
             if lead:
@@ -92,20 +98,20 @@ class MemoryManager:
             lead_summary=lead_summary,
         )
 
-    async def store_summary(self, lead_id: UUID, summary: str) -> None:
+    async def store_summary(self, lead_id: UUID, studio_id: UUID, summary: str) -> None:
         """Speichert eine neue Zusammenfassung für einen Lead."""
         lead_result = await self._session.execute(
-            select(Lead).where(Lead.id == lead_id)
+            select(Lead).where(Lead.id == lead_id).where(Lead.studio_id == studio_id)
         )
         lead = lead_result.scalar_one_or_none()
         if lead:
             lead.summary = summary
             log.info("memory.summary_stored", lead_id=str(lead_id))
 
-    async def get_lead_history(self, lead_id: UUID) -> str:
+    async def get_lead_history(self, lead_id: UUID, studio_id: UUID) -> str:
         """Gibt die gespeicherte Lead-Historie als Text zurück."""
         lead_result = await self._session.execute(
-            select(Lead).where(Lead.id == lead_id)
+            select(Lead).where(Lead.id == lead_id).where(Lead.studio_id == studio_id)
         )
         lead = lead_result.scalar_one_or_none()
         if not lead or not lead.summary:

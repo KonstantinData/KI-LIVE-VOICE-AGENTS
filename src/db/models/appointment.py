@@ -17,7 +17,6 @@ class Appointment(UUIDMixin, Base):
     studio_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     lead_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("leads.id", ondelete="CASCADE"),

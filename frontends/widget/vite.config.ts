@@ -7,6 +7,13 @@ import react from '@vitejs/plugin-react';
  */
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      react: 'preact/compat',
+      'react-dom': 'preact/compat',
+      'react-dom/client': 'preact/compat/client',
+    },
+  },
   build: {
     lib: {
       entry: 'src/main.tsx',
@@ -15,7 +22,7 @@ export default defineConfig({
       formats: ['iife'],
     },
     rollupOptions: {
-      // React in Bundle einschließen (kein externes React auf Kunden-Website)
+      // UI runtime is bundled so customer websites do not need any dependency.
       external: [],
     },
     outDir: 'dist',
