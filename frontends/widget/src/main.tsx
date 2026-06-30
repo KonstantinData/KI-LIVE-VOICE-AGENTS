@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Widget } from './Widget';
 import { loadConfig } from './lib/config';
-import './styles/widget.css';
+import widgetStyles from './styles/widget.css?inline';
 
 function generateVisitorId(): string {
   const key = 'ki_team_visitor_id';
@@ -35,7 +35,7 @@ function mount(): void {
 
   // CSS in Shadow DOM laden
   const style = document.createElement('style');
-  // CSS wird vom Vite-Build injiziert
+  style.textContent = widgetStyles;
   shadow.appendChild(style);
 
   ReactDOM.createRoot(mountPoint).render(

@@ -140,24 +140,35 @@ async def handle_chat(
                 # Typing-Indicator senden
                 await websocket.send_json({"type": "typing", "role": "assistant"})
 
-                # Agent verarbeitet Nachricht (7-Schritte-Loop)
-                response_text = await agent.process_message(
-                    user_message=message_text,
-                    conversation=conversation,
-                    studio=studio,
-                )
+                try:
+                    # Agent verarbeitet Nachricht (7-Schritte-Loop)
+                    response_text = await agent.process_message(
+                        user_message=message_text,
+                        conversation=conversation,
+                        studio=studio,
+                    )
 
-                # Alle DB-Änderungen dieser Nachricht committen
-                # (Nachrichten, Lead-Updates, Conversation.lead_id)
-                await session.commit()
+                    # Alle DB-Änderungen dieser Nachricht committen
+                    # (Nachrichten, Lead-Updates, Conversation.lead_id)
+                    await session.commit()
 
-                # Antwort an Client senden
-                await websocket.send_json({
-                    "type": "message",
-                    "role": "assistant",
-                    "content": response_text,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                })
+                    # Antwort an Client senden
+                    await websocket.send_json({
+                        "type": "message",
+                        "role": "assistant",
+                        "content": response_text,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    })
+                except Exception as e:
+                    await session.rollback()
+                    log.error("ws.message_error", visitor=visitor_id, error=str(e))
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": (
+                            "Lisa ist gerade technisch nicht erreichbar. "
+                            "Bitte versuchen Sie es in einem Moment erneut."
+                        ),
+                    })
 
         except WebSocketDisconnect:
             log.info("ws.disconnected", visitor=visitor_id)

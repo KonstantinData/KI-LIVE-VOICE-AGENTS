@@ -81,6 +81,15 @@ export function useWebSocket({
           onMessage?.(msg);
         } else if (data.type === 'typing') {
           setTyping(true);
+        } else if (data.type === 'error') {
+          const msg: Message = {
+            role: 'assistant',
+            content: data.message ?? 'Lisa ist gerade technisch nicht erreichbar.',
+            timestamp: data.timestamp ?? new Date().toISOString(),
+          };
+          setTyping(false);
+          setMessages((prev) => [...prev, msg]);
+          onMessage?.(msg);
         }
       } catch {
         // Nicht-JSON Nachricht ignorieren

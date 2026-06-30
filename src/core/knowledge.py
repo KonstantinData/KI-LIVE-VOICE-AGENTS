@@ -55,7 +55,15 @@ class KnowledgeBase:
         Returns:
             List of most similar knowledge chunks, ordered by relevance
         """
-        query_embedding = await self._embeddings.embed(query)
+        try:
+            query_embedding = await self._embeddings.embed(query)
+        except Exception as exc:
+            log.warning(
+                "knowledge.search_embedding_failed",
+                studio_id=str(studio_id),
+                error_type=type(exc).__name__,
+            )
+            return []
 
         stmt = (
             select(KnowledgeChunk)
