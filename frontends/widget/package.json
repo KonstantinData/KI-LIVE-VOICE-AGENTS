@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "deploy": "pnpm build && wrangler pages deploy dist"
+    "deploy": "pnpm build && wrangler pages deploy dist --project-name ki-mitarbeiter-widget"
   },
   "dependencies": {
     "preact": "^10.26.9",

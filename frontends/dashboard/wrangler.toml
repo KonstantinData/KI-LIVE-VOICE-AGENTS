@@ -2,9 +2,9 @@
 # Deploy: pnpm run deploy  (oder: wrangler pages deploy dist)
 # Docs:   https://developers.cloudflare.com/pages/
 
-name = "ki-team-dashboard"
+name = "ki-mitarbeiter-team-kuechen-und-moebelgeschaeft"
 pages_build_output_dir = "dist"
-compatibility_date = "2025-03-10"
+compatibility_date = "2026-03-10"
 
 # SPA-Routing: Alle Pfade → index.html
 # (Cloudflare Pages macht das automatisch für SPAs)
