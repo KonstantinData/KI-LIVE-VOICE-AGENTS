@@ -1,6 +1,5 @@
 """WebSocket Connection Manager: Verwaltet alle aktiven Verbindungen."""
 
-from uuid import UUID
 
 import structlog
 from fastapi import WebSocket

@@ -16,7 +16,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const [userMessages, setUserMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, send, connected, connecting } = useWebSocket({
+  const { messages, send, connected, connecting, typing } = useWebSocket({
     url: config.apiUrl,
     studio: config.studio,
     visitorId,
@@ -63,6 +63,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
         {allMessages.map((msg, i) => (
           <MessageBubble key={i} role={msg.role} content={msg.content} />
         ))}
+        {typing && <TypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
 

@@ -31,6 +31,7 @@ interface UseWebSocketReturn {
   send: (text: string) => void;
   connected: boolean;
   connecting: boolean;
+  typing: boolean;
 }
 
 export function useWebSocket({
@@ -43,6 +44,7 @@ export function useWebSocket({
   const [messages, setMessages] = useState<Message[]>([]);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [typing, setTyping] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,7 +53,12 @@ export function useWebSocket({
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     setConnecting(true);
-    const wsUrl = `${url}/ws/chat?studio=${studio}&visitor=${visitorId}`;
+    const params = new URLSearchParams({
+      studio,
+      visitor: visitorId,
+      consent: '1',
+    });
+    const wsUrl = `${url}/ws/chat?${params.toString()}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -69,8 +76,11 @@ export function useWebSocket({
             content: data.content,
             timestamp: data.timestamp ?? new Date().toISOString(),
           };
+          setTyping(false);
           setMessages((prev) => [...prev, msg]);
           onMessage?.(msg);
+        } else if (data.type === 'typing') {
+          setTyping(true);
         }
       } catch {
         // Nicht-JSON Nachricht ignorieren
@@ -80,6 +90,7 @@ export function useWebSocket({
     ws.onclose = () => {
       setConnected(false);
       setConnecting(false);
+      setTyping(false);
       if (enabled) {
         // Reconnect nach 3 Sekunden
         reconnectTimeoutRef.current = setTimeout(connect, 3000);
@@ -107,5 +118,5 @@ export function useWebSocket({
     }
   }, []);
 
-  return { messages, send, connected, connecting };
+  return { messages, send, connected, connecting, typing };
 }

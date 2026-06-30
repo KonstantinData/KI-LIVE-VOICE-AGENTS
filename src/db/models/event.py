@@ -18,7 +18,6 @@ class Event(UUIDMixin, Base):
     studio_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     type: Mapped[str] = mapped_column(String(100), nullable=False)
     actor: Mapped[str] = mapped_column(String(255), nullable=False)

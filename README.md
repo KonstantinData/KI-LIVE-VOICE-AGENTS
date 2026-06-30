@@ -169,24 +169,52 @@ cd frontends/dashboard && pnpm install && pnpm build
 
 **Benötigt:** Python 3.12+, Node.js 20+, pnpm, PostgreSQL 16 mit pgvector
 
+### Produktionsrelevante Konfiguration
+
+- `ADMIN_PASSWORD_HASH` muss in Produktion gesetzt sein. Der Testzugang `admin / secret` funktioniert nur, wenn `ALLOW_DEMO_LOGIN=true` und `APP_ENV` nicht `production` ist.
+- `JWT_SECRET` muss ein langer zufälliger Wert sein und darf nicht in Git landen.
+- `ENABLE_EMAIL_SENDING` und `ENABLE_CALENDAR_SYNC` sind standardmäßig `false`. Externe Aktionen laufen erst, wenn die passenden API-/OAuth-Credentials gesetzt und die Flags bewusst aktiviert sind.
+- `CORS_ORIGINS` muss die öffentliche Website und das Dashboard enthalten. WebSocket-Verbindungen werden serverseitig gegen diese Origins geprüft.
+- Das Widget verbindet sich erst nach DSGVO-Einwilligung und sendet `consent=1` an `/ws/chat`.
+
+### Verifikation
+
+```bash
+# Backend
+python -m pytest -q
+python -m ruff check src tests
+python -m mypy src
+
+# Migration gegen temporäre SQLite-DB prüfen
+DATABASE_URL=sqlite+aiosqlite:///./tmp_migration_check.sqlite3 alembic upgrade head
+
+# Frontends über den Workspace ausführen, damit pnpm allowBuilds greift
+pnpm --filter ki-team-dashboard lint
+pnpm --filter ki-team-dashboard build
+pnpm --filter ki-team-widget lint
+pnpm --filter ki-team-widget build
+```
+
+Das Widget nutzt im Produktionsbuild Preact Compat als gebündelte Runtime, damit `loader.iife.js` klein genug für eine einbettbare Website-Integration bleibt.
+
 ---
 
 ## Projektstatus
 
 | Bereich | Status |
 | ------- | ------ |
-| Datenbankschema | Fertig |
-| API-Grundgerüst | Fertig (Endpunkte als Platzhalter) |
-| WebSocket-Chat | Fertig (Echo-Modus, noch kein Agent dahinter) |
+| Datenbankschema | Fertig mit Alembic-Migration |
+| API-Grundgerüst | Fertig mit tenant-gefilterten MVP-Routen |
+| WebSocket-Chat | Fertig mit Consent-, Origin- und Größenprüfung |
 | Agenten-Kern (Basis) | Fertig |
 | Agenten-Vorlage | Fertig |
-| Chat-Widget | Fertig, live auf `widget.mein-kuechenexperte.de` |
-| Admin-Dashboard | Fertig, live auf `app.mein-kuechenexperte.de` |
-| Agent Lisa | In Planung |
+| Chat-Widget | Fertig mit DSGVO-Consent-Gate und kleinem IIFE-Bundle |
+| Admin-Dashboard | Fertig als MVP mit echten API-Ansichten |
+| Agent Lisa | MVP aktiv für Erstkontakt, Lead-Erfassung und Terminwunsch |
 | Agent Max | In Planung |
 | Agent Anna, Tom, Sara | In Planung |
-| Google Calendar Integration | Vorbereitet, noch nicht aktiviert |
-| E-Mail-Versand | Vorbereitet, noch nicht aktiviert |
+| Google Calendar Integration | Feature-Flag-gesteuert, OAuth-Routen abgesichert |
+| E-Mail-Versand | Feature-Flag-gesteuert über Resend |
 
 ---
 

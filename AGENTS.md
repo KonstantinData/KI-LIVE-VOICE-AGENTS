@@ -1,9 +1,8 @@
-# CLAUDE.md — KI-Mitarbeiter-Team Foundation
+# AGENTS.md — KI-Mitarbeiter-Team
 
-> **Diese Datei ist die zentrale Arbeitsanweisung für Claude Code.**
-> Sie beschreibt NUR die Grundstruktur des Repositories.
-> Die einzelnen KI-Agenten (Lisa, Max, Anna, Tom, Sara) werden SPÄTER
-> in separaten Schritten hinzugefügt.
+> **Diese Datei ist die zentrale Arbeitsanweisung für Codex.**
+> Sie beschreibt den aktuellen Repository-Scope und die verbindlichen
+> Arbeitsregeln für Backend, Widget, Dashboard, Agenten und Compliance.
 
 ---
 
@@ -14,14 +13,14 @@ die in Küchen- und Möbelgeschäften verschiedene Mitarbeiter-Rollen übernehme
 Jeder Agent hat eine eigene Persönlichkeit, eigene Tools und eigenes Fachwissen,
 aber alle teilen sich dieselbe Infrastruktur, Datenbank und Kommunikationsschicht.
 
-### Die geplanten Agenten (werden SPÄTER gebaut)
+### Agenten-Scope
 | Agent | Rolle | Phasen |
 |---|---|---|
-| Lisa | Empfang & Lead-Management | Phase 1 (Erstkontakt) |
-| Max | Beratung, Planung & Verkauf | Phase 2, 3, 4 |
-| Anna | Sachbearbeitung & Auftragsmanagement | Phase 5, 6 |
-| Tom | Logistik, Montage & Koordination | Phase 7 |
-| Sara | Qualität, Service & Kundenbindung | Phase 8, 9 |
+| Lisa | Empfang & Lead-Management | Phase 1 (Erstkontakt), aktiv im MVP |
+| Max | Beratung, Planung & Verkauf | Phase 2, 3, 4, später |
+| Anna | Sachbearbeitung & Auftragsmanagement | Phase 5, 6, später |
+| Tom | Logistik, Montage & Koordination | Phase 7, später |
+| Sara | Qualität, Service & Kundenbindung | Phase 8, 9, später |
 
 ### Ziel-Websites für die Einbindung
 Die Agenten werden als Chat-Widget (JavaScript) in Kunden-Websites
@@ -29,22 +28,21 @@ eingebettet. Erste Ziel-Website: **www.mein-kuechenexperte.de**
 
 ---
 
-## WAS WIR JETZT BAUEN (NUR DIE GRUNDSTRUKTUR)
+## AKTUELLER MVP-SCOPE
 
-In diesem Schritt wird ausschließlich das Fundament gebaut:
-- Repository-Struktur mit Python venv
-- Alle Dependencies installiert
-- Datenbank-Schema (PostgreSQL + pgvector)
+Dieses Repository enthält inzwischen mehr als die Grundstruktur:
+- Datenbank-Schema mit Alembic-Migrationen für PostgreSQL + pgvector
 - Shared Agent-Core (Basisklasse, LLM-Wrapper, Memory, Tools)
-- Backend-API Grundgerüst (FastAPI)
-- WebSocket-Infrastruktur für Chat
-- Widget-Grundgerüst (JavaScript/React)
-- Dashboard-Grundgerüst (React)
-- Konfigurationssystem
-- Deployment-Konfiguration
+- Lisa als MVP-Agent für Erstkontakt, Lead-Erfassung und Terminwunsch
+- FastAPI Backend mit tenant-gefilterten MVP-Routen
+- WebSocket-Chat mit DSGVO-Consent-, Origin- und Größenprüfung
+- React/Vite Dashboard mit echten API-Ansichten
+- einbettbares Widget mit DSGVO-Consent-Gate und kleiner Preact-Runtime
+- Governance-/Compliance-Agent für DSGVO, EU AI Act, Multi-Tenant und Security
+- kontrollierte Feature Flags für E-Mail- und Google-Calendar-Integrationen
 
-**WIR BAUEN NOCH KEINEN AGENTEN.** Kein Lisa, kein Max, nichts.
-Nur das leere Gerüst, in das Agenten später eingesteckt werden können.
+Max, Anna, Tom und Sara sind weiterhin nicht Teil des MVP und werden erst in
+separaten Schritten ergänzt.
 
 ---
 
@@ -55,11 +53,11 @@ Nur das leere Gerüst, in das Agenten später eingesteckt werden können.
 | **Agent-Logik + Backend** | Python 3.12+ | Bestes AI-Ökosystem (LangChain, etc.) |
 | **API-Framework** | FastAPI | Async, schnell, WebSocket-Support, auto Docs |
 | **ORM** | SQLAlchemy 2.0 + Alembic | Standard, async-fähig, Migrations |
-| **Agent LLM** | Anthropic Claude API | Bestes Tool Use + Reasoning |
+| **Agent LLM** | Anthropic Codex API | Bestes Tool Use + Reasoning |
 | **Embeddings** | OpenAI API (text-embedding-3-small) | Günstig, bewährt |
 | **Datenbank** | PostgreSQL 16 + pgvector | Relational + Vektorsuche |
 | **Task Queue** | Kein (vorerst) — in-process mit APScheduler | MVP-einfach |
-| **Widget** | React + Vite (baut als IIFE-Bundle) | Einbettbar in jede Website |
+| **Widget** | React-Komponenten + Preact Compat + Vite (IIFE) | Klein und einbettbar in jede Website |
 | **Dashboard** | React + Vite + Tailwind | Admin-Oberfläche |
 | **Hosting Backend** | Hetzner Cloud | EU, DSGVO, günstig |
 | **CDN + DNS** | Cloudflare | SSL, CDN, DDoS-Schutz |
@@ -77,7 +75,7 @@ Erstelle exakt diese Struktur. Jede Datei wird weiter unten beschrieben.
 ```
 KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft/
 │
-├── CLAUDE.md                          # Diese Datei
+├── AGENTS.md                          # Diese Datei
 ├── README.md                          # Projekt-Dokumentation
 ├── .gitignore
 ├── .env.example                       # Alle Umgebungsvariablen (Template)
@@ -98,7 +96,7 @@ KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft/
 │   ├── core/                          # ══ SHARED AGENT CORE ══
 │   │   ├── __init__.py
 │   │   ├── base_agent.py              # Abstrakte Agent-Basisklasse
-│   │   ├── llm.py                     # Claude API Wrapper
+│   │   ├── llm.py                     # Codex API Wrapper
 │   │   ├── embeddings.py              # OpenAI Embedding Wrapper
 │   │   ├── memory.py                  # Kurzzeit + Langzeit-Gedächtnis
 │   │   ├── knowledge.py               # Wissensbasis-Suche (pgvector)
@@ -419,10 +417,10 @@ LOG_LEVEL=DEBUG
 DATABASE_URL=postgresql+asyncpg://ki_team:PASSWORT@localhost:5432/ki_mitarbeiter
 
 # ═══════════════════════════════════════
-# Anthropic Claude (Agent-Gehirn)
+# Anthropic Codex (Agent-Gehirn)
 # ═══════════════════════════════════════
 ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
+ANTHROPIC_MODEL=Codex-sonnet-4-20250514
 ANTHROPIC_MAX_TOKENS=1024
 
 # ═══════════════════════════════════════
@@ -639,7 +637,7 @@ class BaseAgent(ABC):
     2. Absicht erkennen
     3. Wissen abrufen (Wissensbasis durchsuchen)
     4. Tools bereitstellen
-    5. LLM aufrufen (Claude mit System-Prompt + Tools)
+    5. LLM aufrufen (Codex mit System-Prompt + Tools)
     6. Tool-Calls ausführen (falls vorhanden)
     7. Ergebnis speichern + zurückgeben
 
@@ -666,12 +664,12 @@ class BaseAgent(ABC):
         ...
 ```
 
-### llm.py — Claude API Wrapper
+### llm.py — Codex API Wrapper
 
 ```python
 class LLMClient:
     """
-    Wrapper um die Anthropic Claude API.
+    Wrapper um die Anthropic Codex API.
 
     - Unterstützt Tool Use (function calling)
     - Retry-Logic mit Exponential Backoff
@@ -734,12 +732,12 @@ class KnowledgeBase:
 ```python
 class ToolRunner:
     """
-    Führt Tool-Calls von Claude aus.
+    Führt Tool-Calls von Codex aus.
 
-    Claude gibt Tool-Calls zurück. Der ToolRunner:
+    Codex gibt Tool-Calls zurück. Der ToolRunner:
     1. Validiert die Parameter (Pydantic)
     2. Führt die Tool-Funktion aus
-    3. Gibt das Ergebnis an Claude zurück
+    3. Gibt das Ergebnis an Codex zurück
     4. Loggt die Ausführung
     """
 
@@ -750,7 +748,7 @@ class ToolRunner:
         ...
 
     def get_tool_definitions(self) -> list[dict]:
-        """Gibt die Tool-Definitionen im Claude-Format zurück."""
+        """Gibt die Tool-Definitionen im Codex-Format zurück."""
         ...
 ```
 
@@ -819,15 +817,14 @@ Alle Routes folgen dem gleichen Pattern:
 - studio_id Filter bei JEDER Query (Multi-Tenant)
 - Strukturierte Fehlerantworten
 
-**WICHTIG:** In diesem Schritt werden die Routes nur als Grundgerüst
-erstellt (leere Endpunkte die 501 Not Implemented zurückgeben).
-Die eigentliche Logik kommt erst mit den Agenten.
-
-Ausnahme: `/health` und `/auth/login` werden voll implementiert.
+**Aktueller Stand:** Die produktionsrelevanten MVP-Routen sind implementiert
+und müssen tenant-gefiltert bleiben. Neue Routen dürfen keine 501-Stubs als
+produktiven Endzustand enthalten; nicht verfügbare Integrationen werden über
+Feature Flags deaktiviert und klar dokumentiert.
 
 ---
 
-## FRONTEND GRUNDGERÜST (frontends/)
+## FRONTENDS (frontends/)
 
 ### Widget — Chat-Widget (frontends/widget/)
 
@@ -843,24 +840,23 @@ Einbindung auf Kunden-Website:
 ></script>
 ```
 
-**In diesem Schritt:** Nur das Grundgerüst. Widget zeigt einen Button,
-öffnet ein Chat-Fenster, verbindet per WebSocket. Nachrichten werden
-angezeigt. Kein echtes Agent-Backend nötig — teste mit einer Echo-Antwort.
+Das Widget zeigt einen Button, öffnet ein Chat-Fenster, erzwingt vor der
+WebSocket-Verbindung die DSGVO-Einwilligung und spricht mit dem echten
+Backend-Chat. Der Produktionsbuild nutzt Preact Compat als gebündelte Runtime.
 
 ### Dashboard — Admin-Dashboard (frontends/dashboard/)
 
 React SPA mit React Router und Tailwind.
 API Client spricht mit dem FastAPI Backend.
 
-**In diesem Schritt:** Nur Login-Seite und leeres Dashboard-Layout
-mit Sidebar-Navigation. Alle Unterseiten zeigen "Kommt bald".
-Login funktioniert gegen den /auth/login Endpoint.
+Das Dashboard enthält Login, Sidebar-Navigation und echte API-Ansichten für
+KPI-Stats, Leads, Gespräche, Termine, Follow-ups, Wissensbasis, Feedback und
+Studio-Einstellungen. Neue Platzhalterseiten sind nur zulässig, wenn sie nicht
+im produktiven MVP verlinkt sind.
 
 ---
 
-## WAS NACH DIESEM SCHRITT FERTIG SEIN MUSS
-
-Akzeptanztests für die Grundstruktur:
+## PRODUCTION-READY MVP CHECKS
 
 1. **Setup läuft:**
    - `./setup.sh` erstellt venv, installiert alle Dependencies
@@ -876,37 +872,30 @@ Akzeptanztests für die Grundstruktur:
    - Alle Tabellen existieren in PostgreSQL
    - pgvector Extension ist aktiv
 
-4. **Agent-Core ist testbar:**
-   - `make test` läuft durch (auch wenn noch keine Agenten existieren)
+4. **Agent-Core und Lisa sind testbar:**
+   - `make test` läuft durch
    - BaseAgent kann instanziiert werden (mit Dummy-Subclass)
    - LLM Wrapper kann Claude aufrufen (mit API Key)
    - Embedding Wrapper kann Vektoren erzeugen
 
 5. **WebSocket funktioniert:**
-   - Verbindung zu ws://localhost:8000/ws/chat?studio=test&visitor=123
-   - Nachricht senden → Erhält Echo-Antwort (noch kein Agent dahinter)
+   - Verbindung zu ws://localhost:8000/ws/chat?studio=test&visitor=123&consent=1
+   - Verbindung ohne Consent wird abgelehnt
+   - Nachricht senden → Lisa verarbeitet und persistiert die Nachricht
 
 6. **Widget baut:**
-   - `cd frontends/widget && pnpm build` erzeugt dist/loader.js
+   - `pnpm --filter ki-team-widget build` erzeugt dist/loader.iife.js
    - Bundle ist < 100KB
    - Auf Test-HTML-Seite: Button erscheint, Chat-Fenster öffnet sich
 
 7. **Dashboard baut:**
-   - `cd frontends/dashboard && pnpm build` erzeugt dist/
+   - `pnpm --filter ki-team-dashboard build` erzeugt dist/
    - Login-Seite wird angezeigt
-   - Nach Login: Leeres Dashboard mit Navigation
+   - Nach Login: Dashboard zeigt echte tenant-gefilterte Daten
 
 8. **agents/_template/ existiert:**
    - Vorlage ist vollständig und dokumentiert
-   - Kann nach agents/lisa/ kopiert werden als Startpunkt
-
----
-
-## ERST WENN ALLE 8 PUNKTE GRÜN SIND:
-
-Sage dem Nutzer: "Die Grundstruktur steht. Wir können jetzt mit
-Lisa anfangen. Dafür brauche ich eine separate LISA.md oder du sagst
-mir, dass ich beginnen soll."
+   - Kann für Max, Anna, Tom oder Sara kopiert werden als Startpunkt
 
 ---
 
@@ -916,9 +905,99 @@ mir, dass ich beginnen soll."
 2. **Pydantic v2 für alle Schemas** — Request, Response, Config
 3. **Async/Await durchgehend** — FastAPI + SQLAlchemy Async + httpx
 4. **Keine Datei über 250 Zeilen** — aufteilen
-5. **Docstrings in jeder Klasse und öffentlichen Funktion** — auf Deutsch OK
+5. **Docstrings in jeder Klasse und öffentlichen Funktion** — auf Englisch (siehe Regel 4)
 6. **Logging mit structlog** — JSON Format, jede wichtige Aktion loggen
 7. **Umgebungsvariablen NIEMALS hardcoden** — alles über Settings
 8. **Jede DB-Query filtert nach studio_id** — Multi-Tenant von Anfang an
 9. **Keine Secrets in Git** — .env in .gitignore
 10. **Type Safety** — mypy strict, ruff für Linting/Formatting
+
+---
+
+## DOKUMENTATIONS-REGELN
+
+### Regel 1 — Zweisprachige READMEs
+
+Jede `README.md` (Deutsch) hat eine `README.en.md` (Englisch).
+Beide inhaltlich identisch. Oben in jeder Datei ein Sprachlink-Umschalter:
+
+```md
+🇩🇪 [Deutsch](README.md) | 🇬🇧 [English](README.en.md)
+```
+
+Gilt für jedes Verzeichnis im Repo das eine README enthält.
+
+### Regel 2 — Script-Header (Datei-Docstring)
+
+Jede Python-Datei beginnt mit einem englischen Modul-Docstring der beantwortet:
+
+- **What** — Was ist diese Datei?
+- **Does** — Was tut sie?
+- **Why** — Warum existiert sie?
+- **Who** — Wer nutzt sie (welche anderen Module/Klassen)?
+- **Depends on** — Wovon hängt sie ab?
+
+Beispiel:
+
+```python
+"""
+Google Calendar Integration
+============================
+What:    Service layer for Google Calendar API access.
+Does:    OAuth flow, token management, free-slot detection, event creation.
+Why:     Decouples calendar logic from the booking tool; one place to swap providers.
+Who:     BookAppointmentTool, google_calendar route.
+Depends: google-auth, google-auth-oauthlib, google-api-python-client, src.api.config
+"""
+```
+
+### Regel 3 — Inline-Dokumentation
+
+Jede Funktion/Methode bekommt einen englischen Docstring mit:
+
+- Kurzbeschreibung (1 Satz)
+- `Args:` (falls Parameter vorhanden)
+- `Returns:` (falls Rückgabewert)
+
+Nicht-triviale Stellen bekommen `# NOTE:` Kommentare die **Business-Logik** erklären — nicht den Code paraphrasieren.
+
+```python
+# NOTE: wished_datetime is free text from the customer (e.g. "Wednesday 4pm").
+# We map it to the next available business slot — exact parsing comes later.
+```
+
+### Regel 4 — Sprach-Matrix
+
+| Bereich | Sprache | Begründung |
+| --- | --- | --- |
+| UI-Texte (Widget, Dashboard) | Deutsch | Kundenseitig |
+| Chat-Antworten (Lisa, Max, …) | Deutsch | Kundenseitig |
+| READMEs | Deutsch + Englisch | Beide Versionen |
+| Code, Variablen, Funktionen | Englisch | Universell lesbar |
+| Kommentare & Docstrings | Englisch | Universell lesbar |
+| Commit Messages | Englisch | Conventional Commits |
+| Log-Einträge | Englisch | Tool-kompatibel |
+| Error Messages (API) | Englisch | Standard |
+| `.env`-Keys | Englisch (SCREAMING_SNAKE_CASE) | Standard |
+
+### Regel 5 — Commit Messages
+
+Conventional Commits auf Englisch. Format: `type(scope): description`
+
+| Typ | Wann |
+| --- | --- |
+| `feat:` | Neue Funktionalität |
+| `fix:` | Bugfix |
+| `docs:` | Nur Dokumentation |
+| `refactor:` | Kein neues Feature, kein Fix |
+| `test:` | Tests hinzugefügt/geändert |
+| `chore:` | Build, Dependencies, Config |
+| `style:` | Formatierung, kein Logik-Änderung |
+
+Beispiele:
+
+```text
+feat(lisa): add extract_lead_data tool with incremental scoring
+fix(calendar): refresh token before creating event
+docs(readme): add bilingual setup instructions
+```

@@ -1,10 +1,15 @@
-/** KPI-Karte fuer das Dashboard. Platzhalter — wird spaeter implementiert. */
-
 interface StatsCardProps {
-  // Props werden hier ergaenzt
-  [key: string]: unknown;
+  title: string;
+  value: string | number;
+  detail?: string;
 }
 
-export function StatsCard(_props: StatsCardProps) {
-  return <div className="text-gray-400 text-sm">StatsCard (Platzhalter)</div>;
+export function StatsCard({ title, value, detail }: StatsCardProps) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="text-sm font-medium text-gray-500">{title}</div>
+      <div className="mt-2 text-2xl font-semibold text-gray-900">{value}</div>
+      {detail && <div className="mt-1 text-xs text-gray-500">{detail}</div>}
+    </div>
+  );
 }

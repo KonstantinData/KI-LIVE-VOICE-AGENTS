@@ -41,13 +41,20 @@ def _calculate_score(profile: dict[str, Any]) -> float:
     Maximum: 100 Punkte
     """
     score = 0.0
-    if profile.get("name"):                score += 15
-    if profile.get("email"):               score += 20
-    if profile.get("phone"):               score += 15
-    if profile.get("budget_range"):        score += 20
-    if profile.get("timeline"):            score += 15
-    if profile.get("kitchen_style"):       score += 10
-    if profile.get("room_size"):           score += 5
+    if profile.get("name"):
+        score += 15
+    if profile.get("email"):
+        score += 20
+    if profile.get("phone"):
+        score += 15
+    if profile.get("budget_range"):
+        score += 20
+    if profile.get("timeline"):
+        score += 15
+    if profile.get("kitchen_style"):
+        score += 10
+    if profile.get("room_size"):
+        score += 5
     return min(score, 100.0)
 
 
@@ -182,7 +189,9 @@ class ExtractLeadDataTool(BaseTool):
 
         # Conversation mit Lead verknüpfen
         conv_result = await self._session.execute(
-            select(Conversation).where(Conversation.id == self._conversation_id)
+            select(Conversation)
+            .where(Conversation.id == self._conversation_id)
+            .where(Conversation.studio_id == self._studio_id)
         )
         conversation = conv_result.scalar_one_or_none()
         if conversation and conversation.lead_id is None:

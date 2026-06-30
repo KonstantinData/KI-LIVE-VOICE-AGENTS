@@ -9,6 +9,8 @@ So erstellst du ein neues Tool:
 5. Registriere das Tool in agent.py: registry.register(MeinTool())
 """
 
+from typing import Any
+
 from src.core.tool_registry import BaseTool
 
 
@@ -33,8 +35,9 @@ class ExampleTool(BaseTool):
         "required": ["name"],
     }
 
-    async def execute(self, name: str) -> dict:
+    async def execute(self, **kwargs: Any) -> dict:
         """Führt das Tool aus und gibt das Ergebnis zurück."""
+        name = str(kwargs.get("name", "Gast"))
         return {
             "success": True,
             "message": f"Hallo {name}! Willkommen bei uns.",

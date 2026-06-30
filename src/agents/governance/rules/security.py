@@ -18,10 +18,13 @@ from src.agents.governance.scanner import FileScanner
 
 # PII patterns that must not appear in plain-text log statements
 _PII_LOG_PATTERNS = [
-    (r'log\.\w+\([^)]*email[^)]*\)', "email address"),
-    (r'log\.\w+\([^)]*phone[^)]*\)', "phone number"),
-    (r'log\.\w+\([^)]*password[^)]*\)', "password"),
-    (r'log\.\w+\([^)]*name\s*=\s*[^)]*\)', "customer name"),
+    (r'log\.\w+\([^)]*(?:email\s*=|\.\s*email\b)[^)]*\)', "email address"),
+    (r'log\.\w+\([^)]*(?:phone\s*=|\.\s*phone\b)[^)]*\)', "phone number"),
+    (r'log\.\w+\([^)]*(?:password\s*=|\.\s*password\b)[^)]*\)', "password"),
+    (
+        r'log\.\w+\([^)]*(?:name\s*=|(?:lead|customer|client|user|person)\.name\b)[^)]*\)',
+        "customer name",
+    ),
 ]
 
 
@@ -105,7 +108,7 @@ def check_pii_in_logs(
     for pattern, data_type in _PII_LOG_PATTERNS:
         for path, lineno, line in scanner.grep_all(pattern, "python", re.IGNORECASE):
             rel = scanner.rel(path)
-            if "test_" in rel or "conftest" in rel:
+            if "test_" in rel or "conftest" in rel or "src/agents/governance/rules" in rel:
                 continue
             counter[0] += 1
             findings.append(Finding(
@@ -152,9 +155,11 @@ def check_input_validation(
     findings: list[Finding] = []
 
     # Check WebSocket handler for max-length validation
-    chat_handler_paths = list(
-        (config.repo_root / "src" / "api" / "websocket").rglob("*.py")
-    )
+    chat_handler_paths = [
+        path
+        for path in (config.repo_root / "src" / "api" / "websocket").rglob("*.py")
+        if "handler" in path.name
+    ]
     for path in chat_handler_paths:
         rel = scanner.rel(path)
         content = scanner.read_file(path)

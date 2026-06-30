@@ -1,12 +1,55 @@
-/** Gespräche-Seite. */
+import { useEffect, useState } from 'react';
+import { ChatViewer } from '../components/ChatViewer';
+import { api } from '../lib/api';
+import type { Conversation, Message } from '../lib/types';
 
 export function Conversations() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selected, setSelected] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.get<Conversation[]>('/conversations/')
+      .then((rows) => {
+        setConversations(rows);
+        setSelected(rows[0] ?? null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Fehler beim Laden'));
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setMessages([]);
+      return;
+    }
+    api.get<Message[]>(`/conversations/${selected.id}/messages`)
+      .then(setMessages)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Fehler beim Laden'));
+  }, [selected]);
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">💬 Gespräche</h1>
-      <p className="text-gray-500 mb-8">Alle Chat-Konversationen</p>
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400">
-        Kommt bald — wird implementiert wenn die Agenten gebaut werden.
+      <h1 className="mb-2 text-2xl font-bold text-gray-900">Gespräche</h1>
+      <p className="mb-8 text-gray-500">Chat-Verläufe aus dem Widget</p>
+      {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
+      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="rounded-lg border border-gray-200 bg-white">
+          {conversations.map((conversation) => (
+            <button
+              key={conversation.id}
+              className={`block w-full border-b border-gray-100 px-4 py-3 text-left text-sm hover:bg-gray-50 ${
+                selected?.id === conversation.id ? 'bg-primary-50' : ''
+              }`}
+              onClick={() => setSelected(conversation)}
+            >
+              <div className="font-medium text-gray-900">{conversation.visitor_id}</div>
+              <div className="text-xs text-gray-500">{conversation.status} · {new Date(conversation.updated_at).toLocaleString('de-DE')}</div>
+            </button>
+          ))}
+          {conversations.length === 0 && <div className="p-4 text-sm text-gray-500">Keine Gespräche vorhanden.</div>}
+        </div>
+        <ChatViewer messages={messages} />
       </div>
     </div>
   );

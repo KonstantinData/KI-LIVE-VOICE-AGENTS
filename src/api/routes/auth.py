@@ -1,4 +1,12 @@
-"""Auth-Endpoints: Login und Token-Refresh."""
+"""
+Authentication Routes
+=====================
+What:    Dashboard login route issuing JWT bearer tokens.
+Does:    Verifies an environment-configured admin password hash and embeds tenant scope.
+Why:     Removes hard-coded production credentials while keeping explicit dev bootstrap support.
+Who:     Dashboard frontend and protected API routes.
+Depends: bcrypt, fastapi, jose, pydantic, src.api.config
+"""
 
 from datetime import datetime, timedelta, timezone
 
@@ -38,12 +46,18 @@ def _verify_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hashed)
 
 
-# Demo-User für Entwicklung — in Produktion aus DB laden
-# Hash für "secret" — bei Programmstart generiert
-_ADMIN_HASH = bcrypt.hashpw(b"secret", bcrypt.gensalt())
-DEMO_USERS: dict[str, bytes] = {
-    "admin": _ADMIN_HASH,
-}
+def _get_admin_hash() -> bytes | None:
+    """
+    Returns the configured admin password hash.
+
+    Production must set ADMIN_PASSWORD_HASH. The legacy admin/secret login is
+    only available when ALLOW_DEMO_LOGIN=true and APP_ENV is not production.
+    """
+    if settings.admin_password_hash:
+        return settings.admin_password_hash.encode()
+    if settings.allow_demo_login and settings.app_env != "production":
+        return _hash_password("secret")
+    return None
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -51,10 +65,9 @@ async def login(request: LoginRequest) -> TokenResponse:
     """
     Authentifiziert einen Benutzer und gibt einen JWT-Token zurück.
 
-    Demo-Credentials: admin / secret
-    In Produktion: Benutzer aus DB laden + bcrypt verifizieren.
+    In production, set ADMIN_USERNAME and ADMIN_PASSWORD_HASH.
     """
-    hashed = DEMO_USERS.get(request.username)
+    hashed = _get_admin_hash() if request.username == settings.admin_username else None
     if not hashed or not _verify_password(request.password, hashed):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,7 +77,11 @@ async def login(request: LoginRequest) -> TokenResponse:
 
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
     token = jwt.encode(
-        {"sub": request.username, "exp": expire},
+        {
+            "sub": request.username,
+            "studio_slug": settings.admin_studio_slug,
+            "exp": expire,
+        },
         settings.jwt_secret,
         algorithm=settings.jwt_algorithm,
     )

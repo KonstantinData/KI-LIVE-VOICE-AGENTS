@@ -26,6 +26,7 @@ from src.api.routes import (
     dashboard,
     feedback,
     followups,
+    gdpr,
     google_calendar,
     knowledge,
     leads,
@@ -84,6 +85,7 @@ app.include_router(feedback.router)
 app.include_router(dashboard.router)
 app.include_router(widget_config.router)
 app.include_router(google_calendar.router)
+app.include_router(gdpr.router)
 
 
 # WebSocket Chat-Endpoint
@@ -92,9 +94,15 @@ async def websocket_chat(
     websocket: WebSocket,
     studio: str = "default",
     visitor: str = "anonymous",
+    consent: str = "0",
 ) -> None:
     """WebSocket-Endpoint für den Chat. ?studio={slug}&visitor={visitor_id}"""
-    await handle_chat(websocket, studio_slug=studio, visitor_id=visitor)
+    await handle_chat(
+        websocket,
+        studio_slug=studio,
+        visitor_id=visitor,
+        consent_given=consent in {"1", "true", "yes"},
+    )
 
 
 if __name__ == "__main__":

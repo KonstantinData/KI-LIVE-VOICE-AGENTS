@@ -1,7 +1,6 @@
 """Tests für die BaseAgent-Basisklasse."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 from src.agents._template.agent import TemplateAgent
 from src.core.tool_registry import ToolRegistry

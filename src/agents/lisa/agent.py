@@ -1,6 +1,5 @@
 """Lisa — KI-Empfangsdame für Küchen- und Möbelstudios."""
 
-from typing import Any
 from uuid import UUID
 
 import structlog
@@ -133,6 +132,8 @@ class LisaAgent(BaseAgent):
         # Alle Nachrichten laden
         msg_result = await self._session.execute(
             select(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(Conversation.studio_id == studio.id)
             .where(Message.conversation_id == conversation.id)
             .order_by(Message.created_at.asc())
         )
@@ -172,7 +173,9 @@ class LisaAgent(BaseAgent):
         # Zusammenfassung im Lead speichern
         if conversation.lead_id:
             lead_result = await self._session.execute(
-                select(Lead).where(Lead.id == conversation.lead_id)
+                select(Lead)
+                .where(Lead.id == conversation.lead_id)
+                .where(Lead.studio_id == studio.id)
             )
             lead = lead_result.scalar_one_or_none()
             if lead:

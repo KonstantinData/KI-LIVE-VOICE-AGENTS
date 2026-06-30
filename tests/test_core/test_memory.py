@@ -1,6 +1,5 @@
 """Tests für den MemoryManager."""
 
-import pytest
 from unittest.mock import MagicMock
 
 from src.core.memory import MemoryManager

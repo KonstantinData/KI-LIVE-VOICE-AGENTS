@@ -16,12 +16,20 @@ from src.agents.governance.config import GovernanceConfig
 from src.agents.governance.models import Category, Finding, Severity
 from src.agents.governance.scanner import FileScanner
 
-# Patterns indicating a DB query that SHOULD have a studio_id filter
-_QUERY_PATTERNS = [
-    r"session\.execute\s*\(\s*select\s*\(",
-    r"\.query\s*\(",
-    r"select\s*\(",
-]
+# SQLAlchemy models that store tenant-owned or tenant-derived data.
+_TENANT_MODELS = {
+    "Appointment",
+    "Berater",
+    "Conversation",
+    "Event",
+    "Feedback",
+    "FollowUp",
+    "KnowledgeChunk",
+    "Lead",
+    "Message",
+}
+
+_SELECT_PATTERN = r"select\s*\("
 
 # Files/directories where cross-studio queries are intentionally allowed
 _ADMIN_PATHS = ["seed.py", "migration", "alembic", "test_", "conftest"]
@@ -64,44 +72,49 @@ def check_studio_id_filters(
             continue
 
         lines = content.splitlines()
-        combined = _QUERY_PATTERNS[0]  # use first pattern for simplicity
-        for pattern in _QUERY_PATTERNS:
-            matches = scanner.grep(path, pattern)
-            for lineno, _ in matches:
-                # Check the next 8 lines for studio_id filter
-                window_end = min(lineno + 8, len(lines))
-                window = "\n".join(lines[lineno - 1:window_end])
+        matches = scanner.grep(path, _SELECT_PATTERN)
+        for lineno, _ in matches:
+            # Check the surrounding query block. Legitimate statements often span
+            # several lines before the tenant filter is added.
+            window_end = min(lineno + 20, len(lines))
+            window = "\n".join(lines[lineno - 1:window_end])
 
-                if "studio_id" not in window:
-                    counter[0] += 1
-                    findings.append(Finding(
-                        id=f"{config.finding_id_prefix}-2026-{counter[0]:04d}",
-                        severity=Severity.HOCH,
-                        category=Category.MULTI_TENANT,
-                        subcategory="5.1_DATEN_ISOLATION",
-                        regulation="Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
-                        file=rel,
-                        line=lineno,
-                        finding=(
-                            f"DB-Query in Zeile {lineno} ohne erkennbaren studio_id-Filter. "
-                            "Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden."
-                        ),
-                        must_be=(
-                            "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS "
-                            ".where(<Model>.studio_id == studio_id) enthalten."
-                        ),
-                        fix_example=(
-                            "# VORHER (VERSTOSS):\n"
-                            "result = await session.execute(select(Lead))\n\n"
-                            "# NACHHER (COMPLIANT):\n"
-                            "result = await session.execute(\n"
-                            "    select(Lead).where(Lead.studio_id == studio_id)\n"
-                            ")"
-                        ),
-                        deadline="Vor Go-Live — Datenlecks zwischen Studios verhindern",
-                        auto_fixable=False,
-                        references=["Art. 5 Abs. 1 lit. b DSGVO", "Art. 32 DSGVO"],
-                    ))
+            selected_tenant_model = any(
+                re.search(rf"\b{model}\b", window) for model in _TENANT_MODELS
+            )
+            if not selected_tenant_model:
+                continue
+
+            if "studio_id" not in window:
+                counter[0] += 1
+                findings.append(Finding(
+                    id=f"{config.finding_id_prefix}-2026-{counter[0]:04d}",
+                    severity=Severity.HOCH,
+                    category=Category.MULTI_TENANT,
+                    subcategory="5.1_DATEN_ISOLATION",
+                    regulation="Art. 5 Abs. 1 lit. b DSGVO — Zweckbindung",
+                    file=rel,
+                    line=lineno,
+                    finding=(
+                        f"DB-Query in Zeile {lineno} ohne erkennbaren studio_id-Filter. "
+                        "Ohne Tenant-Isolation können Daten studio-übergreifend geleakt werden."
+                    ),
+                    must_be=(
+                        "Jede Datenbankabfrage auf mandantenfähigen Tabellen MUSS "
+                        ".where(<Model>.studio_id == studio_id) enthalten."
+                    ),
+                    fix_example=(
+                        "# VORHER (VERSTOSS):\n"
+                        "result = await session.execute(select(Lead))\n\n"
+                        "# NACHHER (COMPLIANT):\n"
+                        "result = await session.execute(\n"
+                        "    select(Lead).where(Lead.studio_id == studio_id)\n"
+                        ")"
+                    ),
+                    deadline="Vor Go-Live — Datenlecks zwischen Studios verhindern",
+                    auto_fixable=False,
+                    references=["Art. 5 Abs. 1 lit. b DSGVO", "Art. 32 DSGVO"],
+                ))
 
     # Deduplicate by (file, line) — same query might match multiple patterns
     seen: set[tuple[str, int | None]] = set()

@@ -17,7 +17,6 @@ class Conversation(UUIDMixin, TimestampMixin, Base):
     studio_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     lead_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("leads.id", ondelete="SET NULL"),
