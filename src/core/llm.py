@@ -13,6 +13,7 @@ from typing import Any
 
 import structlog
 from anthropic import AsyncAnthropic, APIStatusError, RateLimitError
+from openai import AsyncOpenAI
 
 from src.api.config import get_settings
 from src.core.types import LLMResponse
@@ -33,8 +34,10 @@ class LLMClient:
 
     def __init__(self) -> None:
         self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
         self._model = settings.anthropic_model
         self._max_tokens = settings.anthropic_max_tokens
+        self._openai_model = settings.openai_chat_model
 
     async def chat(
         self,
@@ -121,7 +124,56 @@ class LLMClient:
                     raise
             except APIStatusError as e:
                 log.error("llm.api_error", status=e.status_code, message=str(e))
+                if settings.openai_api_key:
+                    return await self._chat_with_openai_fallback(
+                        system_prompt=system_prompt,
+                        messages=messages,
+                    )
                 raise
 
         msg = "Max Retries überschritten"
         raise RuntimeError(msg)
+
+    async def _chat_with_openai_fallback(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, Any]],
+    ) -> LLMResponse:
+        """
+        Calls OpenAI Chat Completions when Anthropic is unavailable.
+
+        Args:
+            system_prompt: System prompt defining agent behavior
+            messages: Conversation history
+
+        Returns:
+            LLMResponse with text content and token usage
+        """
+        openai_messages = [{"role": "system", "content": system_prompt}]
+        for message in messages:
+            role = message.get("role", "user")
+            content = message.get("content", "")
+            if not isinstance(content, str):
+                content = str(content)
+            openai_messages.append({"role": role, "content": content})
+
+        response = await self._openai_client.chat.completions.create(
+            model=self._openai_model,
+            messages=openai_messages,
+            max_tokens=self._max_tokens,
+        )
+        content = response.choices[0].message.content or ""
+        usage = response.usage
+
+        log.warning(
+            "llm.openai_fallback_response",
+            model=self._openai_model,
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+        )
+        return LLMResponse(
+            content=content,
+            input_tokens=usage.prompt_tokens if usage else 0,
+            output_tokens=usage.completion_tokens if usage else 0,
+            stop_reason=response.choices[0].finish_reason or "stop",
+        )
