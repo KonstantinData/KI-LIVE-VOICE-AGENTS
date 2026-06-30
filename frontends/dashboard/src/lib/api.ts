@@ -2,7 +2,10 @@
 
 import { getToken, removeToken } from './auth';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const DEFAULT_API_URL = import.meta.env.PROD
+  ? 'https://api.mein-kuechenexperte.de'
+  : 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? DEFAULT_API_URL;
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
