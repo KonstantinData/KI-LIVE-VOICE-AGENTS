@@ -1,6 +1,6 @@
 /** Chat-Fenster mit Nachrichtenverlauf und Eingabefeld. */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -13,30 +13,36 @@ interface ChatWindowProps {
 
 export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const [input, setInput] = useState('');
-  const [userMessages, setUserMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [chatMessages, setChatMessages] = useState<
+    { role: 'user' | 'assistant'; content: string }[]
+  >([{ role: 'assistant', content: config.welcomeMessage }]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, send, connected, connecting, typing } = useWebSocket({
+  const handleIncomingMessage = useCallback(
+    (message: { role: 'user' | 'assistant'; content: string }) => {
+      setChatMessages((prev) => [
+        ...prev,
+        { role: message.role, content: message.content },
+      ]);
+    },
+    [],
+  );
+
+  const { send, connected, connecting, typing } = useWebSocket({
     url: config.apiUrl,
     studio: config.studio,
     visitorId,
+    onMessage: handleIncomingMessage,
   });
-
-  // Erste Willkommensnachricht
-  const allMessages = [
-    { role: 'assistant' as const, content: config.welcomeMessage },
-    ...messages,
-    ...userMessages,
-  ];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [allMessages.length]);
+  }, [chatMessages.length, typing]);
 
   const handleSend = () => {
     const text = input.trim();
     if (!text || !connected) return;
-    setUserMessages((prev) => [...prev, { role: 'user', content: text }]);
+    setChatMessages((prev) => [...prev, { role: 'user', content: text }]);
     send(text);
     setInput('');
   };
@@ -60,7 +66,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
       </div>
 
       <div className="widget-messages">
-        {allMessages.map((msg, i) => (
+        {chatMessages.map((msg, i) => (
           <MessageBubble key={i} role={msg.role} content={msg.content} />
         ))}
         {typing && <TypingIndicator />}
