@@ -21,12 +21,16 @@ function getScriptTag(): HTMLOrSVGScriptElement | null {
   return document.currentScript ?? document.querySelector('script[data-studio]');
 }
 
+function getDefaultApiUrl(): string {
+  return import.meta.env.PROD ? 'wss://api.mein-kuechenexperte.de' : 'ws://localhost:8000';
+}
+
 export function loadConfig(): WidgetConfig {
   const script = getScriptTag();
 
   return {
     studio: script?.getAttribute('data-studio') ?? 'default',
-    apiUrl: script?.getAttribute('data-api') ?? 'ws://localhost:8000',
+    apiUrl: script?.getAttribute('data-api') ?? getDefaultApiUrl(),
     primaryColor: script?.getAttribute('data-color') ?? '#2563eb',
     agentName: script?.getAttribute('data-agent') ?? 'Lisa',
     welcomeMessage:
