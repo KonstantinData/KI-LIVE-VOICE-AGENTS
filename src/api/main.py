@@ -31,6 +31,9 @@ from src.api.routes import (
     knowledge,
     leads,
     studios,
+    upload_admin,
+    uploads,
+    voice,
     widget_config,
 )
 from src.api.services.scheduler import setup_scheduler, shutdown_scheduler
@@ -51,7 +54,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="KI-Mitarbeiter-Team API",
+    title="KI-LIVE-VOICE-AGENTS API",
     description="Backend für das KI-Agenten-Team für Küchen- und Möbelgeschäfte",
     version="0.1.0",
     lifespan=lifespan,
@@ -76,6 +79,9 @@ app.add_middleware(RateLimitMiddleware)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(studios.router)
+app.include_router(voice.router)
+app.include_router(uploads.router)
+app.include_router(upload_admin.router)
 app.include_router(leads.router)
 app.include_router(conversations.router)
 app.include_router(appointments.router)

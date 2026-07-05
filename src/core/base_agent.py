@@ -11,6 +11,7 @@ Depends: sqlalchemy, structlog, src.core.{knowledge, llm, memory, tool_registry,
 """
 
 from abc import ABC, abstractmethod
+import json
 from typing import Any
 from uuid import UUID
 
@@ -39,7 +40,7 @@ class BaseAgent(ABC):
     2. Absicht erkennen
     3. Wissen abrufen (Wissensbasis durchsuchen)
     4. Tools bereitstellen
-    5. LLM aufrufen (Claude mit System-Prompt + Tools)
+    5. LLM aufrufen (OpenAI mit System-Prompt + Tools)
     6. Tool-Calls ausführen (falls vorhanden)
     7. Ergebnis speichern + zurückgeben
 
@@ -135,21 +136,28 @@ class BaseAgent(ABC):
         )
 
         # Step 6: Execute tool calls (if any)
-        # NOTE: Claude may return tool_use blocks instead of text. We execute those tools,
-        # then call Claude again with the results to get the final text response.
+        # NOTE: OpenAI may return tool calls instead of text. We execute those tools,
+        # then call the model again with the results to get the final text response.
         final_response = response
         if response.tool_calls:
             tool_results = await tool_runner.execute_all(response.tool_calls)
-            # Call Claude again with tool results
             messages_with_tools = messages + [
                 {
                     "role": "assistant",
-                    "content": [
-                        {"type": "tool_use", "id": tc["id"], "name": tc["name"], "input": tc["input"]}
+                    "content": response.content or "",
+                    "tool_calls": [
+                        {
+                            "id": tc["id"],
+                            "type": "function",
+                            "function": {
+                                "name": tc["name"],
+                                "arguments": json.dumps(tc["input"]),
+                            },
+                        }
                         for tc in response.tool_calls
                     ],
                 },
-                {"role": "user", "content": tool_results},
+                *tool_results,
             ]
             final_response = await self._llm.chat(
                 system_prompt=system_prompt,

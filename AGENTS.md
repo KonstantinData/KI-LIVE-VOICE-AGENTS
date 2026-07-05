@@ -53,7 +53,7 @@ separaten Schritten ergänzt.
 | **Agent-Logik + Backend** | Python 3.12+ | Bestes AI-Ökosystem (LangChain, etc.) |
 | **API-Framework** | FastAPI | Async, schnell, WebSocket-Support, auto Docs |
 | **ORM** | SQLAlchemy 2.0 + Alembic | Standard, async-fähig, Migrations |
-| **Agent LLM** | Anthropic Codex API | Bestes Tool Use + Reasoning |
+| **Agent LLM** | OpenAI API | Chat, Tool Use und Live Voice über einen Provider |
 | **Embeddings** | OpenAI API (text-embedding-3-small) | Günstig, bewährt |
 | **Datenbank** | PostgreSQL 16 + pgvector | Relational + Vektorsuche |
 | **Task Queue** | Kein (vorerst) — in-process mit APScheduler | MVP-einfach |
@@ -356,7 +356,6 @@ alembic>=1.14.0
 pgvector>=0.3.6
 
 # AI / LLM
-anthropic>=0.42.0
 openai>=1.58.0
 
 # Validierung + Settings
@@ -417,17 +416,12 @@ LOG_LEVEL=DEBUG
 DATABASE_URL=postgresql+asyncpg://ki_team:PASSWORT@localhost:5432/ki_mitarbeiter
 
 # ═══════════════════════════════════════
-# Anthropic Codex (Agent-Gehirn)
-# ═══════════════════════════════════════
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=Codex-sonnet-4-20250514
-ANTHROPIC_MAX_TOKENS=1024
-
-# ═══════════════════════════════════════
-# OpenAI (Embeddings)
+# OpenAI (Agent-Gehirn, Embeddings, Live Voice)
 # ═══════════════════════════════════════
 OPENAI_API_KEY=sk-...
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_CHAT_MAX_TOKENS=1024
 
 # ═══════════════════════════════════════
 # Resend (E-Mail)
@@ -669,7 +663,7 @@ class BaseAgent(ABC):
 ```python
 class LLMClient:
     """
-    Wrapper um die Anthropic Codex API.
+    Wrapper um die OpenAI API.
 
     - Unterstützt Tool Use (function calling)
     - Retry-Logic mit Exponential Backoff
@@ -790,7 +784,6 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_port: int = 8000
     database_url: str
-    anthropic_api_key: str
     openai_api_key: str
     jwt_secret: str
     # ... alle weiteren Variablen
@@ -875,7 +868,7 @@ im produktiven MVP verlinkt sind.
 4. **Agent-Core und Lisa sind testbar:**
    - `make test` läuft durch
    - BaseAgent kann instanziiert werden (mit Dummy-Subclass)
-   - LLM Wrapper kann Claude aufrufen (mit API Key)
+   - LLM Wrapper kann OpenAI aufrufen (mit API Key)
    - Embedding Wrapper kann Vektoren erzeugen
 
 5. **WebSocket funktioniert:**

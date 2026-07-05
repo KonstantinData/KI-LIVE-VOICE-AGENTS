@@ -24,11 +24,16 @@ class EmailServiceDisabledError(RuntimeError):
 
 
 class EmailService:
-    """Sends email through Resend when ENABLE_EMAIL_SENDING=true."""
+    """Sends email through Resend when enabled or when a Resend key is present."""
 
     def _ensure_enabled(self) -> None:
-        """Checks that email sending is explicitly enabled and configured."""
-        if not settings.enable_email_sending or not settings.resend_api_key:
+        """Checks that email sending is allowed and configured."""
+        enabled = (
+            settings.enable_email_sending
+            if settings.enable_email_sending is not None
+            else bool(settings.resend_api_key)
+        )
+        if not enabled or not settings.resend_api_key:
             raise EmailServiceDisabledError("Email sending is disabled or not configured")
         resend.api_key = settings.resend_api_key
 

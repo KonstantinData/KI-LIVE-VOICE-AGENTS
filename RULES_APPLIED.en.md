@@ -58,13 +58,13 @@ All important Python modules now have extended module docstrings with:
 **Example:**
 ```python
 """
-Claude API Wrapper
+OpenAI API Wrapper
 ==================
-What:    Wrapper around Anthropic's Claude API for LLM interactions.
+What:    Wrapper around OpenAI's API for LLM interactions.
 Does:    Handles chat completions with tool use, retry logic, token tracking.
 Why:     Centralizes all LLM communication; provides consistent error handling.
 Who:     BaseAgent (via process_message), all concrete agents.
-Depends: anthropic, structlog, src.api.config, src.core.types
+Depends: openai, structlog, src.api.config, src.core.types
 """
 ```
 
@@ -92,8 +92,8 @@ Non-trivial code sections have `# NOTE:` comments explaining business logic.
 **Examples:**
 
 ```python
-# NOTE: Claude may return tool_use blocks instead of text. We execute those tools,
-# then call Claude again with the results to get the final text response.
+# NOTE: The LLM may return tool calls instead of text. We execute those tools,
+# then call the LLM again with the results to get the final text response.
 if response.tool_calls:
     tool_results = await tool_runner.execute_all(response.tool_calls)
     # ...
@@ -174,7 +174,7 @@ fix(calendar): refresh token before creating event
 docs(readme): add bilingual setup instructions
 refactor(core): simplify agent loop error handling
 test(api): add integration tests for WebSocket chat
-chore(deps): update anthropic to 0.42.0
+chore(deps): update openai client
 ```
 
 **Next steps:**

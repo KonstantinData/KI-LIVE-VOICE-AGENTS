@@ -31,13 +31,13 @@
 | --- | --- | --- | --- |
 | Datenleck durch Multi-Tenant-Fehler | Mittel | Hoch | studio_id auf jeder Query |
 | Profiling ohne Einwilligung | Niedrig | Hoch | Consent-Banner vor Chat |
-| Datenweitergabe an LLM-Provider | Mittel | Mittel | AVV mit Anthropic/OpenAI |
+| Datenweitergabe an LLM-Provider | Mittel | Mittel | AVV mit OpenAI |
 | Unbegrenzte Datenspeicherung | Hoch | Mittel | Retention-Policy implementiert |
 
 ## 4. Maßnahmen zur Risikominderung
 
 - [ ] Consent-Banner vor Chat-Start implementiert
-- [ ] AVV mit Anthropic, OpenAI, Resend, Google abgeschlossen
+- [ ] AVV mit OpenAI, Resend, Google abgeschlossen
 - [ ] Retention-Policy: Konversationen 6 Monate, Leads 12 Monate
 - [ ] Multi-Tenant-Isolation: studio_id auf jeder DB-Query
 - [ ] Verschlüsselung: TLS für alle Verbindungen, Tokens verschlüsselt at rest

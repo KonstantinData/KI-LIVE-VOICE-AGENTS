@@ -28,7 +28,7 @@ async def _seed_studio(db_session) -> Studio:
         name="Mein Küchenexperte",
         slug="mein-kuechenexperte",
         api_key="test-api-key",
-        config={"primary_color": "#2563eb", "agent_name": "Lisa"},
+        config={"primary_color": "#2563eb", "agent_name": "KEA"},
         is_active=True,
     )
     db_session.add(studio)
@@ -174,7 +174,9 @@ async def test_widget_config_is_public_for_active_studio(db_client, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["studio"] == "mein-kuechenexperte"
-    assert data["agent_name"] == "Lisa"
+    assert data["agent_name"] == "KEA"
+    assert data["agent_subtitle"] == "Küchen Expert Assistent"
+    assert data["voice_enabled"] is True
 
 
 @pytest.mark.asyncio

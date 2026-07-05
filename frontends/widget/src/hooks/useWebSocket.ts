@@ -11,10 +11,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface Message {
+export interface Choice {
+  id: string;
+  label: string;
+}
+
+export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  choices?: Choice[];
 }
 
 interface UseWebSocketOptions {
@@ -24,11 +30,13 @@ interface UseWebSocketOptions {
   /** Only connect when true — must be false until DSGVO consent is given. */
   enabled?: boolean;
   onMessage?: (message: Message) => void;
+  onSession?: (conversationId: string) => void;
 }
 
 interface UseWebSocketReturn {
   messages: Message[];
   send: (text: string) => void;
+  sendAction: (actionId: string, label: string) => void;
   connected: boolean;
   connecting: boolean;
   typing: boolean;
@@ -40,6 +48,7 @@ export function useWebSocket({
   visitorId,
   enabled = true,
   onMessage,
+  onSession,
 }: UseWebSocketOptions): UseWebSocketReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [connected, setConnected] = useState(false);
@@ -75,16 +84,19 @@ export function useWebSocket({
             role: data.role,
             content: data.content,
             timestamp: data.timestamp ?? new Date().toISOString(),
+            choices: Array.isArray(data.choices) ? data.choices : undefined,
           };
           setTyping(false);
           setMessages((prev) => [...prev, msg]);
           onMessage?.(msg);
         } else if (data.type === 'typing') {
           setTyping(true);
+        } else if (data.type === 'session' && typeof data.conversation_id === 'string') {
+          onSession?.(data.conversation_id);
         } else if (data.type === 'error') {
           const msg: Message = {
             role: 'assistant',
-            content: data.message ?? 'Lisa ist gerade technisch nicht erreichbar.',
+            content: data.message ?? 'KEA ist gerade technisch nicht erreichbar.',
             timestamp: data.timestamp ?? new Date().toISOString(),
           };
           setTyping(false);
@@ -109,7 +121,7 @@ export function useWebSocket({
     ws.onerror = () => {
       ws.close();
     };
-  }, [url, studio, visitorId, enabled, onMessage]);
+  }, [url, studio, visitorId, enabled, onMessage, onSession]);
 
   useEffect(() => {
     if (enabled) {
@@ -127,5 +139,11 @@ export function useWebSocket({
     }
   }, []);
 
-  return { messages, send, connected, connecting, typing };
+  const sendAction = useCallback((actionId: string, label: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ action_id: actionId, label }));
+    }
+  }, []);
+
+  return { messages, send, sendAction, connected, connecting, typing };
 }

@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.database import get_session
 from src.db.models.studio import Studio
+from src.tenants.registry import widget_config_from_profile
 
 router = APIRouter(prefix="/widget-config", tags=["Widget-Konfiguration"])
 
@@ -29,16 +30,8 @@ async def get_widget_config(
     if studio_row is None or not studio_row.is_active:
         raise HTTPException(status_code=404, detail="Studio not found")
 
-    config = studio_row.config or {}
-    return {
-        "studio": studio_row.slug,
-        "studio_name": studio_row.name,
-        "primary_color": config.get("primary_color", "#2563eb"),
-        "agent_name": config.get("agent_name", "Lisa"),
-        "welcome_message": config.get(
-            "welcome_message",
-            "Hallo! Ich bin Lisa. Wie kann ich Ihnen helfen?",
-        ),
-        "privacy_url": config.get("privacy_url", "/datenschutz"),
-        "retention_days": int(config.get("retention_days", 90)),
-    }
+    return widget_config_from_profile(
+        studio_slug=studio_row.slug,
+        studio_name=studio_row.name,
+        db_config=studio_row.config or {},
+    )

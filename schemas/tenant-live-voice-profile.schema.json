@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ki-live-voice-agents:schema:tenant-live-voice-profile:0.1.0",
+  "title": "KI Live Voice Agents Tenant Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "tenant_id",
+    "studio_slug",
+    "display_name",
+    "status",
+    "default_locale",
+    "hostnames",
+    "public_widget",
+    "live_voice_agents",
+    "policy_bundle",
+    "validators"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "#/$defs/semver" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "studio_slug": { "$ref": "#/$defs/id" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "enum": ["setup", "active", "disabled", "archived"] },
+    "default_locale": { "type": "string", "pattern": "^[a-z]{2}-[A-Z]{2}$" },
+    "hostnames": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hostnameRecord" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "public_widget": { "$ref": "#/$defs/publicWidget" },
+    "live_voice_agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/liveVoiceAgent" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "upload_policy": { "$ref": "#/$defs/uploadPolicy" },
+    "knowledge": { "$ref": "#/$defs/scopeConfig" },
+    "data_sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dataSource" },
+      "uniqueItems": true
+    },
+    "policy_bundle": { "$ref": "#/$defs/idArray" },
+    "validators": { "$ref": "#/$defs/idArray" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "semver": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "idArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/id" },
+      "uniqueItems": true
+    },
+    "hostnameRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostname", "purpose", "expected_origin"],
+      "properties": {
+        "hostname": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "enum": ["website", "widget", "api", "dashboard"] },
+        "expected_origin": { "type": "string", "minLength": 1 }
+      }
+    },
+    "publicWidget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_name",
+        "agent_subtitle",
+        "welcome_message",
+        "privacy_url",
+        "retention_days",
+        "voice_enabled",
+        "upload_enabled"
+      ],
+      "properties": {
+        "agent_name": { "type": "string", "minLength": 1 },
+        "agent_subtitle": { "type": "string", "minLength": 1 },
+        "welcome_message": { "type": "string", "minLength": 1 },
+        "privacy_url": { "type": "string", "minLength": 1 },
+        "retention_days": { "type": "integer", "minimum": 1 },
+        "voice_enabled": { "type": "boolean" },
+        "upload_enabled": { "type": "boolean" }
+      }
+    },
+    "liveVoiceAgent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "agent_type",
+        "display_name",
+        "prompt_profile",
+        "enabled",
+        "model",
+        "voice",
+        "skills",
+        "tools",
+        "knowledge_scopes",
+        "data_scopes",
+        "policies",
+        "validators",
+        "contact_handoff"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "agent_type": { "type": "string", "const": "live-voice" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "prompt_profile": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean" },
+        "model": { "type": "string", "minLength": 1 },
+        "voice": { "type": "string", "minLength": 1 },
+        "skills": { "$ref": "#/$defs/idArray" },
+        "tools": { "$ref": "#/$defs/idArray" },
+        "knowledge_scopes": { "$ref": "#/$defs/idArray" },
+        "data_scopes": { "$ref": "#/$defs/idArray" },
+        "policies": { "$ref": "#/$defs/idArray" },
+        "validators": { "$ref": "#/$defs/idArray" },
+        "contact_handoff": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["secure_form_required", "voice_pii_collection_allowed"],
+          "properties": {
+            "secure_form_required": { "type": "boolean", "const": true },
+            "voice_pii_collection_allowed": { "type": "boolean", "const": false }
+          }
+        }
+      }
+    },
+    "uploadPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "ai_analysis_allowed", "allowed_content_types"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "ai_analysis_allowed": { "type": "boolean" },
+        "allowed_content_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "scopeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope_id", "indexes"],
+      "properties": {
+        "scope_id": { "$ref": "#/$defs/id" },
+        "indexes": { "$ref": "#/$defs/idArray" }
+      }
+    },
+    "dataSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tenant_id", "type", "display_name", "access_modes", "status", "sensitivity"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tenant_id": { "$ref": "#/$defs/id" },
+        "type": { "type": "string", "enum": ["website", "database", "upload_storage", "other"] },
+        "display_name": { "type": "string", "minLength": 1 },
+        "access_modes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["read", "write"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "status": { "type": "string", "enum": ["planned", "active", "disabled", "archived"] },
+        "sensitivity": { "type": "string", "enum": ["public", "internal", "confidential", "restricted"] }
+      }
+    }
+  }
+}

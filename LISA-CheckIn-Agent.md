@@ -37,7 +37,7 @@ Vergiss für einen Moment den Namen und die Persönlichkeit. Technisch ist Lisa 
 | Schicht | Was sie tut | Analogie |
 |---|---|---|
 | **Wahrnehmung (Perception)** | Nimmt Eingaben entgegen: Chatnachrichten, Anrufe, E-Mails, Formulardaten. Erkennt Sprache, Absicht und Kontext. | Augen und Ohren |
-| **Denken (Reasoning)** | Entscheidet, was zu tun ist: Lead qualifizieren? Termin vorschlagen? Nachfassen? Eskalieren an Mensch? Basierend auf einem LLM (z. B. Claude) plus Regeln und Kontext. | Gehirn |
+| **Denken (Reasoning)** | Entscheidet, was zu tun ist: Lead qualifizieren? Termin vorschlagen? Nachfassen? Eskalieren an Mensch? Basierend auf einem LLM (OpenAI) plus Regeln und Kontext. | Gehirn |
 | **Handeln (Action)** | Führt Aktionen aus: Nachricht senden, Termin buchen, CRM aktualisieren, E-Mail schreiben, Berater benachrichtigen. | Hände |
 
 Dazwischen sitzt ein **Gedächtnis (Memory)**: Lisa weiß, wer dieser Kunde ist, was er vorher gesagt hat, welches Studio sie gerade vertritt und welche Berater heute verfügbar sind.
@@ -78,7 +78,7 @@ Lisa ist nicht ein Chat-Widget. Lisa ist eine Person, die über verschiedene Kan
 ### Kanal 4: Telefon / Voice-AI (Stufe 3)
 
 - **Was der Kunde erlebt:** Er ruft das Studio an. Wenn niemand abnimmt (oder außerhalb der Öffnungszeiten), nimmt Lisa ab. Sie klingt natürlich, führt ein echtes Gespräch, erfasst das Anliegen und bucht ggf. einen Termin.
-- **Technisch:** Telephony-API (z. B. Twilio Voice / Vonage) für Anrufweiterleitung. Speech-to-Text (z. B. Deepgram / Whisper) für Spracherkennung. Lisa (Claude) für Reasoning. Text-to-Speech (z. B. ElevenLabs / PlayHT) für die Antwort. Alles in Echtzeit, Latenz unter 1,5 Sekunden.
+- **Technisch:** Telephony-API (z. B. Twilio Voice / Vonage) für Anrufweiterleitung. Speech-to-Text bzw. Realtime Voice für Spracherkennung. Lisa (OpenAI) für Reasoning. Text-to-Speech bzw. Realtime Voice für die Antwort. Alles in Echtzeit, Latenz unter 1,5 Sekunden.
 - **Warum Stufe 3:** Technisch am komplexesten. Latenz-kritisch. Sprachqualität muss perfekt sein — ein holpriges Telefongespräch schadet mehr als es nützt. Braucht viel Testing mit echten Anrufern.
 - **Besonderheit:** Das ist der WOW-Faktor. Wenn ein Studioinhaber zum ersten Mal hört, wie Lisa am Telefon einen Termin bucht, ist er verkauft. Aber technisch ist es die Königsdisziplin.
 
@@ -175,7 +175,7 @@ Lisa besteht nicht aus einem monolithischen System, sondern aus mehreren spezial
 
 | Dienst | Aufgabe | Beispiel-Anbieter | Eigenbau? |
 |---|---|---|---|
-| LLM (Sprachmodell) | Lisas Gehirn: Versteht Sprache, denkt, formuliert Antworten | Anthropic Claude API | Nein — API nutzen |
+| LLM (Sprachmodell) | Lisas Gehirn: Versteht Sprache, denkt, formuliert Antworten | OpenAI API | Nein — API nutzen |
 | Agent-Framework | Orchestriert den 7-Schritte-Denkprozess, verwaltet Tools und Memory | LangGraph / Custom | Teilweise eigenbau |
 | Vektor-Datenbank | Speichert die Wissensbasis so, dass Lisa semantisch suchen kann | Pinecone / Weaviate / pgvector | Nein — Dienst nutzen |
 | Relationale Datenbank | Strukturierte Daten: Leads, Termine, Studios, Konfigurationen | PostgreSQL | Nein — Standard-DB |
@@ -341,8 +341,8 @@ Nicht jede Aktion hat das gleiche Risiko. Eine Begrüßung im Chat ist harmlos. 
 ### DSGVO-Anforderungen
 
 - **Rechtsgrundlage:** Einwilligung des Website-Besuchers vor Chat-Start (Cookie-Banner-ähnlich: "Ich möchte mit Lisa chatten"). Für E-Mail/SMS: Opt-in.
-- **Auftragsverarbeitungsvertrag (AVV):** Zwischen KitchenFlow und dem Küchenstudio. Und zwischen KitchenFlow und allen Sub-Auftragsverarbeitern (Anthropic, Hosting, E-Mail-Provider).
-- **Datenspeicherung in der EU:** Alle Daten auf EU-Servern. Kein Transfer in Drittländer. Achtung: Anthropic Claude API verarbeitet Daten in den USA — klären, ob EU-Region verfügbar ist, oder europäische Alternative nutzen.
+- **Auftragsverarbeitungsvertrag (AVV):** Zwischen KitchenFlow und dem Küchenstudio. Und zwischen KitchenFlow und allen Sub-Auftragsverarbeitern (OpenAI, Hosting, E-Mail-Provider).
+- **Datenspeicherung in der EU:** Alle Daten auf EU-Servern. Drittlandtransfer zum LLM-Provider muss über AVV/SCC dokumentiert werden.
 - **Löschkonzept:** Leads, die nicht konvertieren, nach 12 Monaten automatisch anonymisieren. Konversations-Rohdaten nach 6 Monaten löschen (Zusammenfassungen bleiben). Auf Kundenwunsch sofortige Löschung aller Daten.
 - **Transparenz:** Der Kunde muss wissen, dass er mit einer KI spricht. Im Chat: "Ich bin Lisa, die KI-Assistentin von Küchenstudio Müller." Nicht: "Ich bin Mitarbeiterin im Studio."
 - **Auskunftsrecht:** Auf Anfrage muss das Studio (über KitchenFlow) alle gespeicherten Daten zu einer Person exportieren können.
@@ -367,7 +367,7 @@ Für den MVP brauchst du keine Kubernetes-Cluster und kein DevOps-Team. Die einf
 |---|---|---|---|
 | Backend (Lisa-Agent + API) | Ein Server auf Hetzner Cloud | 20-50 EUR/Monat | ~20 gleichzeitige Studios |
 | Datenbank (PostgreSQL + pgvector) | Auf demselben Hetzner Server | 0 EUR extra | ~100.000 Datensätze |
-| LLM-API (Lisas Gehirn) | Anthropic Claude API (Pay-per-Use) | ~50-200 EUR/Monat bei 10 Studios | Unbegrenzt (API-basiert) |
+| LLM-API (Lisas Gehirn) | OpenAI API (Pay-per-Use) | ~50-200 EUR/Monat bei 10 Studios | Unbegrenzt (API-basiert) |
 | Chat-Widget (Frontend) | Statisches JS-Bundle auf CDN (Cloudflare Pages) | 0 EUR/Monat | Unbegrenzt |
 | Admin-Dashboard | Auf Cloudflare Pages | 0 EUR/Monat | Unbegrenzt |
 | E-Mail-Versand | Resend Free Tier | 0-10 EUR/Monat | ~10.000 E-Mails/Monat |
@@ -375,7 +375,7 @@ Für den MVP brauchst du keine Kubernetes-Cluster und kein DevOps-Team. Die einf
 
 **Gesamtkosten MVP-Infrastruktur: ca. 100-300 EUR/Monat**
 
-> Das ist der Punkt: Du brauchst kein Venture Capital, um Lisa zu starten. Ein einzelner Server, eine Datenbank, die Claude-API und ein CDN für das Widget. Das reicht für 5-10 Pilotstudios. Erst wenn die Nachfrage steigt, investierst du in Skalierung.
+> Das ist der Punkt: Du brauchst kein Venture Capital, um Lisa zu starten. Ein einzelner Server, eine Datenbank, die OpenAI-API und ein CDN für das Widget. Das reicht für 5-10 Pilotstudios. Erst wenn die Nachfrage steigt, investierst du in Skalierung.
 
 ### Wenn es wächst: Skalierungsplan
 
@@ -391,8 +391,7 @@ Keine Theorie mehr. Hier ist die konkrete Liste an Dingen, die du brauchst, bevo
 
 ### Accounts & Zugänge
 
-- **Anthropic API Key:** console.anthropic.com — Registrieren, Kreditkarte hinterlegen, API-Key erstellen.
-- **OpenAI API Key:** Für Embeddings (text-embedding-3-small).
+- **OpenAI API Key:** Für Chat, Live Voice und Embeddings.
 - **Hosting:** Hetzner Cloud Server (CX22, Ubuntu 24.04).
 - **Datenbank:** PostgreSQL 16 + pgvector auf dem Hetzner Server.
 - **E-Mail:** Resend.com Account (Free Tier: 3.000 Mails/Monat).
@@ -423,7 +422,7 @@ In welcher Reihenfolge baust du was? Hier der Fahrplan — jede Stufe baut auf d
 ### Stufe 1: Lisa kann chatten (Woche 1-2)
 
 - Backend-Server aufsetzen (Python/FastAPI)
-- Anthropic Claude API anbinden — ein einziger Endpunkt, der Nachrichten entgegennimmt und Antworten zurückgibt
+- OpenAI API anbinden — ein einziger Endpunkt, der Nachrichten entgegennimmt und Antworten zurückgibt
 - System-Prompt schreiben: Lisas Persönlichkeit, Regeln, Wissen über das Pilotstudio
 - Einfaches Chat-Widget bauen (HTML/CSS/JS) mit WebSocket-Verbindung zum Backend
 - PostgreSQL aufsetzen: Tabellen für studios, konversationen, nachrichten
@@ -486,7 +485,7 @@ In welcher Reihenfolge baust du was? Hier der Fahrplan — jede Stufe baut auf d
 
 Lisa ist:
 
-- Ein LLM (Claude) mit einem sehr guten System-Prompt
+- Ein LLM (OpenAI) mit einem sehr guten System-Prompt
 - \+ eine Wissensbasis über das spezifische Studio
 - \+ ein Gedächtnis über jeden Lead und jedes Gespräch
 - \+ Tools (Kalender, E-Mail, CRM)

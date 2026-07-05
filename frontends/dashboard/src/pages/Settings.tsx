@@ -6,7 +6,7 @@ export function Settings() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [name, setName] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#2563eb');
-  const [agentName, setAgentName] = useState('Lisa');
+  const [agentName, setAgentName] = useState('KEA');
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -17,8 +17,8 @@ export function Settings() {
         setStudio(row);
         setName(row.name);
         setPrimaryColor(String(row.config?.primary_color ?? '#2563eb'));
-        setAgentName(String(row.config?.agent_name ?? 'Lisa'));
-        setWelcomeMessage(String(row.config?.welcome_message ?? 'Hallo! Ich bin Lisa. Wie kann ich Ihnen helfen?'));
+        setAgentName(String(row.config?.agent_name ?? 'KEA'));
+        setWelcomeMessage(String(row.config?.welcome_message ?? 'Hallo! Ich bin KEA. Wie kann ich Ihnen helfen?'));
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Fehler beim Laden'));
   }, []);

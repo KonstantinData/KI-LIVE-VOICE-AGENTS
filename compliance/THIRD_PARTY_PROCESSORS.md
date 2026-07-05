@@ -8,8 +8,7 @@
 
 | Anbieter | Dienst | Sitz | Drittlandtransfer | AVV | SCC | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| Anthropic PBC | Claude LLM API | USA | Ja — USA | [ ] | [ ] | ⚠️ Ausstehend |
-| OpenAI Inc. | Embeddings API | USA | Ja — USA | [ ] | [ ] | ⚠️ Ausstehend |
+| OpenAI Inc. | Chat, Realtime Voice, Embeddings API | USA | Ja — USA | [ ] | [ ] | ⚠️ Ausstehend |
 | Resend Inc. | E-Mail-Versand | USA | Ja — USA | [ ] | [ ] | ⚠️ Ausstehend |
 | Google LLC | Calendar API, OAuth | USA/EU | Ja — USA | [ ] | [ ] | ⚠️ Ausstehend |
 | Hetzner Online GmbH | Server-Hosting | Deutschland | Nein — EU | ✅ | — | ✅ EU-Hosting |
@@ -19,15 +18,9 @@
 
 ## Detailbeschreibung
 
-### Anthropic PBC
-- **Dienst:** Claude AI — Sprachverarbeitung für Chat-Antworten
-- **Daten die übertragen werden:** Chat-Verlauf (pseudonymisiert), System-Prompt
-- **AVV-Link:** https://www.anthropic.com/legal/data-processing-agreement
-- **Aktion:** AVV prüfen und unterzeichnen / akzeptieren
-
 ### OpenAI Inc.
-- **Dienst:** text-embedding-3-small — Vektorisierung der Wissensbasis
-- **Daten die übertragen werden:** Studio-Wissensinhalte (kein PII)
+- **Dienst:** Chat, Live Voice, Embeddings — Sprachverarbeitung, Tool-Nutzung, Realtime-Voice und Vektorisierung
+- **Daten die übertragen werden:** Chat-Verlauf (pseudonymisiert), System-Prompt, Studio-Wissensinhalte, Nutzeranfragen für semantische Suche
 - **AVV-Link:** https://openai.com/policies/data-processing-addendum
 - **Aktion:** AVV prüfen und unterzeichnen / akzeptieren
 
@@ -46,9 +39,8 @@
 
 ## Nächste Schritte
 
-1. [ ] Anthropic AVV prüfen und durch Nutzung der API akzeptieren
-2. [ ] OpenAI AVV prüfen und durch Nutzung der API akzeptieren
-3. [ ] Google Workspace AVV aktivieren (falls Google Workspace genutzt)
-4. [ ] Resend AVV prüfen
-5. [ ] Cloudflare AVV prüfen
-6. [ ] Alle AVVs in diesem Dokument dokumentieren (Datum, Version)
+1. [ ] OpenAI AVV prüfen und durch Nutzung der API akzeptieren
+2. [ ] Google Workspace AVV aktivieren (falls Google Workspace genutzt)
+3. [ ] Resend AVV prüfen
+4. [ ] Cloudflare AVV prüfen
+5. [ ] Alle AVVs in diesem Dokument dokumentieren (Datum, Version)

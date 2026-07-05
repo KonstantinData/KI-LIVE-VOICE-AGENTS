@@ -13,7 +13,6 @@ alembic>=1.14.0
 pgvector>=0.3.6
 
 # AI / LLM
-anthropic>=0.42.0
 openai>=1.58.0
 
 # Validierung + Settings
@@ -40,3 +39,4 @@ python-dotenv>=1.0.1
 httpx>=0.28.0
 structlog>=24.4.0
 python-dateutil>=2.9.0
+pypdf>=5.1.0

@@ -1,0 +1,135 @@
+{
+  "contract_version": "0.1.0",
+  "tenant_id": "mein-kuechenexperte",
+  "studio_slug": "mein-kuechenexperte",
+  "display_name": "Mein Küchenexperte",
+  "status": "active",
+  "default_locale": "de-DE",
+  "hostnames": [
+    {
+      "hostname": "www.mein-kuechenexperte.de",
+      "purpose": "website",
+      "expected_origin": "https://www.mein-kuechenexperte.de"
+    },
+    {
+      "hostname": "widget.mein-kuechenexperte.de",
+      "purpose": "widget",
+      "expected_origin": "https://widget.mein-kuechenexperte.de"
+    },
+    {
+      "hostname": "api.mein-kuechenexperte.de",
+      "purpose": "api",
+      "expected_origin": "https://api.mein-kuechenexperte.de"
+    },
+    {
+      "hostname": "app.mein-kuechenexperte.de",
+      "purpose": "dashboard",
+      "expected_origin": "https://app.mein-kuechenexperte.de"
+    }
+  ],
+  "public_widget": {
+    "agent_name": "KEA",
+    "agent_subtitle": "Küchen Expert Assistent",
+    "welcome_message": "Hallo, ich bin KEA, der Küchen Expert Assistent von Mein Küchenexperte. Möchten Sie Ihr Küchenprojekt kurz einordnen?",
+    "privacy_url": "/datenschutz",
+    "retention_days": 90,
+    "voice_enabled": true,
+    "upload_enabled": true
+  },
+  "live_voice_agents": [
+    {
+      "id": "kea-project-intake",
+      "agent_type": "live-voice",
+      "display_name": "KEA",
+      "prompt_profile": "mein-kuechenexperte-project-intake",
+      "enabled": true,
+      "model": "gpt-realtime-2",
+      "voice": "marin",
+      "skills": [
+        "project-intake",
+        "secure-contact-handoff",
+        "project-upload-context"
+      ],
+      "tools": [
+        "extract-lead-data"
+      ],
+      "knowledge_scopes": [
+        "mein-kuechenexperte-studio-knowledge"
+      ],
+      "data_scopes": [
+        "tenant-conversation-write",
+        "tenant-lead-write",
+        "tenant-private-upload-write"
+      ],
+      "policies": [
+        "strict-tenant-isolation",
+        "no-cross-tenant-access",
+        "no-voice-pii-capture",
+        "secure-contact-form-required",
+        "no-raw-audio-storage"
+      ],
+      "validators": [
+        "tenant-profile-validator",
+        "voice-consent-validator",
+        "contact-handoff-validator",
+        "upload-policy-validator"
+      ],
+      "contact_handoff": {
+        "secure_form_required": true,
+        "voice_pii_collection_allowed": false
+      }
+    }
+  ],
+  "upload_policy": {
+    "enabled": true,
+    "ai_analysis_allowed": true,
+    "allowed_content_types": [
+      "application/pdf",
+      "image/jpeg",
+      "image/png"
+    ]
+  },
+  "knowledge": {
+    "scope_id": "mein-kuechenexperte-studio-knowledge",
+    "indexes": [
+      "mein-kuechenexperte-knowledge-chunks"
+    ]
+  },
+  "data_sources": [
+    {
+      "id": "mein-kuechenexperte-website",
+      "tenant_id": "mein-kuechenexperte",
+      "type": "website",
+      "display_name": "Mein Küchenexperte Website",
+      "access_modes": [
+        "read"
+      ],
+      "status": "active",
+      "sensitivity": "public"
+    },
+    {
+      "id": "mein-kuechenexperte-private-uploads",
+      "tenant_id": "mein-kuechenexperte",
+      "type": "upload_storage",
+      "display_name": "Private project uploads",
+      "access_modes": [
+        "read",
+        "write"
+      ],
+      "status": "active",
+      "sensitivity": "restricted"
+    }
+  ],
+  "policy_bundle": [
+    "strict-tenant-isolation",
+    "no-cross-tenant-access",
+    "fail-closed-unknown-scope",
+    "no-raw-audio-storage"
+  ],
+  "validators": [
+    "tenant-profile-validator",
+    "voice-consent-validator",
+    "widget-origin-validator",
+    "upload-policy-validator"
+  ]
+}

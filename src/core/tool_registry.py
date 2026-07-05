@@ -2,7 +2,7 @@
 Tool Registry and Discovery
 ===========================
 What:    Registry for all agent tools; provides tool discovery and definition export.
-Does:    Registers tools, retrieves them by name, exports definitions in Claude's tool format.
+Does:    Registers tools, retrieves them by name, exports definitions in OpenAI's tool format.
 Why:     Centralizes tool management; allows agents to dynamically register and use tools.
 Who:     BaseAgent, ToolRunner, all concrete agents.
 Depends: structlog
@@ -20,7 +20,7 @@ class BaseTool:
     
     Subclasses must define:
     - name: Unique tool identifier
-    - description: What the tool does (shown to Claude)
+    - description: What the tool does (shown to the LLM)
     - input_schema: JSON schema for parameters
     - execute(): Async method that performs the tool's action
     """
@@ -77,16 +77,19 @@ class ToolRegistry:
 
     def get_definitions(self) -> list[dict]:
         """
-        Returns all tool definitions in Claude's format.
+        Returns all tool definitions in OpenAI's format.
         
         Returns:
-            List of dicts with name, description, input_schema
+            List of OpenAI function tool definitions
         """
         return [
             {
-                "name": tool.name,
-                "description": tool.description,
-                "input_schema": tool.input_schema,
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.input_schema,
+                },
             }
             for tool in self._tools.values()
         ]

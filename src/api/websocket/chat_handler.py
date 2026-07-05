@@ -1,4 +1,4 @@
-"""WebSocket Chat-Endpoint: Empfängt Nachrichten und leitet sie an Lisa weiter."""
+"""WebSocket chat endpoint for tenant-scoped widget conversations."""
 
 import json
 from datetime import datetime, timezone
@@ -9,10 +9,13 @@ from sqlalchemy import select
 
 from src.agents.lisa.agent import LisaAgent
 from src.api.config import get_settings
+from src.api.services.kea_text_flow import KeaTextFlow
+from src.api.services.kea_text_flow_nodes import FlowChoice, FlowResponse
 from src.api.websocket.manager import manager
 from src.db.database import AsyncSessionLocal
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
+from src.tenants.registry import agent_display_name
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -23,6 +26,22 @@ def _origin_allowed(origin: str | None) -> bool:
     if origin is None:
         return settings.app_env != "production"
     return origin in settings.cors_origins
+
+
+def _choice_payload(choice: FlowChoice) -> dict[str, str]:
+    """Serializes one KEA text-flow choice for the widget."""
+    return {"id": choice.id, "label": choice.label}
+
+
+async def _send_flow_response(websocket: WebSocket, response: FlowResponse) -> None:
+    """Sends one KEA text-flow response to the widget."""
+    await websocket.send_json({
+        "type": "message",
+        "role": "assistant",
+        "content": response.content,
+        "choices": [_choice_payload(choice) for choice in response.choices],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
 
 
 async def handle_chat(
@@ -38,7 +57,7 @@ async def handle_chat(
 
     1. Studio anhand slug laden → Verbindung schließen wenn nicht gefunden
     2. Konversation finden oder erstellen (via visitor_id)
-    3. LisaAgent initialisieren
+    3. Agent initialisieren
     4. Bei jeder Nachricht: agent.process_message() → DB commit → Antwort senden
     5. Bei Disconnect: finalize_conversation() → DB commit → Verbindung trennen
     """
@@ -107,9 +126,21 @@ async def handle_chat(
             visitor=visitor_id,
             conversation_id=str(conversation.id),
         )
+        await websocket.send_json({
+            "type": "session",
+            "conversation_id": str(conversation.id),
+            "visitor_id": visitor_id,
+        })
 
         # ── Agent initialisieren ──────────────────────────────────────────────
         agent = LisaAgent(session=session)
+        public_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
+        kea_flow = KeaTextFlow(session=session) if studio.slug == "mein-kuechenexperte" else None
+
+        if kea_flow is not None:
+            flow_response = await kea_flow.start(conversation)
+            await session.commit()
+            await _send_flow_response(websocket, flow_response)
 
         # ── Nachrichten-Loop ──────────────────────────────────────────────────
         try:
@@ -118,13 +149,21 @@ async def handle_chat(
 
                 try:
                     payload = json.loads(data)
-                    message_text = payload.get("message", data)
+                    message_text = str(payload.get("message") or "")
+                    action_id = payload.get("action_id")
+                    action_label = payload.get("label")
                 except json.JSONDecodeError:
                     message_text = data
+                    action_id = None
+                    action_label = None
 
-                if not message_text.strip():
+                if not message_text.strip() and not action_id:
                     continue
-                if len(message_text) > settings.max_chat_message_chars:
+                action_label_text = str(action_label or "")
+                if (
+                    len(message_text) > settings.max_chat_message_chars
+                    or len(action_label_text) > settings.max_chat_message_chars
+                ):
                     await websocket.send_json({
                         "type": "error",
                         "message": "Die Nachricht ist zu lang.",
@@ -142,30 +181,41 @@ async def handle_chat(
 
                 try:
                     # Agent verarbeitet Nachricht (7-Schritte-Loop)
-                    response_text = await agent.process_message(
-                        user_message=message_text,
-                        conversation=conversation,
-                        studio=studio,
-                    )
+                    if kea_flow is not None:
+                        flow_response = await kea_flow.handle(
+                            conversation,
+                            message_text=message_text,
+                            action_id=str(action_id) if action_id else None,
+                            action_label=action_label_text if action_label else None,
+                        )
+                    else:
+                        response_text = await agent.process_message(
+                            user_message=message_text,
+                            conversation=conversation,
+                            studio=studio,
+                        )
 
                     # Alle DB-Änderungen dieser Nachricht committen
                     # (Nachrichten, Lead-Updates, Conversation.lead_id)
                     await session.commit()
 
                     # Antwort an Client senden
-                    await websocket.send_json({
-                        "type": "message",
-                        "role": "assistant",
-                        "content": response_text,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                    })
+                    if kea_flow is not None:
+                        await _send_flow_response(websocket, flow_response)
+                    else:
+                        await websocket.send_json({
+                            "type": "message",
+                            "role": "assistant",
+                            "content": response_text,
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                        })
                 except Exception as e:
                     await session.rollback()
                     log.error("ws.message_error", visitor=visitor_id, error=str(e))
                     await websocket.send_json({
                         "type": "error",
                         "message": (
-                            "Lisa ist gerade technisch nicht erreichbar. "
+                            f"{public_agent_name} ist gerade technisch nicht erreichbar. "
                             "Bitte versuchen Sie es in einem Moment erneut."
                         ),
                     })

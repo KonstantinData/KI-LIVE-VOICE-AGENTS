@@ -33,8 +33,11 @@ async def seed() -> None:
             api_key=secrets.token_urlsafe(32),
             config={
                 "primary_color": "#2563eb",
-                "agent_name": "Lisa",
-                "welcome_message": "Hallo! Ich bin Lisa, Ihre persönliche Küchenberaterin.",
+                "agent_name": "KEA",
+                "welcome_message": (
+                    "Hallo, ich bin KEA, der Küchen Expert Assistent von "
+                    "Mein Küchenexperte. Möchten Sie Ihr Küchenprojekt kurz einordnen?"
+                ),
             },
             is_active=True,
         )

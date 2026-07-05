@@ -21,21 +21,24 @@ def test_llm_response_model():
 
 
 @pytest.mark.asyncio
-@patch("src.core.llm.AsyncAnthropic")
-async def test_llm_client_chat(mock_anthropic_class):
-    """LLMClient.chat() ruft die Anthropic API auf und gibt LLMResponse zurück."""
+@patch("src.core.llm.AsyncOpenAI")
+async def test_llm_client_chat(mock_openai_class):
+    """LLMClient.chat() ruft die OpenAI API auf und gibt LLMResponse zurück."""
     # Mock aufbauen
-    mock_message = MagicMock()
-    mock_message.content = [MagicMock(type="text", text="Test-Antwort")]
-    mock_message.usage.input_tokens = 20
-    mock_message.usage.output_tokens = 10
-    mock_message.stop_reason = "end_turn"
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = "Test-Antwort"
+    mock_response.choices[0].message.tool_calls = None
+    mock_response.choices[0].finish_reason = "stop"
+    mock_response.usage.prompt_tokens = 20
+    mock_response.usage.completion_tokens = 10
 
     mock_client = AsyncMock()
-    mock_client.messages.create = AsyncMock(return_value=mock_message)
-    mock_anthropic_class.return_value = mock_client
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+    mock_openai_class.return_value = mock_client
 
     from src.core.llm import LLMClient
+
     llm = LLMClient()
     llm._client = mock_client
 

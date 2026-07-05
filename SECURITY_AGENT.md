@@ -1,6 +1,6 @@
 # SECURITY_AGENT.md — Sicherheits-Prüfagent
 
-> **Arbeitsanweisung für Claude Code**
+> **Arbeitsanweisung für Codex**
 > Erstelle einen Security-Agenten, der den gesamten Codestand auf
 > Sicherheitslücken prüft — von OWASP-Klassikern über LLM-spezifische
 > Angriffsvektoren bis zur Server-Härtung.
@@ -37,7 +37,7 @@ INTERNET
     ├── Dashboard-Nutzer → React SPA → REST API → Backend → DB
     │   (Angreifer kann: Auth Bypass, Privilege Escalation, CSRF)
     │
-    ├── Externe APIs ← Backend → Anthropic, OpenAI, Google, Resend
+    ├── Externe APIs ← Backend → OpenAI, Google, Resend
     │   (Risiko: API-Key-Leak, Man-in-the-Middle, Supply Chain)
     │
     └── Server-Zugang → SSH → Hetzner Server

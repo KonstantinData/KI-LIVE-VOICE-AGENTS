@@ -33,7 +33,11 @@ async def test_engine():
 
 @pytest_asyncio.fixture
 async def db_session(test_engine):
-    """Gibt eine Test-Datenbank-Session zurück (wird nach jedem Test zurückgerollt)."""
+    """Returns an isolated database session for each test."""
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
     session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
