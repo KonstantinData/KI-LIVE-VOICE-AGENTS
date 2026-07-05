@@ -1,0 +1,115 @@
+name: Configure CRM Cloudflare Access
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email address allowed to access the CRM dashboard"
+        required: true
+        default: "konstantin.milonas@mein-kuechenexperte.de"
+      domain:
+        description: "CRM dashboard hostname protected by Cloudflare Access"
+        required: true
+        default: "app.mein-kuechenexperte.de"
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Access application and allow policy
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_CRM_ACCESS_API_TOKEN }}
+          ACCESS_EMAIL: ${{ inputs.email }}
+          ACCESS_DOMAIN: ${{ inputs.domain }}
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+          const token = process.env.CLOUDFLARE_API_TOKEN;
+          const email = process.env.ACCESS_EMAIL;
+          const domain = process.env.ACCESS_DOMAIN;
+          const appName = "Mein Küchenexperte CRM";
+          const policyName = "Allow CRM admin";
+          const base = `https://api.cloudflare.com/client/v4/accounts/${accountId}/access`;
+
+          if (!accountId || !token) {
+            throw new Error("Missing Cloudflare account id or CRM Access API token secret.");
+          }
+
+          async function cf(path, options = {}) {
+            const response = await fetch(`${base}${path}`, {
+              ...options,
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+                ...(options.headers ?? {}),
+              },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success === false) {
+              const detail = JSON.stringify(payload.errors ?? payload, null, 2);
+              throw new Error(`Cloudflare API ${options.method ?? "GET"} ${path} failed: ${detail}`);
+            }
+            return payload.result;
+          }
+
+          function minimalAppPayload(existing) {
+            return {
+              name: appName,
+              domain,
+              type: "self_hosted",
+              session_duration: "24h",
+              allowed_idps: existing?.allowed_idps ?? [],
+              auto_redirect_to_identity: existing?.auto_redirect_to_identity ?? false,
+              enable_binding_cookie: existing?.enable_binding_cookie ?? false,
+              http_only_cookie_attribute: true,
+              same_site_cookie_attribute: "lax",
+            };
+          }
+
+          const apps = await cf("/apps");
+          let app = apps.find((candidate) => candidate.domain === domain);
+          if (app) {
+            app = await cf(`/apps/${app.id}`, {
+              method: "PUT",
+              body: JSON.stringify({ ...app, ...minimalAppPayload(app) }),
+            });
+            console.log(`Updated Access application: ${app.id}`);
+          } else {
+            app = await cf("/apps", {
+              method: "POST",
+              body: JSON.stringify(minimalAppPayload()),
+            });
+            console.log(`Created Access application: ${app.id}`);
+          }
+
+          const policyPayload = {
+            name: policyName,
+            decision: "allow",
+            precedence: 1,
+            session_duration: "24h",
+            include: [{ email: { email } }],
+            require: [],
+            exclude: [],
+          };
+
+          const policies = await cf(`/apps/${app.id}/policies`);
+          const existingPolicy = policies.find((policy) => policy.name === policyName);
+          if (existingPolicy) {
+            const updated = await cf(`/apps/${app.id}/policies/${existingPolicy.id}`, {
+              method: "PUT",
+              body: JSON.stringify({ ...existingPolicy, ...policyPayload }),
+            });
+            console.log(`Updated Access policy: ${updated.id}`);
+          } else {
+            const created = await cf(`/apps/${app.id}/policies`, {
+              method: "POST",
+              body: JSON.stringify(policyPayload),
+            });
+            console.log(`Created Access policy: ${created.id}`);
+          }
+
+          console.log(`Cloudflare Access is configured for ${domain}; allowed email: ${email}`);
+          NODE
