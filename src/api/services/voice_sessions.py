@@ -1,11 +1,11 @@
 """
 Voice Session Services
 ======================
-What:    Shared session helpers for Lisa browser voice routes.
+What:    Shared session helpers for browser live voice routes.
 Does:    Validates origins and feature flags, loads tenants, creates conversations, builds provider config.
 Why:     Voice routes need reusable tenant-safe orchestration without oversized route files.
 Who:     FastAPI voice routes.
-Depends: fastapi, sqlalchemy, src.agents.lisa, src.api.config
+Depends: fastapi, sqlalchemy, src.agents.lisa, src.api.config, src.tenants
 """
 
 import hashlib
@@ -20,6 +20,7 @@ from src.agents.lisa.voice_prompt import build_lisa_voice_prompt
 from src.api.config import get_settings
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
+from src.tenants.registry import get_tenant_profile_for_studio
 
 
 def origin_allowed(request: Request) -> bool:
@@ -33,6 +34,17 @@ def origin_allowed(request: Request) -> bool:
 
 def voice_enabled(studio: Studio) -> bool:
     """Checks the global and studio-level voice kill switches."""
+    profile = get_tenant_profile_for_studio(studio.slug)
+    if profile is not None:
+        try:
+            voice_agent = profile.live_voice_agent()
+        except ValueError:
+            return False
+        return (
+            get_settings().enable_voice_sessions
+            and profile.public_widget.voice_enabled
+            and voice_agent.enabled
+        )
     config = studio.config or {}
     return bool(config.get("voice_enabled")) and get_settings().enable_voice_sessions
 
@@ -91,14 +103,28 @@ def realtime_session_config(
     lead_summary: str | None,
     address_mode: str = "sie",
 ) -> dict[str, Any]:
-    """Builds the OpenAI Realtime session configuration for Lisa."""
+    """Builds the OpenAI Realtime session configuration for a tenant live voice agent."""
     settings = get_settings()
+    profile = get_tenant_profile_for_studio(studio.slug)
+    voice_agent = profile.live_voice_agent() if profile is not None else None
+    model = voice_agent.model if voice_agent is not None else settings.openai_realtime_model
+    voice = voice_agent.voice if voice_agent is not None else settings.openai_realtime_voice
+    agent_name = (
+        voice_agent.display_name
+        if voice_agent is not None
+        else str((studio.config or {}).get("agent_name") or "Live Voice Agent")
+    )
     config: dict[str, Any] = {
         "type": "realtime",
-        "model": settings.openai_realtime_model,
-        "instructions": build_lisa_voice_prompt(studio, lead_summary, address_mode),
+        "model": model,
+        "instructions": build_lisa_voice_prompt(
+            studio,
+            lead_summary,
+            address_mode,
+            agent_display_name=agent_name,
+        ),
         "audio": {
-            "output": {"voice": settings.openai_realtime_voice},
+            "output": {"voice": voice},
             "input": {
                 "turn_detection": {
                     "type": "server_vad",
@@ -111,8 +137,16 @@ def realtime_session_config(
             },
         },
         "reasoning": {"effort": "low"},
-        "metadata": {"conversation_id": str(conversation.id), "studio": studio.slug},
+        "metadata": {
+            "conversation_id": str(conversation.id),
+            "studio": studio.slug,
+            "tenant_id": profile.tenant_id if profile is not None else studio.slug,
+            "agent_profile_id": voice_agent.id if voice_agent is not None else "legacy-live-voice",
+        },
     }
+    if voice_agent is not None:
+        config["metadata"]["policies"] = ",".join(voice_agent.policies)
+        config["metadata"]["validators"] = ",".join(voice_agent.validators)
     if tools:
         config["tools"] = tools
         config["tool_choice"] = "auto"

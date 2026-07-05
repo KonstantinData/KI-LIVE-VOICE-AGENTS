@@ -33,7 +33,7 @@ export function Knowledge() {
   return (
     <div>
       <h1 className="mb-2 text-2xl font-bold text-gray-900">Wissensbasis</h1>
-      <p className="mb-8 text-gray-500">Studio-Wissen für Lisa verwalten</p>
+      <p className="mb-8 text-gray-500">Studio-Wissen für den Live Voice Agent verwalten</p>
       {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
 
       <form onSubmit={handleSubmit} className="mb-6 rounded-lg border border-gray-200 bg-white p-4">

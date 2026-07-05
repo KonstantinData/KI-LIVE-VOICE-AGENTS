@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(
-    title="KI-Mitarbeiter-Team API",
+    title="KI-LIVE-VOICE-AGENTS API",
     description="Backend für das KI-Agenten-Team für Küchen- und Möbelgeschäfte",
     version="0.1.0",
     lifespan=lifespan,

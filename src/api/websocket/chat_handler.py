@@ -1,4 +1,4 @@
-"""WebSocket Chat-Endpoint: Empfängt Nachrichten und leitet sie an Lisa weiter."""
+"""WebSocket chat endpoint for tenant-scoped widget conversations."""
 
 import json
 from datetime import datetime, timezone
@@ -13,6 +13,7 @@ from src.api.websocket.manager import manager
 from src.db.database import AsyncSessionLocal
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
+from src.tenants.registry import agent_display_name
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -38,7 +39,7 @@ async def handle_chat(
 
     1. Studio anhand slug laden → Verbindung schließen wenn nicht gefunden
     2. Konversation finden oder erstellen (via visitor_id)
-    3. LisaAgent initialisieren
+    3. Agent initialisieren
     4. Bei jeder Nachricht: agent.process_message() → DB commit → Antwort senden
     5. Bei Disconnect: finalize_conversation() → DB commit → Verbindung trennen
     """
@@ -110,6 +111,7 @@ async def handle_chat(
 
         # ── Agent initialisieren ──────────────────────────────────────────────
         agent = LisaAgent(session=session)
+        public_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
 
         # ── Nachrichten-Loop ──────────────────────────────────────────────────
         try:
@@ -165,7 +167,7 @@ async def handle_chat(
                     await websocket.send_json({
                         "type": "error",
                         "message": (
-                            "Lisa ist gerade technisch nicht erreichbar. "
+                            f"{public_agent_name} ist gerade technisch nicht erreichbar. "
                             "Bitte versuchen Sie es in einem Moment erneut."
                         ),
                     })

@@ -1,7 +1,7 @@
 """
 Voice Session Routes
 ====================
-What:    FastAPI routes for Lisa browser live voice sessions.
+What:    FastAPI routes for browser live voice sessions.
 Does:    Brokers WebRTC SDP, persists consent-safe transcripts, executes allowlisted tools.
 Why:     Voice mode needs tenant checks, consent checks, server-side credentials, and audits.
 Who:     Website widget voice mode.
@@ -38,8 +38,9 @@ from src.db.database import get_session
 from src.db.models.event import Event
 from src.db.models.lead import Lead
 from src.db.models.message import Message
+from src.tenants.registry import agent_display_name, get_tenant_profile_for_studio
 
-router = APIRouter(prefix="/voice", tags=["Lisa Voice"])
+router = APIRouter(prefix="/voice", tags=["Live Voice"])
 log = structlog.get_logger()
 MAX_CONTACT_TEXT_CHARS = 1600
 EMAIL_RE = re.compile(r"^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$")
@@ -237,6 +238,7 @@ def _admin_email_html(
     additional_notes: str,
     conversation_id: uuid.UUID,
     voice_session_id: str,
+    agent_name: str,
 ) -> str:
     """Builds the internal lead handoff email."""
     phone_html = f"<li>Telefon: {escape(phone)}</li>" if phone else ""
@@ -251,7 +253,7 @@ def _admin_email_html(
         else ""
     )
     return f"""
-<p><strong>Neue KEA-Kundenanfrage für {escape(studio.name or studio.slug)}</strong></p>
+<p><strong>Neue {escape(agent_name)}-Kundenanfrage für {escape(studio.name or studio.slug)}</strong></p>
 <p><strong>Kontaktdaten</strong></p>
 <ul>
   <li>Name: {escape(first_name)} {escape(last_name)}</li>
@@ -265,7 +267,7 @@ def _admin_email_html(
 <p style="font-size:12px;color:#666">
 Conversation: {escape(str(conversation_id))}<br>
 Voice Session: {escape(voice_session_id)}<br>
-Quelle: KEA Voice Widget
+Quelle: {escape(agent_name)} Voice Widget
 </p>
 """
 
@@ -373,6 +375,8 @@ async def create_ephemeral_voice_session(
         raise HTTPException(status_code=503, detail="Voice provider is not configured")
 
     studio = await load_voice_studio(session, payload.studio)
+    if not voice_enabled(studio):
+        raise HTTPException(status_code=403, detail="Voice is disabled for this studio")
     conversation = await load_voice_conversation(session, studio, payload.visitor_id)
     conversation.channel = "voice"
     conversation.metadata_ = {
@@ -386,10 +390,14 @@ async def create_ephemeral_voice_session(
     }
     voice_session_id = payload.session_id or f"voice_{uuid.uuid4()}"
     config = realtime_session_config(studio, conversation, [], None, payload.address_mode)
+    profile = get_tenant_profile_for_studio(studio.slug)
+    voice_agent = profile.live_voice_agent() if profile is not None else None
     config["tracing"] = {
-        "workflow_name": "lisa_live_voice_mein_kuechenexperte",
+        "workflow_name": f"live_voice_{studio.slug}",
         "group_id": str(conversation.id),
         "metadata": {
+            "tenant_id": profile.tenant_id if profile is not None else studio.slug,
+            "agent_profile_id": voice_agent.id if voice_agent is not None else "legacy-live-voice",
             "studio": studio.slug,
             "voice_session_id": voice_session_id,
             "consent_version": payload.consent_version,
@@ -419,7 +427,7 @@ async def create_ephemeral_voice_session(
             "voice_session_id": voice_session_id,
             "consent_version": payload.consent_version,
             "raw_audio_stored": False,
-            "model": settings.openai_realtime_model,
+            "model": str(config["model"]),
             "address_mode": payload.address_mode,
         },
     ))
@@ -427,8 +435,8 @@ async def create_ephemeral_voice_session(
     return EphemeralVoiceSessionResponse(
         client_secret=client_secret,
         expires_at=expires.isoformat(),
-        model=settings.openai_realtime_model,
-        voice=settings.openai_realtime_voice,
+        model=str(config["model"]),
+        voice=str(config["audio"]["output"]["voice"]),
         conversation_id=str(conversation.id),
         voice_session_id=voice_session_id,
     )
@@ -440,7 +448,7 @@ async def create_webrtc_voice_session(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
-    """Creates a consent-gated OpenAI Realtime WebRTC session for Lisa."""
+    """Creates a consent-gated OpenAI Realtime WebRTC session."""
     settings = get_settings()
     if not origin_allowed(request):
         raise HTTPException(status_code=403, detail="Origin not allowed")
@@ -676,6 +684,7 @@ async def submit_voice_contact_handoff(
     await session.flush()
 
     summary_items = _summary_items(project_summary)
+    handoff_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
     emails_sent = False
     email_error: str | None = None
     try:
@@ -692,7 +701,7 @@ async def submit_voice_contact_handoff(
         )
         await email_service.send(
             to=_lead_notification_email(studio),
-            subject=f"Neue KEA-Anfrage: {first_name} {last_name}",
+            subject=f"Neue {handoff_agent_name}-Anfrage: {first_name} {last_name}",
             html=_admin_email_html(
                 studio=studio,
                 first_name=first_name,
@@ -704,6 +713,7 @@ async def submit_voice_contact_handoff(
                 additional_notes=additional_notes,
                 conversation_id=conversation.id,
                 voice_session_id=payload.voice_session_id,
+                agent_name=handoff_agent_name,
             ),
         )
         emails_sent = True

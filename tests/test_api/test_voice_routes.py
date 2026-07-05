@@ -1,4 +1,4 @@
-"""Tests for Lisa live voice routes."""
+"""Tests for tenant-scoped live voice routes."""
 
 from datetime import datetime, timezone
 import uuid
@@ -51,7 +51,7 @@ async def _seed_voice_studio(db_session, *, voice_enabled: bool = True) -> Studi
         name="Mein Küchenexperte",
         slug=slug,
         api_key=f"voice-api-key-{uuid.uuid4()}",
-        config={"agent_name": "Lisa", "voice_enabled": voice_enabled},
+        config={"agent_name": "KEA", "voice_enabled": voice_enabled},
         is_active=True,
     )
     db_session.add(studio)

@@ -15,7 +15,7 @@ import { ChatWindow } from './ChatWindow';
 import { ConsentBanner } from './ConsentBanner';
 import type { WidgetConfig } from './lib/config';
 
-const CONSENT_KEY = 'lisa_consent_v1';
+const CONSENT_KEY = 'live_voice_consent_v1';
 
 interface WidgetProps {
   config: WidgetConfig;

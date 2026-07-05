@@ -15,7 +15,7 @@ export function Feedback() {
   return (
     <div>
       <h1 className="mb-2 text-2xl font-bold text-gray-900">Feedback</h1>
-      <p className="mb-8 text-gray-500">Bewertungen und Korrekturen zu Lisa-Antworten</p>
+      <p className="mb-8 text-gray-500">Bewertungen und Korrekturen zu Agent-Antworten</p>
       {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
       <div className="grid gap-3">
         {feedback.map((item) => (

@@ -1,18 +1,18 @@
-# KI-Mitarbeiter-Team für Küchen- und Möbelgeschäfte
+# KI-LIVE-VOICE-AGENTS
 
 🇩🇪 [Deutsch](README.md) | 🇬🇧 [English](README.en.md)
 
 ---
 
-Ein vollständiges System aus KI-gestützten virtuellen Mitarbeitern, das Küchen- und Möbelgeschäfte dabei unterstützt, Kundenanfragen rund um die Uhr zu bearbeiten — vom ersten Chat-Kontakt bis zur Terminbuchung.
+Ein mandantenfähiges System für KI-gestützte Live-Voice- und Chat-Agenten, das Küchen- und Möbelgeschäfte bei Kundenanfragen unterstützt — vom ersten Kontakt bis zur sicheren Übergabe an das Team.
 
 ---
 
 ## Was ist das hier?
 
-Dieses Projekt ist die technische Grundlage für ein Team aus KI-Agenten, die im Hintergrund wie echte Mitarbeiter arbeiten: Sie begrüßen Interessenten auf der Website, führen Beratungsgespräche, qualifizieren Leads, buchen Termine und koordinieren Nachfass-Aktionen — automatisch, 24/7, in natürlicher Sprache.
+Dieses Projekt ist die technische Grundlage für tenant-spezifische Live Voice Agents. Der Runtime-Agent ist generisch; Name, Prompt-Profil, Tools, Richtlinien, Wissen, Upload-Regeln und Widget-Texte werden pro Tenant aus der Registry zusammengesetzt.
 
-Das System ist als **fertige Plattform** konzipiert: Ein Küchenstudio kauft Zugang, richtet sein Studio ein, und die KI-Mitarbeiter gehen direkt an die Arbeit. Mehrere Studios können das System gleichzeitig nutzen, ohne sich gegenseitig zu beeinflussen. Alle Mitarbeiter können dabei **parallel** mit verschiedenen Besuchern gleichzeitig arbeiten.
+Das System ist als **fertige Plattform** konzipiert: Ein Küchenstudio bekommt einen Tenant, richtet sein Profil ein, und der passende Live Voice Agent geht direkt an die Arbeit. Mehrere Tenants können das System gleichzeitig nutzen, ohne sich gegenseitig zu beeinflussen.
 
 ---
 
@@ -29,29 +29,28 @@ Das System ist **kein Ersatz** für die bestehende Website — es wird unsichtba
 ></script>
 ```
 
-Das war es. Der Chat-Button erscheint, und die KI-Mitarbeiter sind einsatzbereit.
+Das war es. Der Chat-Button erscheint, und der für diesen Tenant konfigurierte Agent ist einsatzbereit. Für `mein-kuechenexperte` heißt der öffentliche Widget-Agent **KEA**.
 
 ---
 
-## Die KI-Mitarbeiter (geplant)
+## Tenant-Runtime-Modell
 
-Ein einziges Chat-Fenster für den Besucher — im Hintergrund übernimmt automatisch der passende Mitarbeiter je nach Phase des Gesprächs.
+Ein einziges Chat-Fenster für den Besucher — im Hintergrund wird ein tenant-spezifisches Runtime-Profil geladen.
 
-| Name | Aufgabe | Wann aktiv |
-| ---- | ------- | ---------- |
-| **Lisa** | Erstkontakt, Begrüßung, Lead-Erfassung | Sobald jemand die Website besucht |
-| **Max** | Beratung, Planung, Angebote | Wenn der Kunde konkrete Fragen hat |
-| **Anna** | Auftragsabwicklung, Dokumente | Nach dem Kauf |
-| **Tom** | Lieferung, Montage, Koordination | Kurz vor dem Liefertermin |
-| **Sara** | Qualitätssicherung, Kundenbindung | Nach der Montage |
+| Ebene | Aufgabe |
+| ---- | ------- |
+| **Tenant-Profil** | Widget-Name, Hostnames, Sprache, Datenschutz, Upload- und Voice-Flags |
+| **Live Voice Agent Profil** | Prompt-Profil, Modell, Stimme, Skills, Tools, Scopes, Policies, Validatoren |
+| **Skill-Pack** | Tenant-spezifische Fähigkeiten und Audit-Anforderungen |
+| **Runtime** | Nutzt nur die im Profil erlaubten Module und Daten |
 
-> **Aktueller Stand:** Das Fundament ist fertig gebaut. Die einzelnen Agenten werden in den nächsten Entwicklungsschritten hinzugefügt.
+> **Aktueller Stand:** `mein-kuechenexperte` ist als erster Tenant registriert. `KEA` ist dort der öffentliche Widget-Name, technisch aber ein Tenant-Profil für den generischen Live Voice Agent.
 
 ---
 
 ## Wie sieht das für den Endkunden aus?
 
-Ein Besucher auf `www.mein-kuechenexperte.de` sieht einen Chat-Button in der Ecke. Er klickt, schreibt seine Frage — und Lisa antwortet sofort. Die Unterhaltung fühlt sich wie ein echtes Gespräch an. Im Hintergrund erfasst das System alle wichtigen Informationen, bewertet den Interessenten und plant den nächsten Schritt (z. B. einen Beratungstermin).
+Ein Besucher auf `www.mein-kuechenexperte.de` sieht einen Chat-Button in der Ecke. Er klickt, schreibt oder spricht seine Frage — und **KEA** antwortet sofort. Die Unterhaltung fühlt sich wie ein echtes Gespräch an. Im Hintergrund erfasst das System relevante Projektdaten, bewertet den Interessenten und bereitet den nächsten Schritt vor.
 
 Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenexperte.de`: welche Leads eingegangen sind, was besprochen wurde, welche Termine bevorstehen.
 
@@ -75,7 +74,7 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 - Vollständiges **Datenbankschema** (Interessenten, Gespräche, Termine, Wissensbasis, Audit-Trail)
 - **API-Server** mit allen nötigen Endpunkten (Authentifizierung, Chat, Studios, Leads, Termine u.v.m.)
 - **Echtzeit-Chat** via WebSocket — Nachrichten werden in Millisekunden übertragen
-- **Lisa Live Voice** via Browser-WebRTC — Sprache läuft über einen serverseitigen OpenAI-Realtime-Broker ohne Browser-API-Key
+- **Live Voice Agents** via Browser-WebRTC — Sprache läuft über einen serverseitigen OpenAI-Realtime-Broker ohne Browser-API-Key
 - **Wissenssuche**: Das System kann in der Produktdatenbank eines Studios semantisch suchen und passende Informationen an die KI weitergeben
 - **Gedächtnissystem**: Jeder Agent merkt sich, was in früheren Gesprächen mit einem Kunden besprochen wurde
 - **Multi-Studio-Betrieb**: Beliebig viele Studios können das System parallel nutzen — vollständig voneinander getrennt
@@ -85,7 +84,7 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 - Vorgefertigte **Agentenstruktur**: Jeder neue Agent folgt demselben 7-Schritte-Ablauf (Kontext laden → Anfrage verstehen → Wissen abrufen → Tools nutzen → Antworten → Speichern)
 - Anbindung an **Anthropic Claude** (modernste Sprachmodell-Technologie) für natürliche Gespräche und komplexes Reasoning
 - **Tool-System**: Agenten können eigenständig Aktionen ausführen (Termine prüfen, E-Mails senden, Daten speichern)
-- **Vorlage für neue Agenten**: Ein neuer Mitarbeiter (z. B. Lisa) kann schnell durch Kopieren und Anpassen einer Vorlage erstellt werden
+- **Tenant-Registry**: Neue Tenants erhalten eigene Profile, Skill-Packs, Policies und Widget-Identität ohne neuen hart codierten Agenten
 
 ### Frontend
 
@@ -105,13 +104,15 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 ## Projektstruktur (vereinfacht)
 
 ```text
-KI-Mitarbeiter-Team/
+KI-LIVE-VOICE-AGENTS/
 │
 ├── src/
 │   ├── core/          # Gemeinsamer Kern aller Agenten (LLM, Gedächtnis, Wissen, Tools)
-│   ├── agents/        # Die einzelnen KI-Mitarbeiter (Lisa, Max, Anna, Tom, Sara)
+│   ├── agents/        # Runtime-Agent-Implementierung und Legacy-Agent-Module
 │   ├── api/           # API-Server (Endpunkte, WebSocket, Authentifizierung)
 │   └── db/            # Datenbankmodelle und Migrationen
+├── registry/          # Tenant-Profile und tenant-spezifische Skill-Packs
+├── schemas/           # Maschinenlesbare Tenant-/Runtime-Verträge
 │
 ├── frontends/
 │   ├── widget/        # Chat-Widget → widget.mein-kuechenexperte.de
@@ -144,8 +145,8 @@ KI-Mitarbeiter-Team/
 
 ```bash
 # 1. Repository klonen
-git clone https://github.com/KonstantinData/KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft.git
-cd KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft
+git clone https://github.com/KonstantinData/KI-LIVE-VOICE-AGENTS.git
+cd KI-LIVE-VOICE-AGENTS
 
 # 2. Einmalig einrichten (Python venv + alle Abhängigkeiten)
 ./setup.sh
@@ -177,8 +178,8 @@ cd frontends/dashboard && pnpm install && pnpm build
 - `ADMIN_PASSWORD_HASH` muss in Produktion gesetzt sein. Der Testzugang `admin / secret` funktioniert nur, wenn `ALLOW_DEMO_LOGIN=true` und `APP_ENV` nicht `production` ist.
 - `JWT_SECRET` muss ein langer zufälliger Wert sein und darf nicht in Git landen.
 - `ENABLE_EMAIL_SENDING` und `ENABLE_CALENDAR_SYNC` sind standardmäßig `false`. Externe Aktionen laufen erst, wenn die passenden API-/OAuth-Credentials gesetzt und die Flags bewusst aktiviert sind.
-- `ENABLE_VOICE_SESSIONS` ist ein globaler Kill-Switch für Lisa Live Voice. Zusätzlich muss im jeweiligen Studio-`config` `voice_enabled=true` gesetzt sein; das Widget kann den Tab per `data-voice="true"` anzeigen.
-- Lisa Live Voice nutzt `/voice/sessions/webrtc` als serverseitigen WebRTC-Broker für OpenAI Realtime. Standard-API-Keys bleiben im Backend; der Browser erhält nur das SDP-Answer und sichere Session-Metadaten.
+- `ENABLE_VOICE_SESSIONS` ist ein globaler Kill-Switch für Live Voice Agents. Zusätzlich muss das Tenant-Profil Voice aktivieren; das Widget kann den Tab per `data-voice="true"` anzeigen.
+- Live Voice Agents nutzen `/voice/sessions/webrtc` und `/voice/session` als serverseitige OpenAI-Realtime-Broker. Standard-API-Keys bleiben im Backend; der Browser erhält nur kurzlebige Client-Secrets oder SDP-Antworten und sichere Session-Metadaten.
 - Im Sprachmodus wird Mikrofonzugriff erst nach Consent und zusätzlichem Klick angefragt. Roh-Audio wird standardmäßig nicht gespeichert; finale Transkripte, Tool-Audits und Zusammenfassungen werden tenant-sicher gespeichert.
 - `CORS_ORIGINS` muss die öffentliche Website und das Dashboard enthalten. WebSocket-Verbindungen werden serverseitig gegen diese Origins geprüft.
 - Das Widget verbindet sich erst nach DSGVO-Einwilligung und sendet `consent=1` an `/ws/chat`.
@@ -212,14 +213,13 @@ Das Widget nutzt im Produktionsbuild Preact Compat als gebündelte Runtime, dami
 | Datenbankschema | Fertig mit Alembic-Migration |
 | API-Grundgerüst | Fertig mit tenant-gefilterten MVP-Routen |
 | WebSocket-Chat | Fertig mit Consent-, Origin- und Größenprüfung |
-| Lisa Live Voice | Fertig als feature-geflaggter WebRTC-Modus mit Consent, Tool-Bridge und Text-Fallback |
+| Live Voice Agents | Fertig als feature-geflaggter WebRTC-Modus mit Consent, Tenant-Profil, Tool-Bridge und Text-Fallback |
 | Agenten-Kern (Basis) | Fertig |
 | Agenten-Vorlage | Fertig |
 | Chat-Widget | Fertig mit DSGVO-Consent-Gate und kleinem IIFE-Bundle |
 | Admin-Dashboard | Fertig als MVP mit echten API-Ansichten |
-| Agent Lisa | MVP aktiv für Erstkontakt, Lead-Erfassung und Terminwunsch |
-| Agent Max | In Planung |
-| Agent Anna, Tom, Sara | In Planung |
+| Tenant `mein-kuechenexperte` | Aktiv mit Widget-Name KEA |
+| Weitere Tenants | Über Registry-Struktur vorbereitet |
 | Google Calendar Integration | Feature-Flag-gesteuert, OAuth-Routen abgesichert |
 | E-Mail-Versand | Feature-Flag-gesteuert über Resend |
 

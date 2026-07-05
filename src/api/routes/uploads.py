@@ -31,6 +31,7 @@ from src.db.models.conversation import Conversation
 from src.db.models.event import Event
 from src.db.models.message import Message
 from src.db.models.studio import Studio
+from src.tenants.registry import agent_display_name, get_tenant_profile_for_studio
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
 log = structlog.get_logger()
@@ -192,6 +193,7 @@ async def _analyze_image_upload(
     content_type: str,
     data: bytes,
     filename: str,
+    agent_name: str,
 ) -> str | None:
     settings = get_settings()
     if (
@@ -223,7 +225,7 @@ async def _analyze_image_upload(
                     {
                         "type": "text",
                         "text": (
-                            f"Datei: {filename}. Fasse die für KEA relevanten "
+                            f"Datei: {filename}. Fasse die für {agent_name} relevanten "
                             "Küchenplanungsdetails kurz auf Deutsch zusammen."
                         ),
                     },
@@ -259,6 +261,17 @@ async def upload_project_file(
         )
 
     studio_row = await _load_studio(session, studio)
+    tenant_profile = get_tenant_profile_for_studio(studio_row.slug)
+    if tenant_profile is not None:
+        upload_policy = tenant_profile.upload_policy
+        if upload_policy is None or not upload_policy.enabled:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="uploads_disabled")
+        if content_type := file.content_type:
+            if content_type in ALLOWED_TYPES and content_type not in upload_policy.allowed_content_types:
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail="unsupported_file_type",
+                )
     conversation = await _get_or_create_conversation(session, studio_row, visitor_id)
     await _enforce_upload_limits(
         session=session,
@@ -273,6 +286,12 @@ async def upload_project_file(
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file_too_large")
 
     content_type = _sniff_content_type(data, file.content_type)
+    if tenant_profile is not None and tenant_profile.upload_policy is not None:
+        if content_type not in tenant_profile.upload_policy.allowed_content_types:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="unsupported_file_type",
+            )
     extension = ALLOWED_TYPES[content_type]
     original_name = _safe_name(file.filename)
     absolute_path, relative_path = _storage_path(
@@ -285,11 +304,13 @@ async def upload_project_file(
 
     analysis_summary: str | None = None
     analysis_error: str | None = None
+    upload_agent_name = agent_display_name(studio_row.slug, fallback="Live Voice Agent")
     try:
         analysis_summary = await _analyze_image_upload(
             content_type=content_type,
             data=data,
             filename=original_name,
+            agent_name=upload_agent_name,
         )
     except Exception as exc:
         analysis_error = "analysis_failed"
@@ -300,7 +321,7 @@ async def upload_project_file(
         f"({content_type}, {len(data)} Bytes)."
     )
     if analysis_summary:
-        content += f"\nKI-Dateizusammenfassung für die Beratung: {analysis_summary}"
+        content += f"\nKI-Dateizusammenfassung für {upload_agent_name}: {analysis_summary}"
     elif content_type == "application/pdf":
         content += "\nHinweis: Das PDF wurde gespeichert und kann vom Team geprüft werden."
 
@@ -352,7 +373,7 @@ async def upload_project_file(
         size_bytes=len(data),
         analysis_summary=analysis_summary,
         message=(
-            "Die Datei wurde hochgeladen und für KEA zusammengefasst."
+            f"Die Datei wurde hochgeladen und für {upload_agent_name} zusammengefasst."
             if analysis_summary
             else "Die Datei wurde hochgeladen und für die Beratung gespeichert."
         ),
