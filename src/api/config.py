@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-4o-mini"
+    openai_realtime_model: str = "gpt-realtime-2"
+    openai_realtime_voice: str = "marin"
+    enable_voice_sessions: bool = False
+    max_voice_session_seconds: int = 900
+    max_voice_sdp_chars: int = 200_000
 
     # Resend E-Mail
     resend_api_key: str = ""
@@ -69,6 +74,14 @@ class Settings(BaseSettings):
     retention_unconverted_lead_days: int = 365
     retention_feedback_days: int = 730
     retention_event_days: int = 1095
+
+    # Customer project uploads
+    upload_storage_dir: str = "uploads/project-files"
+    max_upload_file_bytes: int = 10_485_760
+    max_upload_files_per_selection: int = 10
+    max_uploads_per_visitor_hour: int = 10
+    max_uploads_per_conversation: int = 30
+    enable_upload_ai_analysis: bool = True
 
     # Encryption
     encryption_key: str = ""
@@ -110,6 +123,8 @@ class Settings(BaseSettings):
             raise ValueError(
                 "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required when ENABLE_CALENDAR_SYNC=true"
             )
+        if self.enable_voice_sessions and not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is required when ENABLE_VOICE_SESSIONS=true")
         return self
 
 

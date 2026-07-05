@@ -1,4 +1,4 @@
-/** Tipp-Indikator ("Lisa tippt..."). */
+/** Tipp-Indikator ("KEA tippt..."). */
 
 export function TypingIndicator() {
   return (

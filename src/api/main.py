@@ -31,6 +31,8 @@ from src.api.routes import (
     knowledge,
     leads,
     studios,
+    uploads,
+    voice,
     widget_config,
 )
 from src.api.services.scheduler import setup_scheduler, shutdown_scheduler
@@ -76,6 +78,8 @@ app.add_middleware(RateLimitMiddleware)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(studios.router)
+app.include_router(voice.router)
+app.include_router(uploads.router)
 app.include_router(leads.router)
 app.include_router(conversations.router)
 app.include_router(appointments.router)

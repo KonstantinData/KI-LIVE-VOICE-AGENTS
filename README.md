@@ -25,6 +25,7 @@ Das System ist **kein Ersatz** für die bestehende Website — es wird unsichtba
 <script
   src="https://widget.mein-kuechenexperte.de/loader.iife.js"
   data-studio="mein-kuechenexperte"
+  data-voice="true"
 ></script>
 ```
 
@@ -74,6 +75,7 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 - Vollständiges **Datenbankschema** (Interessenten, Gespräche, Termine, Wissensbasis, Audit-Trail)
 - **API-Server** mit allen nötigen Endpunkten (Authentifizierung, Chat, Studios, Leads, Termine u.v.m.)
 - **Echtzeit-Chat** via WebSocket — Nachrichten werden in Millisekunden übertragen
+- **Lisa Live Voice** via Browser-WebRTC — Sprache läuft über einen serverseitigen OpenAI-Realtime-Broker ohne Browser-API-Key
 - **Wissenssuche**: Das System kann in der Produktdatenbank eines Studios semantisch suchen und passende Informationen an die KI weitergeben
 - **Gedächtnissystem**: Jeder Agent merkt sich, was in früheren Gesprächen mit einem Kunden besprochen wurde
 - **Multi-Studio-Betrieb**: Beliebig viele Studios können das System parallel nutzen — vollständig voneinander getrennt
@@ -87,7 +89,7 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 
 ### Frontend
 
-- **Chat-Widget**: Ein `<script>`-Tag reicht zur Integration in jede bestehende Website
+- **Chat-Widget**: Ein `<script>`-Tag reicht zur Integration in jede bestehende Website; Textchat bleibt Fallback für den Sprachmodus
 - **Admin-Dashboard**: Weboberfläche für das Küchenstudio mit Login, Übersichten und Navigation
 - Beide Frontends **live auf Cloudflare Pages** mit automatischem SSL und Custom Domains
 
@@ -130,6 +132,7 @@ KI-Mitarbeiter-Team/
 | KI-Modell | Anthropic Claude | Bestes Modell für Gespräche und eigenständiges Handeln |
 | Embeddings | OpenAI | Günstige, bewährte Vektorisierung für Wissenssuche |
 | Chat | WebSocket | Echtzeit-Kommunikation ohne Seitenneuladung |
+| Live Voice | OpenAI Realtime + WebRTC | Niedrige Latenz, VAD und Unterbrechungen im Browser |
 | Widget | React + Vite | Kleines Bundle, läuft isoliert auf jeder Website |
 | Dashboard | React + Tailwind | Moderne, wartbare Admin-Oberfläche |
 | Hosting Backend | Hetzner (EU) | DSGVO-konform, zuverlässig, kosteneffizient |
@@ -174,6 +177,9 @@ cd frontends/dashboard && pnpm install && pnpm build
 - `ADMIN_PASSWORD_HASH` muss in Produktion gesetzt sein. Der Testzugang `admin / secret` funktioniert nur, wenn `ALLOW_DEMO_LOGIN=true` und `APP_ENV` nicht `production` ist.
 - `JWT_SECRET` muss ein langer zufälliger Wert sein und darf nicht in Git landen.
 - `ENABLE_EMAIL_SENDING` und `ENABLE_CALENDAR_SYNC` sind standardmäßig `false`. Externe Aktionen laufen erst, wenn die passenden API-/OAuth-Credentials gesetzt und die Flags bewusst aktiviert sind.
+- `ENABLE_VOICE_SESSIONS` ist ein globaler Kill-Switch für Lisa Live Voice. Zusätzlich muss im jeweiligen Studio-`config` `voice_enabled=true` gesetzt sein; das Widget kann den Tab per `data-voice="true"` anzeigen.
+- Lisa Live Voice nutzt `/voice/sessions/webrtc` als serverseitigen WebRTC-Broker für OpenAI Realtime. Standard-API-Keys bleiben im Backend; der Browser erhält nur das SDP-Answer und sichere Session-Metadaten.
+- Im Sprachmodus wird Mikrofonzugriff erst nach Consent und zusätzlichem Klick angefragt. Roh-Audio wird standardmäßig nicht gespeichert; finale Transkripte, Tool-Audits und Zusammenfassungen werden tenant-sicher gespeichert.
 - `CORS_ORIGINS` muss die öffentliche Website und das Dashboard enthalten. WebSocket-Verbindungen werden serverseitig gegen diese Origins geprüft.
 - Das Widget verbindet sich erst nach DSGVO-Einwilligung und sendet `consent=1` an `/ws/chat`.
 
@@ -206,6 +212,7 @@ Das Widget nutzt im Produktionsbuild Preact Compat als gebündelte Runtime, dami
 | Datenbankschema | Fertig mit Alembic-Migration |
 | API-Grundgerüst | Fertig mit tenant-gefilterten MVP-Routen |
 | WebSocket-Chat | Fertig mit Consent-, Origin- und Größenprüfung |
+| Lisa Live Voice | Fertig als feature-geflaggter WebRTC-Modus mit Consent, Tool-Bridge und Text-Fallback |
 | Agenten-Kern (Basis) | Fertig |
 | Agenten-Vorlage | Fertig |
 | Chat-Widget | Fertig mit DSGVO-Consent-Gate und kleinem IIFE-Bundle |

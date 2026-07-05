@@ -10,7 +10,7 @@
  * Depends: React, ChatWindow, ConsentBanner, WidgetConfig
  */
 
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { ChatWindow } from './ChatWindow';
 import { ConsentBanner } from './ConsentBanner';
 import type { WidgetConfig } from './lib/config';
@@ -38,8 +38,13 @@ export function Widget({ config, visitorId }: WidgetProps) {
     setOpen(false);
   };
 
+  const themeStyle = {
+    '--primary-color': config.primaryColor,
+    '--accent-color': config.accentColor,
+  } as CSSProperties;
+
   return (
-    <>
+    <div className="widget-root" style={themeStyle}>
       {open && (
         <div className="widget-window">
           {consentGiven ? (
@@ -54,13 +59,23 @@ export function Widget({ config, visitorId }: WidgetProps) {
         </div>
       )}
       <button
-        className="widget-button"
-        style={{ '--primary-color': config.primaryColor } as React.CSSProperties}
+        className={`widget-launcher ${open ? 'widget-launcher--open' : ''}`}
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Chat schließen' : 'Chat öffnen'}
+        aria-label={open ? `${config.agentName} schließen` : `${config.agentName} öffnen`}
+        type="button"
       >
-        {open ? '✕' : '💬'}
+        <span className="launcher-mark" aria-hidden="true">
+          {open ? 'x' : 'KI'}
+        </span>
+        <span className="launcher-copy">
+          <span className="launcher-title">
+            {open ? `${config.agentName} schließen` : config.agentName}
+          </span>
+          <span className="launcher-subtitle">
+            {config.voiceEnabled ? 'Küchen Expert Assistent' : 'Küchenprojekt klären'}
+          </span>
+        </span>
       </button>
-    </>
+    </div>
   );
 }

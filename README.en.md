@@ -25,6 +25,7 @@ The system is **not a replacement** for the existing website — it integrates i
 <script
   src="https://widget.mein-kuechenexperte.de/loader.iife.js"
   data-studio="mein-kuechenexperte"
+  data-voice="true"
 ></script>
 ```
 
@@ -74,6 +75,7 @@ The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexp
 - Complete **database schema** (prospects, conversations, appointments, knowledge base, audit trail)
 - **API server** with all necessary endpoints (authentication, chat, studios, leads, appointments, etc.)
 - **Real-time chat** via WebSocket — messages are transmitted in milliseconds
+- **Lisa Live Voice** via browser WebRTC — voice runs through a server-side OpenAI Realtime broker without browser API keys
 - **Knowledge search**: The system can semantically search a studio's product database and pass relevant information to the AI
 - **Memory system**: Each agent remembers what was discussed in previous conversations with a customer
 - **Multi-studio operation**: Any number of studios can use the system in parallel — completely separated from each other
@@ -87,7 +89,7 @@ The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexp
 
 ### Frontend
 
-- **Chat widget**: A `<script>` tag is enough to integrate into any existing website
+- **Chat widget**: A `<script>` tag is enough to integrate into any existing website; text chat remains the fallback for voice mode
 - **Admin dashboard**: Web interface for the kitchen studio with login, overviews, and navigation
 - Both frontends **live on Cloudflare Pages** with automatic SSL and custom domains
 
@@ -130,6 +132,7 @@ KI-Mitarbeiter-Team/
 | AI Model | Anthropic Claude | Best model for conversations and autonomous action |
 | Embeddings | OpenAI | Cheap, proven vectorization for knowledge search |
 | Chat | WebSocket | Real-time communication without page reload |
+| Live Voice | OpenAI Realtime + WebRTC | Low latency, VAD, and interruptions in the browser |
 | Widget | React + Vite | Small bundle, runs isolated on any website |
 | Dashboard | React + Tailwind | Modern, maintainable admin interface |
 | Hosting Backend | Hetzner (EU) | GDPR-compliant, reliable, cost-effective |
@@ -174,6 +177,9 @@ cd frontends/dashboard && pnpm install && pnpm build
 - `ADMIN_PASSWORD_HASH` must be set in production. The test login `admin / secret` only works when `ALLOW_DEMO_LOGIN=true` and `APP_ENV` is not `production`.
 - `JWT_SECRET` must be a long random value and must never be committed.
 - `ENABLE_EMAIL_SENDING` and `ENABLE_CALENDAR_SYNC` default to `false`. External actions only run when the matching API/OAuth credentials are configured and the feature flags are deliberately enabled.
+- `ENABLE_VOICE_SESSIONS` is the global kill switch for Lisa Live Voice. The studio `config` must also set `voice_enabled=true`; the widget can show the tab with `data-voice="true"`.
+- Lisa Live Voice uses `/voice/sessions/webrtc` as the server-side WebRTC broker for OpenAI Realtime. Standard API keys stay in the backend; the browser receives only the SDP answer and safe session metadata.
+- In voice mode, microphone access is requested only after consent and an additional click. Raw audio is not stored by default; final transcripts, tool audits, and summaries are stored tenant-safely.
 - `CORS_ORIGINS` must include the public website and dashboard. WebSocket connections are checked server-side against these origins.
 - The widget connects only after GDPR consent and sends `consent=1` to `/ws/chat`.
 
@@ -206,6 +212,7 @@ The widget production build aliases React to Preact Compat so the bundled `loade
 | Database schema | Complete with Alembic migration |
 | API framework | Complete with tenant-scoped MVP routes |
 | WebSocket chat | Complete with consent, origin, and size checks |
+| Lisa Live Voice | Complete as feature-flagged WebRTC mode with consent, tool bridge, and text fallback |
 | Agent core (base) | Complete |
 | Agent template | Complete |
 | Chat widget | Complete with GDPR consent gate and small IIFE bundle |

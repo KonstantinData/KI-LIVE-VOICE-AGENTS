@@ -41,4 +41,5 @@ async def get_widget_config(
         ),
         "privacy_url": config.get("privacy_url", "/datenschutz"),
         "retention_days": int(config.get("retention_days", 90)),
+        "voice_enabled": bool(config.get("voice_enabled", False)),
     }

@@ -175,6 +175,7 @@ async def test_widget_config_is_public_for_active_studio(db_client, db_session):
     data = response.json()
     assert data["studio"] == "mein-kuechenexperte"
     assert data["agent_name"] == "Lisa"
+    assert data["voice_enabled"] is False
 
 
 @pytest.mark.asyncio

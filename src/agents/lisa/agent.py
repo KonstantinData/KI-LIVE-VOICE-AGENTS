@@ -109,6 +109,17 @@ class LisaAgent(BaseAgent):
 
         return await super().process_message(user_message, conversation, studio)
 
+    def get_contextual_tools(
+        self,
+        conversation: Conversation,
+        studio: Studio,
+    ) -> ToolRegistry:
+        """Returns Lisa's tool registry bound to a specific conversation."""
+        self._current_conversation_id = conversation.id
+        self._current_studio_id = studio.id
+        self._current_visitor_id = conversation.visitor_id
+        return self.get_tools()
+
     # ──────────────────────────────────────────────────────────────────────────
     # finalize_conversation — Zusammenfassung bei Gesprächsende
     # ──────────────────────────────────────────────────────────────────────────

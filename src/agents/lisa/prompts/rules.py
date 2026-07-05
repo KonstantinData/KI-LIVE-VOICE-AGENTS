@@ -1,4 +1,4 @@
-"""Verhaltensregeln für Lisas System-Prompt."""
+"""Verhaltensregeln für KEAs System-Prompt."""
 
 LISA_RULES = """## DEINE REGELN
 

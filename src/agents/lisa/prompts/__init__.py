@@ -1,1 +1,1 @@
-"""Prompt-Bausteine für Lisa."""
+"""Prompt-Bausteine für KEA."""

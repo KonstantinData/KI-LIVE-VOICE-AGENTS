@@ -84,7 +84,7 @@ export function useWebSocket({
         } else if (data.type === 'error') {
           const msg: Message = {
             role: 'assistant',
-            content: data.message ?? 'Lisa ist gerade technisch nicht erreichbar.',
+            content: data.message ?? 'KEA ist gerade technisch nicht erreichbar.',
             timestamp: data.timestamp ?? new Date().toISOString(),
           };
           setTyping(false);

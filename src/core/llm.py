@@ -14,6 +14,7 @@ from typing import Any
 import structlog
 from anthropic import AsyncAnthropic, APIStatusError, RateLimitError
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from src.api.config import get_settings
 from src.core.types import LLMResponse
@@ -149,7 +150,9 @@ class LLMClient:
         Returns:
             LLMResponse with text content and token usage
         """
-        openai_messages = [{"role": "system", "content": system_prompt}]
+        openai_messages: list[ChatCompletionMessageParam] = [
+            {"role": "system", "content": system_prompt}
+        ]
         for message in messages:
             role = message.get("role", "user")
             content = message.get("content", "")
