@@ -20,6 +20,7 @@ from src.db.models.conversation import Conversation
 from src.db.models.event import Event
 from src.db.models.feedback import Feedback
 from src.db.models.lead import Lead
+from src.api.services.project_uploads import delete_expired_upload_files
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -31,6 +32,7 @@ async def run_retention_cleanup() -> None:
     now = datetime.now(timezone.utc)
     conversation_cutoff = now - timedelta(days=settings.retention_conversation_days)
     lead_cutoff = now - timedelta(days=settings.retention_unconverted_lead_days)
+    upload_cutoff = now - timedelta(days=settings.retention_upload_days)
     feedback_cutoff = now - timedelta(days=settings.retention_feedback_days)
     event_cutoff = now - timedelta(days=settings.retention_event_days)
 
@@ -62,6 +64,14 @@ async def run_retention_cleanup() -> None:
             lead.status = "anonymized"
             anonymized_leads += 1
 
+        (
+            deleted_upload_files,
+            deleted_orphan_upload_files,
+        ) = await delete_expired_upload_files(
+            session=session,
+            cutoff=upload_cutoff,
+        )
+
         old_feedback = await session.execute(
             select(Feedback.id)
             .where(Feedback.studio_id.is_not(None))
@@ -92,6 +102,8 @@ async def run_retention_cleanup() -> None:
         "retention.cleanup_completed",
         deleted_conversations=deleted_conversations,
         anonymized_leads=anonymized_leads,
+        deleted_upload_files=deleted_upload_files,
+        deleted_orphan_upload_files=deleted_orphan_upload_files,
         deleted_feedback=deleted_feedback,
         deleted_events=deleted_events,
     )

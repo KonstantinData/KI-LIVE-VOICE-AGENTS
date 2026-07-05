@@ -32,15 +32,11 @@ class Settings(BaseSettings):
     # Datenbank
     database_url: str = "postgresql+asyncpg://ki_team:passwort@localhost:5432/ki_mitarbeiter"
 
-    # Anthropic Claude
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-4-20250514"
-    anthropic_max_tokens: int = 1024
-
-    # OpenAI Embeddings
+    # OpenAI
     openai_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-4o-mini"
+    openai_chat_max_tokens: int = 1024
     openai_realtime_model: str = "gpt-realtime-2"
     openai_realtime_voice: str = "marin"
     enable_voice_sessions: bool = False
@@ -51,7 +47,7 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     resend_from_email: str = "noreply@example.com"
     resend_from_name: str = "KI-Assistent"
-    enable_email_sending: bool = False
+    enable_email_sending: bool | None = None
 
     # Google Calendar OAuth
     google_client_id: str = ""
@@ -72,6 +68,7 @@ class Settings(BaseSettings):
     max_chat_message_chars: int = 4000
     retention_conversation_days: int = 180
     retention_unconverted_lead_days: int = 365
+    retention_upload_days: int = 180
     retention_feedback_days: int = 730
     retention_event_days: int = 1095
 
@@ -115,7 +112,7 @@ class Settings(BaseSettings):
                 raise ValueError("ADMIN_PASSWORD_HASH must be set in production")
             if self.allow_demo_login:
                 raise ValueError("ALLOW_DEMO_LOGIN must be false in production")
-        if self.enable_email_sending and not self.resend_api_key:
+        if self.enable_email_sending is True and not self.resend_api_key:
             raise ValueError("RESEND_API_KEY is required when ENABLE_EMAIL_SENDING=true")
         if self.enable_calendar_sync and (
             not self.google_client_id or not self.google_client_secret

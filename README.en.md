@@ -82,7 +82,7 @@ The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexp
 ### AI Core
 
 - Pre-built **agent structure**: Each new agent follows the same 7-step process (load context → understand request → retrieve knowledge → use tools → respond → save)
-- Connection to **Anthropic Claude** (state-of-the-art language model technology) for natural conversations and complex reasoning
+- Connection to **OpenAI** for natural conversations, live voice, and complex reasoning
 - **Tool system**: Agents can independently perform actions (check appointments, send emails, save data)
 - **Tenant registry**: New tenants receive their own profiles, skill packs, policies, and widget identity without a new hard-coded agent
 
@@ -130,7 +130,7 @@ KI-LIVE-VOICE-AGENTS/
 | ---- | ---------- | --- |
 | Backend | Python + FastAPI | Fast, asynchronous, ideal for AI applications |
 | Database | PostgreSQL + pgvector | Relational data + AI search in one system |
-| AI Model | Anthropic Claude | Best model for conversations and autonomous action |
+| AI Model | OpenAI | Conversations, tool use, and live voice through one provider |
 | Embeddings | OpenAI | Cheap, proven vectorization for knowledge search |
 | Chat | WebSocket | Real-time communication without page reload |
 | Live Voice | OpenAI Realtime + WebRTC | Low latency, VAD, and interruptions in the browser |

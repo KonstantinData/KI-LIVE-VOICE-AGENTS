@@ -1,7 +1,7 @@
 """
 Tool Execution Engine
 =====================
-What:    Executes tool calls returned by Claude (function calling).
+What:    Executes tool calls returned by OpenAI function calling.
 Does:    Looks up tools in registry, executes them with parameters, returns results, logs execution.
 Why:     Agents need to perform actions (book appointments, send emails, etc.) via tools.
 Who:     BaseAgent (via process_message), all agents that use tools.
@@ -20,12 +20,12 @@ log = structlog.get_logger()
 
 class ToolRunner:
     """
-    Führt Tool-Calls von Claude aus.
+    Führt Tool-Calls des LLM aus.
 
-    Claude gibt Tool-Calls zurück. Der ToolRunner:
+    Das LLM gibt Tool-Calls zurück. Der ToolRunner:
     1. Sucht das Tool in der Registry
     2. Führt die Tool-Funktion aus
-    3. Gibt das Ergebnis an Claude zurück
+    3. Gibt das Ergebnis an das LLM zurück
     4. Loggt die Ausführung
     """
 
@@ -66,28 +66,28 @@ class ToolRunner:
         self, tool_calls: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
         """
-        Executes all tool calls and formats results for the next Claude call.
+        Executes all tool calls and formats results for the next OpenAI call.
         
         Args:
-            tool_calls: List of tool calls from Claude (with id, name, input)
+            tool_calls: List of tool calls with id, name, input
             
         Returns:
-            List of tool results in Claude's expected format
+            List of OpenAI tool response messages
         """
         results = []
         for call in tool_calls:
             result = await self.execute(call["name"], call["input"])
             content = result.result if result.success else f"Fehler: {result.error}"
             results.append({
-                "type": "tool_result",
-                "tool_use_id": call["id"],
+                "role": "tool",
+                "tool_call_id": call["id"],
                 "content": str(content),
             })
         return results
 
     def get_tool_definitions(self) -> list[dict]:
         """
-        Returns tool definitions in Claude's format.
+        Returns tool definitions in OpenAI's format.
         
         Returns:
             List of tool definitions with name, description, and input_schema

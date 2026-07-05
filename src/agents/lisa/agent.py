@@ -1,4 +1,4 @@
-"""Lisa — KI-Empfangsdame für Küchen- und Möbelstudios."""
+"""KEA website intake agent for kitchen project conversations."""
 
 from uuid import UUID
 
@@ -21,7 +21,7 @@ log = structlog.get_logger()
 
 # System-Prompt für die Zusammenfassungsgenerierung
 _SUMMARY_SYSTEM_PROMPT = """Du bist ein präziser Assistent, der Gesprächszusammenfassungen erstellt.
-Erstelle eine kompakte Zusammenfassung für den Berater. Maximal 5–8 Sätze.
+Erstelle eine kompakte Zusammenfassung für das Team. Maximal 5–8 Sätze.
 Format: Was will der Kunde? Was wurde besprochen? Was ist der nächste Schritt?
 Hebe Wichtiges hervor: Budget, Zeitrahmen, Besonderheiten, offene Fragen.
 Schreibe aus der Perspektive des Studios — nüchtern, informativ, kein Marketing."""
@@ -29,11 +29,10 @@ Schreibe aus der Perspektive des Studios — nüchtern, informativ, kein Marketi
 
 class LisaAgent(BaseAgent):
     """
-    Lisa — erste KI-Mitarbeiterin.
+    KEA — website project-intake assistant.
 
-    Zuständig für: Erstkontakt, Begrüßung, Lead-Qualifizierung, Terminvereinbarung.
-    Läuft der vollständige 7-Schritte-Agent-Loop aus BaseAgent.
-    Zusätzlich: finalize_conversation() für Gesprächszusammenfassung bei Disconnect.
+    Handles first contact, controlled project intake, upload/contact handoff,
+    and conversation summaries.
     """
 
     def __init__(self, session: AsyncSession) -> None:
@@ -41,6 +40,7 @@ class LisaAgent(BaseAgent):
         # Wird in process_message gesetzt, damit get_tools() Zugriff hat
         self._current_conversation_id: UUID | None = None
         self._current_studio_id: UUID | None = None
+        self._current_studio_slug: str = ""
         self._current_visitor_id: str = ""
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -75,13 +75,14 @@ class LisaAgent(BaseAgent):
                     visitor_id=self._current_visitor_id,
                 )
             )
-            registry.register(
-                BookAppointmentTool(
-                    session=self._session,
-                    studio_id=self._current_studio_id,
-                    visitor_id=self._current_visitor_id,
+            if self._current_studio_slug != "mein-kuechenexperte":
+                registry.register(
+                    BookAppointmentTool(
+                        session=self._session,
+                        studio_id=self._current_studio_id,
+                        visitor_id=self._current_visitor_id,
+                    )
                 )
-            )
 
         return registry
 
@@ -105,6 +106,7 @@ class LisaAgent(BaseAgent):
         """
         self._current_conversation_id = conversation.id
         self._current_studio_id = studio.id
+        self._current_studio_slug = studio.slug
         self._current_visitor_id = conversation.visitor_id
 
         return await super().process_message(user_message, conversation, studio)
@@ -117,6 +119,7 @@ class LisaAgent(BaseAgent):
         """Returns Lisa's tool registry bound to a specific conversation."""
         self._current_conversation_id = conversation.id
         self._current_studio_id = studio.id
+        self._current_studio_slug = studio.slug
         self._current_visitor_id = conversation.visitor_id
         return self.get_tools()
 
@@ -169,7 +172,7 @@ class LisaAgent(BaseAgent):
                     {
                         "role": "user",
                         "content": (
-                            f"Bitte erstelle eine Zusammenfassung für den Berater "
+                            f"Bitte erstelle eine Zusammenfassung für das Team "
                             f"des Studios '{studio.name}'.\n\n"
                             f"Gesprächsprotokoll:\n{transcript}"
                         ),

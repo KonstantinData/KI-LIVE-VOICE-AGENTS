@@ -1,5 +1,9 @@
-"""System-Prompt-Builder für Lisa."""
+"""System prompt builder for KEA."""
 
+from src.agents.lisa.prompts.conversation_contract import (
+    KEA_CONVERSATION_CONTRACT,
+    KEA_OFFER_GUIDANCE,
+)
 from src.agents.lisa.prompts.identity import LISA_IDENTITY
 from src.agents.lisa.prompts.rules import LISA_RULES, LISA_TOOL_INSTRUCTIONS
 from src.agents.lisa.prompts.tonality import LISA_TONALITY
@@ -61,6 +65,10 @@ def build_lisa_system_prompt(
         )
 
     # 5. Tonalität
+    sections.append("\n" + KEA_CONVERSATION_CONTRACT)
+
+    sections.append("\n" + KEA_OFFER_GUIDANCE)
+
     sections.append("\n" + LISA_TONALITY)
 
     # 6. Regeln

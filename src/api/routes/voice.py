@@ -128,7 +128,7 @@ class VoiceContactHandoffRequest(BaseModel):
     email: str = Field(min_length=3, max_length=254)
     phone: str | None = Field(default=None, max_length=50)
     best_reachability: str | None = Field(default=None, max_length=160)
-    project_summary: str = Field(min_length=10, max_length=1600)
+    project_summary: str = Field(default="", max_length=1600)
     additional_notes: str | None = Field(default=None, max_length=1600)
     contact_consent_confirmed: bool
     consent_granted: bool
@@ -664,8 +664,8 @@ async def submit_voice_contact_handoff(
         return VoiceContactHandoffResponse(success=False, error="invalid_email")
     if not _valid_phone(phone):
         return VoiceContactHandoffResponse(success=False, error="invalid_phone")
-    if len(project_summary) < 10:
-        return VoiceContactHandoffResponse(success=False, error="project_summary_required")
+    if not project_summary:
+        project_summary = "Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung."
 
     lead = await _upsert_contact_lead(
         session=session,

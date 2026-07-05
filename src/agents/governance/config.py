@@ -69,7 +69,6 @@ class GovernanceConfig:
 
     # Patterns that indicate a secret/API key in code
     secret_patterns: list[str] = field(default_factory=lambda: [
-        r"sk-ant-[a-zA-Z0-9\-_]{20,}",      # Anthropic key
         r"sk-[a-zA-Z0-9]{48}",               # OpenAI key
         r"re_[a-zA-Z0-9]{32,}",              # Resend key
         r"GOCSPX-[a-zA-Z0-9\-_]{28,}",      # Google OAuth secret

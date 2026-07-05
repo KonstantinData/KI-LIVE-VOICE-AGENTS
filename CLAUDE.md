@@ -1,6 +1,6 @@
 # CLAUDE.md — KI-Mitarbeiter-Team Foundation
 
-> **Diese Datei ist die zentrale Arbeitsanweisung für Claude Code.**
+> **Diese Datei ist eine Legacy-Arbeitsanweisung für Codex.**
 > Sie beschreibt NUR die Grundstruktur des Repositories.
 > Die einzelnen KI-Agenten (Lisa, Max, Anna, Tom, Sara) werden SPÄTER
 > in separaten Schritten hinzugefügt.
@@ -55,7 +55,7 @@ Nur das leere Gerüst, in das Agenten später eingesteckt werden können.
 | **Agent-Logik + Backend** | Python 3.12+ | Bestes AI-Ökosystem (LangChain, etc.) |
 | **API-Framework** | FastAPI | Async, schnell, WebSocket-Support, auto Docs |
 | **ORM** | SQLAlchemy 2.0 + Alembic | Standard, async-fähig, Migrations |
-| **Agent LLM** | Anthropic Claude API | Bestes Tool Use + Reasoning |
+| **Agent LLM** | OpenAI API | Chat, Tool Use und Live Voice über einen Provider |
 | **Embeddings** | OpenAI API (text-embedding-3-small) | Günstig, bewährt |
 | **Datenbank** | PostgreSQL 16 + pgvector | Relational + Vektorsuche |
 | **Task Queue** | Kein (vorerst) — in-process mit APScheduler | MVP-einfach |
@@ -98,7 +98,7 @@ KI-Mitarbeiter-Team-Kuechen-und-Moebelgeschaeft/
 │   ├── core/                          # ══ SHARED AGENT CORE ══
 │   │   ├── __init__.py
 │   │   ├── base_agent.py              # Abstrakte Agent-Basisklasse
-│   │   ├── llm.py                     # Claude API Wrapper
+│   │   ├── llm.py                     # OpenAI API Wrapper
 │   │   ├── embeddings.py              # OpenAI Embedding Wrapper
 │   │   ├── memory.py                  # Kurzzeit + Langzeit-Gedächtnis
 │   │   ├── knowledge.py               # Wissensbasis-Suche (pgvector)
@@ -358,7 +358,6 @@ alembic>=1.14.0
 pgvector>=0.3.6
 
 # AI / LLM
-anthropic>=0.42.0
 openai>=1.58.0
 
 # Validierung + Settings
@@ -419,17 +418,12 @@ LOG_LEVEL=DEBUG
 DATABASE_URL=postgresql+asyncpg://ki_team:PASSWORT@localhost:5432/ki_mitarbeiter
 
 # ═══════════════════════════════════════
-# Anthropic Claude (Agent-Gehirn)
-# ═══════════════════════════════════════
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
-ANTHROPIC_MAX_TOKENS=1024
-
-# ═══════════════════════════════════════
-# OpenAI (Embeddings)
+# OpenAI (Agent-Gehirn, Embeddings, Live Voice)
 # ═══════════════════════════════════════
 OPENAI_API_KEY=sk-...
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_CHAT_MAX_TOKENS=1024
 
 # ═══════════════════════════════════════
 # Resend (E-Mail)
@@ -639,7 +633,7 @@ class BaseAgent(ABC):
     2. Absicht erkennen
     3. Wissen abrufen (Wissensbasis durchsuchen)
     4. Tools bereitstellen
-    5. LLM aufrufen (Claude mit System-Prompt + Tools)
+    5. LLM aufrufen (OpenAI mit System-Prompt + Tools)
     6. Tool-Calls ausführen (falls vorhanden)
     7. Ergebnis speichern + zurückgeben
 
@@ -666,12 +660,12 @@ class BaseAgent(ABC):
         ...
 ```
 
-### llm.py — Claude API Wrapper
+### llm.py — OpenAI API Wrapper
 
 ```python
 class LLMClient:
     """
-    Wrapper um die Anthropic Claude API.
+    Wrapper um die OpenAI API.
 
     - Unterstützt Tool Use (function calling)
     - Retry-Logic mit Exponential Backoff
@@ -734,12 +728,12 @@ class KnowledgeBase:
 ```python
 class ToolRunner:
     """
-    Führt Tool-Calls von Claude aus.
+    Führt Tool-Calls des LLMs aus.
 
-    Claude gibt Tool-Calls zurück. Der ToolRunner:
+    Das LLM gibt Tool-Calls zurück. Der ToolRunner:
     1. Validiert die Parameter (Pydantic)
     2. Führt die Tool-Funktion aus
-    3. Gibt das Ergebnis an Claude zurück
+    3. Gibt das Ergebnis an das LLM zurück
     4. Loggt die Ausführung
     """
 
@@ -750,7 +744,7 @@ class ToolRunner:
         ...
 
     def get_tool_definitions(self) -> list[dict]:
-        """Gibt die Tool-Definitionen im Claude-Format zurück."""
+        """Gibt die Tool-Definitionen im OpenAI-Format zurück."""
         ...
 ```
 
@@ -792,7 +786,6 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_port: int = 8000
     database_url: str
-    anthropic_api_key: str
     openai_api_key: str
     jwt_secret: str
     # ... alle weiteren Variablen
@@ -879,7 +872,7 @@ Akzeptanztests für die Grundstruktur:
 4. **Agent-Core ist testbar:**
    - `make test` läuft durch (auch wenn noch keine Agenten existieren)
    - BaseAgent kann instanziiert werden (mit Dummy-Subclass)
-   - LLM Wrapper kann Claude aufrufen (mit API Key)
+   - LLM Wrapper kann OpenAI aufrufen (mit API Key)
    - Embedding Wrapper kann Vektoren erzeugen
 
 5. **WebSocket funktioniert:**

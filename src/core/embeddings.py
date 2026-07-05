@@ -25,7 +25,11 @@ class EmbeddingClient:
     """
 
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(api_key=settings.openai_api_key)
+        self._client = (
+            AsyncOpenAI(api_key=settings.openai_api_key)
+            if settings.openai_api_key
+            else None
+        )
         self._model = settings.openai_embedding_model
 
     async def embed(self, text: str) -> list[float]:
@@ -38,6 +42,8 @@ class EmbeddingClient:
         Returns:
             1536-dimensional embedding vector
         """
+        if self._client is None:
+            raise RuntimeError("OPENAI_API_KEY is required for embeddings")
         response = await self._client.embeddings.create(
             model=self._model,
             input=text,
@@ -57,6 +63,8 @@ class EmbeddingClient:
         Returns:
             List of 1536-dimensional embedding vectors
         """
+        if self._client is None:
+            raise RuntimeError("OPENAI_API_KEY is required for embeddings")
         response = await self._client.embeddings.create(
             model=self._model,
             input=texts,

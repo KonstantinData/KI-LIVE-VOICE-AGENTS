@@ -25,6 +25,7 @@ interface VoiceMessage {
 interface VoiceControlsProps {
   config: WidgetConfig;
   visitorId: string;
+  onConversationReady?: (conversationId: string) => void;
 }
 
 interface VoiceSessionResponse {
@@ -78,7 +79,7 @@ function waitForIceGatheringComplete(peer: RTCPeerConnection): Promise<void> {
   });
 }
 
-export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
+export function VoiceControls({ config, visitorId, onConversationReady }: VoiceControlsProps) {
   const [state, setState] = useState<VoiceState>('idle');
   const [status, setStatus] = useState('Bitte wählen Sie zuerst Du oder Sie.');
   const [addressMode, setAddressMode] = useState<AddressMode | null>(null);
@@ -167,8 +168,8 @@ export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
     appendVoiceMessage(
       'assistant',
       mode === 'du'
-        ? 'Alles klar, dann duze ich dich. Wenn du möchtest, kannst du jetzt das Gespräch starten.'
-        : 'Sehr gern, dann bleiben wir beim Sie. Wenn Sie möchten, können Sie jetzt das Gespräch starten.',
+        ? `Hallo, ich bin ${config.agentName}. Dann bleiben wir gerne beim Du. Wenn du möchtest, kannst du jetzt das Gespräch starten.`
+        : `Hallo, ich bin ${config.agentName}. Dann bleiben wir gerne beim Sie. Wenn Sie möchten, können Sie jetzt das Gespräch starten.`,
     );
     setStatus('Sprachmodus bereit.');
   };
@@ -289,7 +290,9 @@ export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
           email: contactForm.email,
           phone: contactForm.phone || null,
           best_reachability: contactForm.best_reachability || null,
-          project_summary: contactForm.project_summary,
+          project_summary:
+            contactForm.project_summary ||
+            'Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung.',
           additional_notes: contactForm.additional_notes || null,
           contact_consent_confirmed: contactForm.contact_consent_confirmed,
           consent_granted: true,
@@ -347,8 +350,8 @@ export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
       const mode = addressModeRef.current ?? 'sie';
       const instructions =
         mode === 'du'
-          ? 'Der Besucher hat Du gewählt. Starte ohne Selbstvorstellung. Sage kurz: "Alles klar, dann sind wir per Du. Worum geht es bei deinem Küchenprojekt?"'
-          : 'Der Besucher hat Sie gewählt. Starte ohne Selbstvorstellung. Sage kurz: "Sehr gern, dann bleiben wir beim Sie. Worum geht es bei Ihrem Küchenprojekt?"';
+          ? 'Die Begrüßung und Selbstvorstellung wurden im Widget bereits angezeigt. Wiederhole nicht, wer du bist. Sage nur: "Worum geht es bei deinem Küchenprojekt?"'
+          : 'Die Begrüßung und Selbstvorstellung wurden im Widget bereits angezeigt. Wiederholen Sie nicht, wer Sie sind. Sagen Sie nur: "Worum geht es bei Ihrem Küchenprojekt?"';
       dc.send(JSON.stringify({ type: 'response.create', response: { instructions } }));
     };
     dc.onmessage = (event) => {
@@ -437,6 +440,7 @@ export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
       const session = await createVoiceSession();
       conversationIdRef.current = session.conversation_id;
       voiceSessionIdRef.current = session.voice_session_id;
+      onConversationReady?.(session.conversation_id);
       await connectRealtime(session, stream);
       pausedRef.current = false;
       setState('live');
@@ -587,12 +591,10 @@ export function VoiceControls({ config, visitorId }: VoiceControlsProps) {
             />
           </label>
           <label>
-            <span>Kurze Projektzusammenfassung</span>
+            <span>Kurze Projektzusammenfassung optional</span>
             <textarea
               maxLength={1600}
-              minLength={10}
               onInput={(event) => updateContactField('project_summary', event.currentTarget.value)}
-              required
               rows={3}
               value={contactForm.project_summary}
             />

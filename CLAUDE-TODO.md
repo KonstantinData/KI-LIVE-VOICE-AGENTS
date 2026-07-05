@@ -68,7 +68,7 @@ Abgeleitet aus `BASIS.md`. Ausgeführt am 2026-03-10.
 
 - [x] `src/core/types.py` (Pydantic Models)
 - [x] `src/core/base_agent.py` (Abstrakte Basisklasse)
-- [x] `src/core/llm.py` (Claude API Wrapper)
+- [x] `src/core/llm.py` (OpenAI API Wrapper)
 - [x] `src/core/embeddings.py` (OpenAI Embedding Wrapper)
 - [x] `src/core/memory.py` (Gedächtnis-Management)
 - [x] `src/core/knowledge.py` (pgvector Wissensbasis-Suche)

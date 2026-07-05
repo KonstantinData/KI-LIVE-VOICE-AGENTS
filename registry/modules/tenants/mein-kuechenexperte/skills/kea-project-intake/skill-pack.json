@@ -6,7 +6,7 @@
   "status": "active",
   "task_types": [
     "project-intake",
-    "voice-consultation",
+    "guided-project-intake",
     "contact-handoff",
     "project-upload-context"
   ],

@@ -13,7 +13,7 @@
 | Komponente | Technologie | Version | Zweck |
 | --- | --- | --- | --- |
 | Agent-Core | Python 3.12 | — | Basisklasse + Orchestrierung |
-| LLM | Anthropic Claude | claude-sonnet-4-20250514 | Sprachverarbeitung |
+| LLM | OpenAI | gpt-4o-mini | Sprachverarbeitung und Tool Use |
 | Embeddings | OpenAI | text-embedding-3-small | Semantische Suche |
 | Datenbank | PostgreSQL 16 + pgvector | — | Datenspeicherung |
 | API | FastAPI | 0.115+ | REST + WebSocket |
@@ -30,8 +30,7 @@ Endkunde (Browser)
   ▼
 FastAPI Backend (Hetzner, DE)
   │ HTTPS
-  ├─► Anthropic Claude API (USA) — Chat-Verarbeitung
-  ├─► OpenAI API (USA) — Embeddings für Wissensbasis
+  ├─► OpenAI API (USA) — Chat, Live Voice, Embeddings für Wissensbasis
   └─► PostgreSQL (Hetzner, DE) — Datenspeicherung
 ```
 
@@ -41,7 +40,7 @@ FastAPI Backend (Hetzner, DE)
 
 | Modell | Anbieter | Zweck | Drittland |
 | --- | --- | --- | --- |
-| claude-sonnet-4-20250514 | Anthropic | Chat-Antworten + Tool Use | USA (SCC) |
+| gpt-4o-mini | OpenAI | Chat-Antworten + Tool Use | USA (SCC) |
 | text-embedding-3-small | OpenAI | Vektorsuche in Wissensbasis | USA (SCC) |
 
 ---

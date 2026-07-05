@@ -74,10 +74,10 @@ def check_secrets_in_code(
                 ),
                 fix_example=(
                     "# VORHER (VERSTOSS):\n"
-                    'api_key = "sk-ant-abc123"\n\n'
+                    'api_key = "sk-abc123"\n\n'
                     "# NACHHER (COMPLIANT):\n"
                     "from src.api.config import get_settings\n"
-                    "api_key = get_settings().anthropic_api_key"
+                    "api_key = get_settings().openai_api_key"
                 ),
                 deadline="Sofort — Key rotieren und aus Git-History entfernen",
                 auto_fixable=False,

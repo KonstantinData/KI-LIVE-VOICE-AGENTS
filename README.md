@@ -82,7 +82,7 @@ Das Küchenstudio sieht alles in einem Admin-Dashboard unter `app.mein-kuechenex
 ### KI-Kern
 
 - Vorgefertigte **Agentenstruktur**: Jeder neue Agent folgt demselben 7-Schritte-Ablauf (Kontext laden → Anfrage verstehen → Wissen abrufen → Tools nutzen → Antworten → Speichern)
-- Anbindung an **Anthropic Claude** (modernste Sprachmodell-Technologie) für natürliche Gespräche und komplexes Reasoning
+- Anbindung an **OpenAI** für natürliche Gespräche, Live Voice und komplexes Reasoning
 - **Tool-System**: Agenten können eigenständig Aktionen ausführen (Termine prüfen, E-Mails senden, Daten speichern)
 - **Tenant-Registry**: Neue Tenants erhalten eigene Profile, Skill-Packs, Policies und Widget-Identität ohne neuen hart codierten Agenten
 
@@ -130,7 +130,7 @@ KI-LIVE-VOICE-AGENTS/
 | ------- | ----------- | ----- |
 | Backend | Python + FastAPI | Schnell, asynchron, ideal für KI-Anwendungen |
 | Datenbank | PostgreSQL + pgvector | Relationale Daten + KI-Suche in einem System |
-| KI-Modell | Anthropic Claude | Bestes Modell für Gespräche und eigenständiges Handeln |
+| KI-Modell | OpenAI | Gespräche, Tool-Nutzung und Live Voice über einen Provider |
 | Embeddings | OpenAI | Günstige, bewährte Vektorisierung für Wissenssuche |
 | Chat | WebSocket | Echtzeit-Kommunikation ohne Seitenneuladung |
 | Live Voice | OpenAI Realtime + WebRTC | Niedrige Latenz, VAD und Unterbrechungen im Browser |

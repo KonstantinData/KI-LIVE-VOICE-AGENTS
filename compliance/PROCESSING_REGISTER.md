@@ -15,8 +15,8 @@
 | Betroffene Personen | Website-Besucher des Küchenstudios |
 | Datenkategorien | Chat-Verlauf, Name, E-Mail, Telefon (optional), Budget-Angaben |
 | Empfänger intern | Studio-Berater (über Dashboard) |
-| Empfänger extern | Anthropic Claude API (LLM-Verarbeitung), OpenAI (Embeddings) |
-| Drittlandtransfer | USA — Anthropic, OpenAI (SCC-Mechanismus) |
+| Empfänger extern | OpenAI API (LLM-Verarbeitung, Live Voice, Embeddings) |
+| Drittlandtransfer | USA — OpenAI (SCC-Mechanismus) |
 | Löschfrist | Chat-Rohdaten: 6 Monate; Lead-Daten: 12 Monate nach letztem Kontakt |
 | TOM | TLS-Verschlüsselung, Pseudonymisierung via visitor_id, Zugangskontrolle |
 
@@ -33,7 +33,7 @@
 | Datenkategorien | Budget, Zeitrahmen, Küchenstil, Raumgröße, Kontaktdaten |
 | Score-Kriterien | Sachliche Merkmale (Budget, Timeline) — KEINE demografischen Merkmale |
 | Empfänger | Studio-Berater |
-| Drittlandtransfer | USA — Anthropic (Score-Berechnung via LLM) |
+| Drittlandtransfer | USA — OpenAI (Score-Berechnung via LLM) |
 | Löschfrist | Mit Lead-Daten: 12 Monate |
 | TOM | Keine Diskriminierungsmerkmale im Scoring-Algorithmus |
 

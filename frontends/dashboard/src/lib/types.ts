@@ -37,6 +37,7 @@ export interface Message {
   conversation_id: string;
   role: 'user' | 'assistant' | string;
   content: string;
+  tool_calls?: unknown[] | null;
   created_at: string;
 }
 

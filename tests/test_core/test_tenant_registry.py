@@ -20,6 +20,7 @@ def test_mein_kuechenexperte_profile_selects_kea_widget_identity():
     assert profile.tenant_id == "mein-kuechenexperte"
     assert profile.public_widget.agent_name == "KEA"
     assert profile.live_voice_agent().agent_type == "live-voice"
+    assert "book-appointment" not in profile.live_voice_agent().tools
     assert "no-voice-pii-capture" in profile.live_voice_agent().policies
 
 
@@ -67,5 +68,7 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
     assert config["metadata"]["tenant_id"] == "mein-kuechenexperte"
     assert config["metadata"]["agent_profile_id"] == "kea-project-intake"
     assert "Du bist KEA" in config["instructions"]
+    assert "kein Kuechenfachberater" in config["instructions"]
+    assert "Angebotsfragen" in config["instructions"]
     assert "niemals Lisa" not in config["instructions"]
     assert agent_display_name("mein-kuechenexperte") == "KEA"

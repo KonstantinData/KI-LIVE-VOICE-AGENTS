@@ -12,37 +12,34 @@ Depends: fastapi, sqlalchemy, openai, src.api.config, src.db.models
 
 from __future__ import annotations
 
-import base64
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-import re
+from uuid import UUID
 from uuid import uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
-from openai import AsyncOpenAI
 from pydantic import BaseModel
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.config import get_settings
+from src.api.services.project_upload_runtime import (
+    ALLOWED_TYPES,
+    analyze_project_upload as _analyze_project_upload,
+    enforce_upload_limits,
+    get_or_create_conversation,
+    load_studio,
+    origin_allowed,
+    safe_name,
+    sniff_content_type,
+    storage_path,
+)
 from src.db.database import get_session
-from src.db.models.conversation import Conversation
 from src.db.models.event import Event
 from src.db.models.message import Message
-from src.db.models.studio import Studio
 from src.tenants.registry import agent_display_name, get_tenant_profile_for_studio
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
 log = structlog.get_logger()
-
-ALLOWED_TYPES = {
-    "application/pdf": ".pdf",
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-}
-IMAGE_TYPES = {"image/jpeg", "image/png"}
-
 
 class ProjectUploadResponse(BaseModel):
     """Upload response returned to the widget."""
@@ -57,191 +54,12 @@ class ProjectUploadResponse(BaseModel):
     message: str
 
 
-def _allowed_origins() -> set[str]:
-    settings = get_settings()
-    origins = {origin.rstrip("/") for origin in settings.cors_origins if origin}
-    origins.update({
-        settings.website_url.rstrip("/"),
-        settings.dashboard_url.rstrip("/"),
-        settings.widget_url.rstrip("/"),
-    })
-    return {origin for origin in origins if origin}
-
-
-def _origin_allowed(origin: str | None) -> bool:
-    settings = get_settings()
-    if origin is None:
-        return settings.app_env != "production"
-    return origin.rstrip("/") in _allowed_origins()
-
-
-def _safe_name(filename: str | None) -> str:
-    name = Path(filename or "upload").name
-    name = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip(".-")
-    return name[:120] or "upload"
-
-
-def _sniff_content_type(data: bytes, declared_type: str | None) -> str:
-    if data.startswith(b"%PDF-"):
-        return "application/pdf"
-    if data.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "image/png"
-    if data.startswith(b"\xff\xd8\xff"):
-        return "image/jpeg"
-    if declared_type in ALLOWED_TYPES:
-        return declared_type
-    raise HTTPException(
-        status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        detail="unsupported_file_type",
-    )
-
-
-def _storage_path(
-    *,
-    studio_slug: str,
-    conversation_id: str,
-    extension: str,
-) -> tuple[Path, str]:
-    settings = get_settings()
-    now = datetime.now(timezone.utc)
-    file_id = str(uuid4())
-    relative_path = Path(
-        studio_slug,
-        f"{now.year:04d}",
-        f"{now.month:02d}",
-        conversation_id,
-        f"{file_id}{extension}",
-    )
-    return Path(settings.upload_storage_dir) / relative_path, str(relative_path).replace("\\", "/")
-
-
-async def _load_studio(session: AsyncSession, slug: str) -> Studio:
-    result = await session.execute(select(Studio).where(Studio.slug == slug))
-    studio = result.scalar_one_or_none()
-    if studio is None or not studio.is_active:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="studio_not_found")
-    return studio
-
-
-async def _get_or_create_conversation(
-    session: AsyncSession,
-    studio: Studio,
-    visitor_id: str,
-) -> Conversation:
-    result = await session.execute(
-        select(Conversation)
-        .where(Conversation.studio_id == studio.id)
-        .where(Conversation.visitor_id == visitor_id)
-        .where(Conversation.status == "active")
-    )
-    conversation = result.scalar_one_or_none()
-    if conversation is not None:
-        return conversation
-
-    conversation = Conversation(
-        studio_id=studio.id,
-        visitor_id=visitor_id,
-        channel="widget",
-        status="active",
-        metadata_={},
-    )
-    session.add(conversation)
-    await session.flush()
-    await session.refresh(conversation)
-    return conversation
-
-
-async def _enforce_upload_limits(
-    *,
-    session: AsyncSession,
-    conversation: Conversation,
-    visitor_id: str,
-) -> None:
-    settings = get_settings()
-    hour_start = datetime.now(timezone.utc) - timedelta(hours=1)
-    visitor_count = (
-        await session.execute(
-            select(func.count(Message.id))
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .where(Conversation.visitor_id == visitor_id)
-            .where(Message.created_at >= hour_start)
-            .where(Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%"))
-        )
-    ).scalar_one()
-    if int(visitor_count or 0) >= settings.max_uploads_per_visitor_hour:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="upload_rate_limit_exceeded",
-        )
-
-    conversation_count = (
-        await session.execute(
-            select(func.count(Message.id))
-            .where(Message.conversation_id == conversation.id)
-            .where(Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%"))
-        )
-    ).scalar_one()
-    if int(conversation_count or 0) >= settings.max_uploads_per_conversation:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="conversation_upload_limit_exceeded",
-        )
-
-
-async def _analyze_image_upload(
-    *,
-    content_type: str,
-    data: bytes,
-    filename: str,
-    agent_name: str,
-) -> str | None:
-    settings = get_settings()
-    if (
-        not settings.enable_upload_ai_analysis
-        or not settings.openai_api_key
-        or content_type not in IMAGE_TYPES
-    ):
-        return None
-
-    data_url = f"data:{content_type};base64,{base64.b64encode(data).decode('ascii')}"
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    response = await client.chat.completions.create(
-        model=settings.openai_chat_model,
-        max_tokens=450,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Du analysierst Kundenfotos für eine Küchenberatung. "
-                    "Beschreibe nur sichtbare, nicht-sensitive Projektdetails: "
-                    "Raumwirkung, Küchenform, Anschlüsse soweit erkennbar, "
-                    "Stauraum, Arbeitsfläche, Licht, mögliche Planungsfragen. "
-                    "Keine Personen identifizieren, keine privaten Details ableiten."
-                ),
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            f"Datei: {filename}. Fasse die für {agent_name} relevanten "
-                            "Küchenplanungsdetails kurz auf Deutsch zusammen."
-                        ),
-                    },
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                ],
-            },
-        ],
-    )
-    return (response.choices[0].message.content or "").strip() or None
-
-
 @router.post("/project-file", response_model=ProjectUploadResponse)
 async def upload_project_file(
     request: Request,
     studio: str = Form(..., min_length=1, max_length=100),
     visitor_id: str = Form(..., min_length=1, max_length=255),
+    conversation_id: UUID | None = Form(default=None),
     consent_granted: bool = Form(...),
     consent_version: str = Form(..., min_length=1, max_length=80),
     ai_analysis_consent: bool = Form(False),
@@ -250,7 +68,7 @@ async def upload_project_file(
 ) -> ProjectUploadResponse:
     """Stores a consented project file upload and records it in the conversation."""
     settings = get_settings()
-    if not _origin_allowed(request.headers.get("origin")):
+    if not origin_allowed(request.headers.get("origin")):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="origin_not_allowed")
     if not consent_granted:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="consent_required")
@@ -260,7 +78,7 @@ async def upload_project_file(
             detail="upload_analysis_consent_required",
         )
 
-    studio_row = await _load_studio(session, studio)
+    studio_row = await load_studio(session, studio)
     tenant_profile = get_tenant_profile_for_studio(studio_row.slug)
     if tenant_profile is not None:
         upload_policy = tenant_profile.upload_policy
@@ -272,20 +90,21 @@ async def upload_project_file(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail="unsupported_file_type",
                 )
-    conversation = await _get_or_create_conversation(session, studio_row, visitor_id)
-    await _enforce_upload_limits(
+    conversation = await get_or_create_conversation(
+        session, studio_row, visitor_id, conversation_id
+    )
+    await enforce_upload_limits(
         session=session,
         conversation=conversation,
         visitor_id=visitor_id,
     )
-
     data = await file.read(settings.max_upload_file_bytes + 1)
     if not data:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty_file")
     if len(data) > settings.max_upload_file_bytes:
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file_too_large")
 
-    content_type = _sniff_content_type(data, file.content_type)
+    content_type = sniff_content_type(data, file.content_type)
     if tenant_profile is not None and tenant_profile.upload_policy is not None:
         if content_type not in tenant_profile.upload_policy.allowed_content_types:
             raise HTTPException(
@@ -293,8 +112,8 @@ async def upload_project_file(
                 detail="unsupported_file_type",
             )
     extension = ALLOWED_TYPES[content_type]
-    original_name = _safe_name(file.filename)
-    absolute_path, relative_path = _storage_path(
+    original_name = safe_name(file.filename)
+    absolute_path, relative_path = storage_path(
         studio_slug=studio_row.slug,
         conversation_id=str(conversation.id),
         extension=extension,
@@ -306,7 +125,7 @@ async def upload_project_file(
     analysis_error: str | None = None
     upload_agent_name = agent_display_name(studio_row.slug, fallback="Live Voice Agent")
     try:
-        analysis_summary = await _analyze_image_upload(
+        analysis_summary = await _analyze_project_upload(
             content_type=content_type,
             data=data,
             filename=original_name,

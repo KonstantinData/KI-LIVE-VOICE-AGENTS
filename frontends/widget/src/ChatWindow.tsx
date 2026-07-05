@@ -1,10 +1,11 @@
 /** Chat-Fenster mit Nachrichtenverlauf und Eingabefeld. */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { MessageBubble } from './MessageBubble';
+import { ProjectUploadPanel } from './ProjectUploadPanel';
 import { TypingIndicator } from './TypingIndicator';
 import { VoiceControls } from './VoiceControls';
-import { useWebSocket } from './hooks/useWebSocket';
+import { useWebSocket, type Choice } from './hooks/useWebSocket';
 import type { WidgetConfig } from './lib/config';
 
 interface ChatWindowProps {
@@ -12,69 +13,62 @@ interface ChatWindowProps {
   visitorId: string;
 }
 
-const MAX_UPLOAD_FILES = 10;
+interface ContactFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  best_reachability: string;
+  project_summary: string;
+  additional_notes: string;
+  contact_consent_confirmed: boolean;
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  choices?: Choice[];
+}
 
 export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<'text' | 'voice'>('text');
-  const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
-  const [uploadAnalysisConsent, setUploadAnalysisConsent] = useState(false);
-  const [showUploadInfo, setShowUploadInfo] = useState(false);
-  const [chatMessages, setChatMessages] = useState<
-    { role: 'user' | 'assistant'; content: string }[]
-  >([{ role: 'assistant', content: config.welcomeMessage }]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactStatus, setContactStatus] = useState('');
+  const [contactForm, setContactForm] = useState<ContactFormData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    best_reachability: '',
+    project_summary: '',
+    additional_notes: '',
+    contact_consent_confirmed: false,
+  });
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadContextGreeting() {
-      try {
-        const response = await fetch(`${config.apiHttpUrl}/voice/context`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studio: config.studio,
-            visitor_id: visitorId,
-            consent_granted: true,
-            consent_version: config.voiceConsentVersion,
-          }),
-        });
-        if (!response.ok) return;
-        const data = (await response.json()) as { greeting?: string };
-        const greeting = data.greeting?.trim();
-        if (!cancelled && greeting) {
-          setChatMessages([{ role: 'assistant', content: greeting }]);
-        }
-      } catch {
-        // Keep the static fallback greeting when context lookup is unavailable.
-      }
-    }
-
-    void loadContextGreeting();
-    return () => {
-      cancelled = true;
-    };
-  }, [config.apiHttpUrl, config.studio, config.voiceConsentVersion, visitorId]);
 
   const handleIncomingMessage = useCallback(
-    (message: { role: 'user' | 'assistant'; content: string }) => {
+    (message: ChatMessage) => {
       setChatMessages((prev) => [
         ...prev,
-        { role: message.role, content: message.content },
+        {
+          role: message.role,
+          content: message.content,
+          choices: message.choices,
+        },
       ]);
     },
     [],
   );
 
-  const { send, connected, connecting, typing } = useWebSocket({
+  const { send, sendAction, connected, connecting, typing } = useWebSocket({
     url: config.apiUrl,
     studio: config.studio,
     visitorId,
     onMessage: handleIncomingMessage,
+    onSession: setConversationId,
   });
 
   useEffect(() => {
@@ -89,147 +83,22 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
     setInput('');
   };
 
-  const uploadSingleProjectFile = async (file: File, index: number, total: number) => {
-    const progress = total > 1 ? ` (${index + 1}/${total})` : '';
-    const form = new FormData();
-    form.append('studio', config.studio);
-    form.append('visitor_id', visitorId);
-    form.append('consent_granted', 'true');
-    form.append('consent_version', config.voiceConsentVersion);
-    form.append('ai_analysis_consent', String(uploadAnalysisConsent));
-    form.append('file', file);
-
-    setUploadStatus(`Datei wird sicher hochgeladen${progress}...`);
-    const response = await fetch(`${config.apiHttpUrl}/uploads/project-file`, {
-      method: 'POST',
-      body: form,
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.success) {
-      throw new Error(`upload_failed_${response.status}`);
-    }
-
-    const filename = String(payload.filename || file.name);
-    const userMessage = `Ich habe die Projektdatei "${filename}" hochgeladen.`;
-    if (mode === 'voice') {
-      setMode('text');
-    }
-    setChatMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-    if (connected) {
-      send(
-        `${userMessage} Bitte frage mich kurz, ob ich zu der Datei bestimmte Angaben machen möchte oder ob wir darüber sprechen sollen.`,
-      );
-    } else {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: String(
-            payload.message || 'Die Datei wurde hochgeladen und für die Beratung gespeichert.',
-          ),
-        },
-      ]);
-    }
-  };
-
-  const uploadProjectFiles = async (files: FileList | File[] | null) => {
-    const selectedFiles = Array.from(files ?? []);
-    if (selectedFiles.length === 0 || uploading) return;
-    if (selectedFiles.length > MAX_UPLOAD_FILES) {
-      setUploadStatus(`Bitte wählen Sie höchstens ${MAX_UPLOAD_FILES} Dateien auf einmal aus.`);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      if (cameraInputRef.current) cameraInputRef.current.value = '';
-      return;
-    }
-    if (!uploadAnalysisConsent) {
-      setUploadStatus('Bitte bestätigen Sie zuerst die KI-gestützte Einordnung der Datei.');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      let uploaded = 0;
-      for (const [index, file] of selectedFiles.entries()) {
-        await uploadSingleProjectFile(file, index, selectedFiles.length);
-        uploaded += 1;
-      }
-      setUploadStatus(
-        uploaded === 1
-          ? 'Upload abgeschlossen.'
-          : `${uploaded} Dateien wurden hochgeladen.`,
-      );
-    } catch {
-      setUploadStatus('Mindestens eine Datei konnte nicht hochgeladen werden. Bitte prüfen Sie Format und Größe.');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      if (cameraInputRef.current) cameraInputRef.current.value = '';
-    }
+  const handleChoice = (choice: Choice) => {
+    if (!connected) return;
+    setChatMessages((prev) => [...prev, { role: 'user', content: choice.label }]);
+    sendAction(choice.id, choice.label);
   };
 
   const renderUploadPanel = () => (
-    <div className="widget-upload-panel">
-      <div className="widget-upload-row">
-        <div className="widget-upload-actions">
-          <button
-            className="widget-upload-button"
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-            type="button"
-          >
-            Datei
-          </button>
-          <button
-            className="widget-upload-button"
-            disabled={uploading}
-            onClick={() => cameraInputRef.current?.click()}
-            type="button"
-          >
-            Foto
-          </button>
-        </div>
-        <button
-          aria-label="Hinweis zu Datei-Uploads"
-          className="widget-upload-info"
-          onClick={() => setShowUploadInfo((visible) => !visible)}
-          type="button"
-        >
-          i
-        </button>
-      </div>
-      <input
-        accept="application/pdf,image/png,image/jpeg"
-        hidden
-        multiple
-        onChange={(event) => void uploadProjectFiles(event.currentTarget.files)}
-        ref={fileInputRef}
-        type="file"
-      />
-      <input
-        accept="image/png,image/jpeg"
-        capture="environment"
-        hidden
-        onChange={(event) => void uploadProjectFiles(event.currentTarget.files)}
-        ref={cameraInputRef}
-        type="file"
-      />
-      <label className="widget-upload-consent">
-        <input
-          checked={uploadAnalysisConsent}
-          onChange={(event) => setUploadAnalysisConsent(event.currentTarget.checked)}
-          type="checkbox"
-        />
-        <span>
-          Datei zur KI-gestützten Projekteinordnung hochladen und privat speichern.
-        </span>
-      </label>
-      {showUploadInfo && (
-        <div className="widget-upload-note">
-          PDF, PNG oder JPEG bis 10 MB. Fotos helfen KEA, die bestehende Situation konkreter einzuordnen.
-        </div>
-      )}
-      {uploadStatus && <div className="widget-upload-status">{uploadStatus}</div>}
-    </div>
+    <ProjectUploadPanel
+      config={config}
+      visitorId={visitorId}
+      conversationId={conversationId}
+      connected={connected}
+      send={send}
+      onConversationAssigned={setConversationId}
+      onLocalMessage={handleIncomingMessage}
+    />
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -238,6 +107,171 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
       handleSend();
     }
   };
+
+  const updateContactField = (
+    field: keyof ContactFormData,
+    value: string | boolean,
+  ) => {
+    setContactForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const submitContactForm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!conversationId) {
+      setContactStatus('Bitte warten Sie kurz, bis die Chat-Sitzung verbunden ist.');
+      return;
+    }
+    if (!contactForm.contact_consent_confirmed) {
+      setContactStatus('Bitte bestätigen Sie die Datenschutzhinweise.');
+      return;
+    }
+
+    setContactStatus('Kontaktdaten werden sicher übermittelt...');
+    try {
+      const response = await fetch(`${config.apiHttpUrl}/voice/contact-handoff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studio: config.studio,
+          visitor_id: visitorId,
+          conversation_id: conversationId,
+          voice_session_id: `text_chat_${conversationId}`,
+          first_name: contactForm.first_name,
+          last_name: contactForm.last_name,
+          email: contactForm.email,
+          phone: contactForm.phone || null,
+          best_reachability: contactForm.best_reachability || null,
+          project_summary:
+            contactForm.project_summary ||
+            'Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung.',
+          additional_notes: contactForm.additional_notes || null,
+          contact_consent_confirmed: contactForm.contact_consent_confirmed,
+          consent_granted: true,
+          consent_version: config.voiceConsentVersion,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.success) {
+        setContactStatus('Die Kontaktdaten konnten gerade nicht übermittelt werden. Bitte versuchen Sie es später erneut.');
+        return;
+      }
+      const sentText = payload.emails_sent
+        ? 'Ihre Anfrage wurde übermittelt. Die Bestätigungs-E-Mail ist unterwegs.'
+        : 'Ihre Anfrage wurde gespeichert. Die E-Mail-Bestätigung wird intern nachgefasst.';
+      setContactStatus(sentText);
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: sentText }]);
+      setShowContactForm(false);
+    } catch {
+      setContactStatus('Die Kontaktdaten konnten gerade nicht übermittelt werden. Bitte versuchen Sie es später erneut.');
+    }
+  };
+
+  const renderContactPanel = () => (
+    <>
+      <div className="voice-secure-contact">
+        <button
+          className="voice-link-button"
+          onClick={() => setShowContactForm((visible) => !visible)}
+          type="button"
+        >
+          Kontaktdaten sicher eingeben
+        </button>
+      </div>
+
+      {showContactForm && (
+        <form className="voice-contact-form" onSubmit={submitContactForm}>
+          <div className="voice-form-grid">
+            <label>
+              <span>Vorname</span>
+              <input
+                autoComplete="given-name"
+                minLength={2}
+                onInput={(event) => updateContactField('first_name', event.currentTarget.value)}
+                required
+                type="text"
+                value={contactForm.first_name}
+              />
+            </label>
+            <label>
+              <span>Nachname</span>
+              <input
+                autoComplete="family-name"
+                minLength={2}
+                onInput={(event) => updateContactField('last_name', event.currentTarget.value)}
+                required
+                type="text"
+                value={contactForm.last_name}
+              />
+            </label>
+          </div>
+          <label>
+            <span>E-Mail-Adresse</span>
+            <input
+              autoComplete="email"
+              onInput={(event) => updateContactField('email', event.currentTarget.value)}
+              required
+              type="email"
+              value={contactForm.email}
+            />
+          </label>
+          <label>
+            <span>Telefon optional</span>
+            <input
+              autoComplete="tel"
+              onInput={(event) => updateContactField('phone', event.currentTarget.value)}
+              type="tel"
+              value={contactForm.phone}
+            />
+          </label>
+          <label>
+            <span>Beste Erreichbarkeit optional</span>
+            <input
+              onInput={(event) => updateContactField('best_reachability', event.currentTarget.value)}
+              placeholder="z. B. werktags ab 18 Uhr"
+              type="text"
+              value={contactForm.best_reachability}
+            />
+          </label>
+          <label>
+            <span>Kurze Projektzusammenfassung optional</span>
+            <textarea
+              maxLength={1600}
+              onInput={(event) => updateContactField('project_summary', event.currentTarget.value)}
+              rows={3}
+              value={contactForm.project_summary}
+            />
+          </label>
+          <label>
+            <span>Weitere Hinweise optional</span>
+            <textarea
+              maxLength={1600}
+              onInput={(event) => updateContactField('additional_notes', event.currentTarget.value)}
+              rows={2}
+              value={contactForm.additional_notes}
+            />
+          </label>
+          <label className="voice-consent-row">
+            <input
+              checked={contactForm.contact_consent_confirmed}
+              onChange={(event) => updateContactField('contact_consent_confirmed', event.currentTarget.checked)}
+              required
+              type="checkbox"
+            />
+            <span>
+              Ich bin einverstanden, dass Mein Küchenexperte meine Angaben zur
+              Bearbeitung meiner Anfrage, zur Kontaktaufnahme und zum Versand
+              einer Zusammenfassung verarbeitet. Ich kann diese Einwilligung
+              jederzeit mit Wirkung für die Zukunft widerrufen.
+            </span>
+          </label>
+          <button className="voice-button voice-button--primary" type="submit">
+            Anfrage senden
+          </button>
+          {contactStatus && <div className="voice-form-status">{contactStatus}</div>}
+        </form>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -272,24 +306,50 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
           type="button"
           disabled={!config.voiceEnabled}
         >
-          Sprache
+          Sprachchat
         </button>
       </div>
 
       {mode === 'voice' ? (
         <>
-          <VoiceControls config={config} visitorId={visitorId} />
+          <VoiceControls
+            config={config}
+            visitorId={visitorId}
+            onConversationReady={setConversationId}
+          />
           {renderUploadPanel()}
         </>
       ) : (
         <>
           <div className="widget-messages">
             {chatMessages.map((msg, i) => (
-              <MessageBubble key={i} role={msg.role} content={msg.content} />
+              <div
+                className={`widget-message-group widget-message-group--${msg.role}`}
+                key={`${msg.role}-${i}`}
+              >
+                <MessageBubble role={msg.role} content={msg.content} />
+                {msg.role === 'assistant' && i === chatMessages.length - 1 && msg.choices?.length ? (
+                  <div className="widget-choice-list">
+                    {msg.choices.map((choice) => (
+                      <button
+                        className="widget-choice-button"
+                        disabled={!connected}
+                        key={choice.id}
+                        onClick={() => handleChoice(choice)}
+                        type="button"
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             ))}
             {typing && <TypingIndicator />}
             <div ref={messagesEndRef} />
           </div>
+
+          {renderContactPanel()}
 
           {renderUploadPanel()}
 

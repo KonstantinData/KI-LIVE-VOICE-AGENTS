@@ -1,6 +1,6 @@
 # DATA_GOVERNANCE_AGENT.md — Compliance-Prüfagent
 
-> **Arbeitsanweisung für Claude Code**
+> **Arbeitsanweisung für Codex**
 > Erstelle einen DataGovernance-Agenten, der jedes relevante Script im
 > Repository automatisch auf Einhaltung der DSGVO und des EU AI Act prüft.
 
@@ -107,14 +107,13 @@ Prüfe JEDEN Codepfad, der personenbezogene Daten verarbeitet:
       - Link zur Datenschutzerklärung
 
 1.6 AUFTRAGSVERARBEITUNG (Art. 28 DSGVO)
-    - Wird für jeden externen Dienst (Anthropic, OpenAI, Resend, Google)
+    - Wird für jeden externen Dienst (OpenAI, Resend, Google)
       ein AVV-Hinweis im Code/Config dokumentiert?
     - Werden Daten an Dienste außerhalb der EU gesendet?
     - Ist ein Transfer-Mechanismus dokumentiert (SCC, Angemessenheitsbeschluss)?
-    FINDING wenn: API-Calls an anthropic.com oder openai.com ohne
+    FINDING wenn: API-Calls an openai.com ohne
     Dokumentation des Drittlandtransfers.
     FIX: In config.py oder PRIVACY.md dokumentieren:
-      - Anthropic (USA): SCC + DPA vorhanden: [Ja/Nein]
       - OpenAI (USA): SCC + DPA vorhanden: [Ja/Nein]
       - Resend (USA): SCC + DPA vorhanden: [Ja/Nein]
       - Google (USA/EU): SCC + DPA vorhanden: [Ja/Nein]
@@ -374,7 +373,7 @@ Prüfe JEDEN Codepfad, der personenbezogene Daten verarbeitet:
 
 6.10 ÜBERWACHUNG DES LLM-OUTPUTS (EU AI Act Art. 9 — Risikomanagement)
     - Werden LLM-Antworten auf problematische Inhalte geprüft?
-    - Was passiert, wenn Claude halluziniert (falsche Preise, falsche Fakten)?
+    - Was passiert, wenn das LLM halluziniert (falsche Preise, falsche Fakten)?
     - Gibt es ein Monitoring für Antwortqualität?
     FINDING wenn: Keine Output-Validation nach dem LLM-Call existiert.
     FIX: Post-Processing-Layer:
