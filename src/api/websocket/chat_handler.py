@@ -15,7 +15,6 @@ from src.api.websocket.manager import manager
 from src.db.database import AsyncSessionLocal
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
-from src.tenants.registry import agent_display_name
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -42,6 +41,13 @@ async def _send_flow_response(websocket: WebSocket, response: FlowResponse) -> N
         "choices": [_choice_payload(choice) for choice in response.choices],
         "timestamp": datetime.now(timezone.utc).isoformat(),
     })
+
+
+def _public_agent_name(studio_slug: str) -> str:
+    """Returns the public assistant name used in user-facing error messages."""
+    if studio_slug == "mein-kuechenexperte":
+        return "KEA"
+    return "Live Voice Agent"
 
 
 async def handle_chat(
@@ -134,7 +140,7 @@ async def handle_chat(
 
         # ── Agent initialisieren ──────────────────────────────────────────────
         agent = LisaAgent(session=session)
-        public_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
+        public_agent_name = _public_agent_name(studio.slug)
         kea_flow = KeaTextFlow(session=session) if studio.slug == "mein-kuechenexperte" else None
 
         if kea_flow is not None:
@@ -225,7 +231,19 @@ async def handle_chat(
 
             # Gesprächszusammenfassung generieren + Konversation schließen
             try:
-                await agent.finalize_conversation(conversation, studio)
+                if kea_flow is not None:
+                    conversation.status = "closed"
+                    conversation.summary = (
+                        conversation.summary
+                        or "KEA Textchat: geführte Projekteinordnung im Widget."
+                    )
+                    log.info(
+                        "kea.finalized",
+                        visitor=visitor_id,
+                        conversation_id=str(conversation.id),
+                    )
+                else:
+                    await agent.finalize_conversation(conversation, studio)
                 await session.commit()
                 log.info(
                     "ws.finalized",
