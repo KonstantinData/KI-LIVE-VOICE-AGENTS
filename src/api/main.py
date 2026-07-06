@@ -23,6 +23,7 @@ from src.api.routes import auth, health
 from src.api.routes import (
     appointments,
     conversations,
+    crm_contact_capture,
     dashboard,
     feedback,
     followups,
@@ -84,6 +85,7 @@ app.include_router(uploads.router)
 app.include_router(upload_admin.router)
 app.include_router(leads.router)
 app.include_router(conversations.router)
+app.include_router(crm_contact_capture.router)
 app.include_router(appointments.router)
 app.include_router(followups.router)
 app.include_router(knowledge.router)

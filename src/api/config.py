@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # Datenbank
     database_url: str = "postgresql+asyncpg://ki_team:passwort@localhost:5432/ki_mitarbeiter"
+    crm_contact_capture_database_url: str = ""
+    crm_contact_capture_intake_secret: str = ""
 
     # OpenAI
     openai_api_key: str = ""
