@@ -275,6 +275,13 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
     );
   };
 
+  const renderCompletionPanel = () => (
+    <div className="voice-contact-form voice-contact-form--complete">
+      <strong>Anfrage gespeichert</strong>
+      <p>{contactStatus || 'Ihre Anfrage wurde gespeichert. Wir melden uns mit den nächsten Schritten.'}</p>
+    </div>
+  );
+
   return (
     <>
       <div className="widget-header">
@@ -352,28 +359,30 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          {showContactForm && renderContactPanel()}
+          {contactSubmitted ? renderCompletionPanel() : showContactForm && renderContactPanel()}
 
-          {renderUploadPanel()}
+          {!contactSubmitted && renderUploadPanel()}
 
-          <div className="widget-input-area">
-            <textarea
-              className="widget-input"
-              placeholder="Schreiben Sie eine Nachricht..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={1}
-            />
-            <button
-              className="widget-send-button"
-              onClick={handleSend}
-              disabled={!connected || !input.trim()}
-              aria-label="Senden"
-            >
-              ➤
-            </button>
-          </div>
+          {!contactSubmitted && (
+            <div className="widget-input-area">
+              <textarea
+                className="widget-input"
+                placeholder="Schreiben Sie eine Nachricht..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+              />
+              <button
+                className="widget-send-button"
+                onClick={handleSend}
+                disabled={!connected || !input.trim()}
+                aria-label="Senden"
+              >
+                ➤
+              </button>
+            </div>
+          )}
         </>
       )}
     </>

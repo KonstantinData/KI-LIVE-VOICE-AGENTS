@@ -76,8 +76,8 @@
         "secure_form_required": true,
         "voice_pii_collection_allowed": false,
         "crm_target": "mein-kuechenexperte",
-        "contact_endpoint": "https://www.mein-kuechenexperte.de/agent-lead-webhook.php",
-        "usage_endpoint": "https://www.mein-kuechenexperte.de/agent-usage-webhook.php"
+        "contact_endpoint": "https://mein-kuechenexperte.de/agent-lead-webhook",
+        "usage_endpoint": "https://mein-kuechenexperte.de/agent-usage-webhook"
       }
     }
   ],

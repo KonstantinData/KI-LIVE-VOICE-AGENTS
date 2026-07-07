@@ -80,7 +80,7 @@ async def test_usage_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
 
     assert usage_id == "usage-42"
     call = _FakeAsyncClient.calls[0]
-    assert call["url"] == "https://www.mein-kuechenexperte.de/agent-usage-webhook.php"
+    assert call["url"] == "https://mein-kuechenexperte.de/agent-usage-webhook"
     assert call["headers"]["X-Agent-Usage-Webhook-Secret"] == "secret"
     assert call["json"]["tenant_id"] == "mein-kuechenexperte"
     assert call["json"]["source_system"] == "ki-live-voice-agents"
@@ -110,12 +110,23 @@ async def test_contact_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
         project_summary="Küche mit Insel",
         additional_notes="Samstag erreichbar",
         best_reachability="Samstag",
+        conversation_id="conversation-1",
+        project_uploads=[
+            {
+                "file_id": "file-1",
+                "original_filename": "grundriss.pdf",
+                "content_type": "application/pdf",
+                "size_bytes": 1234,
+            }
+        ],
     )
 
     assert ledger_id == "ledger-1"
     call = _FakeAsyncClient.calls[0]
-    assert call["url"] == "https://www.mein-kuechenexperte.de/agent-lead-webhook.php"
+    assert call["url"] == "https://mein-kuechenexperte.de/agent-lead-webhook"
     assert call["headers"]["X-Agent-Webhook-Secret"] == "secret"
     assert call["json"]["tenant_id"] == "mein-kuechenexperte"
     assert call["json"]["email"] == "max@example.test"
     assert call["json"]["privacy_accepted"] is True
+    assert call["json"]["conversation_id"] == "conversation-1"
+    assert call["json"]["project_uploads"][0]["original_filename"] == "grundriss.pdf"

@@ -44,6 +44,7 @@ class StoredProjectUpload:
     relative_path: str
     created_at: datetime
     ai_analysis_completed: bool
+    analysis_summary: str = ""
     file_deleted: bool = False
 
 
@@ -89,6 +90,7 @@ def extract_uploads_from_message(message: Message) -> list[StoredProjectUpload]:
                 relative_path=relative_path,
                 created_at=message.created_at,
                 ai_analysis_completed=bool(call.get("ai_analysis_completed")),
+                analysis_summary=str(call.get("analysis_summary") or ""),
                 file_deleted=bool(call.get("file_deleted")),
             )
         )

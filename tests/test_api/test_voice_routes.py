@@ -474,4 +474,6 @@ async def test_voice_contact_handoff_forwards_manual_form_to_crm(
     assert crm_payload["email"] == "max@example.com"
     assert crm_payload["phone"] == "+49 176 23785746"
     assert crm_payload["privacy_accepted"] is True
+    assert crm_payload["conversation_id"] == str(conversation.id)
+    assert crm_payload["project_uploads"] == []
     assert "transcript" not in str(crm_payload).lower()

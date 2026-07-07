@@ -30,6 +30,7 @@ from src.api.services.crm_handoff import (
     post_openai_usage_to_crm,
     post_voice_contact_to_crm,
 )
+from src.api.services.project_uploads import list_stored_project_uploads
 from src.api.services.openai_realtime import OpenAIRealtimeAdapter
 from src.api.services.voice_sessions import (
     load_voice_conversation,
@@ -621,6 +622,27 @@ async def submit_voice_contact_handoff(
         return VoiceContactHandoffResponse(success=False, error="invalid_phone")
     if not project_summary:
         project_summary = "Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung."
+    uploads = await list_stored_project_uploads(
+        session=session,
+        studio_id=studio.id,
+        conversation_id=conversation.id,
+        limit=25,
+    )
+    project_uploads = [
+        {
+            "file_id": upload.file_id,
+            "conversation_id": upload.conversation_id,
+            "message_id": upload.message_id,
+            "original_filename": upload.original_filename,
+            "content_type": upload.content_type,
+            "size_bytes": upload.size_bytes,
+            "ai_analysis_completed": upload.ai_analysis_completed,
+            "analysis_summary": upload.analysis_summary,
+            "created_at": upload.created_at.isoformat(),
+        }
+        for upload in uploads
+        if not upload.file_deleted
+    ]
 
     crm_capture_id: str | None = None
     crm_error: str | None = None
@@ -636,6 +658,8 @@ async def submit_voice_contact_handoff(
             project_summary=project_summary,
             additional_notes=additional_notes,
             best_reachability=best_reachability,
+            conversation_id=str(conversation.id),
+            project_uploads=project_uploads,
         )
     except CrmHandoffNotConfiguredError as exc:
         crm_error = "crm_handoff_not_configured"
@@ -667,6 +691,7 @@ async def submit_voice_contact_handoff(
                 "emails_sent": False,
                 "crm_captured": True,
                 "crm_capture_id": crm_capture_id,
+                "project_upload_count": len(project_uploads),
             },
         )
     )

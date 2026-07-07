@@ -29,7 +29,7 @@ def test_mein_kuechenexperte_profile_selects_kea_widget_identity():
         profile.live_voice_agent().contact_handoff.crm_target == "mein-kuechenexperte"
     )
     assert profile.live_voice_agent().contact_handoff.usage_endpoint.endswith(
-        "/agent-usage-webhook.php"
+        "/agent-usage-webhook"
     )
 
 

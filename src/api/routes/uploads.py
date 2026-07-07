@@ -202,6 +202,7 @@ async def upload_project_file(
                 "relative_path": relative_path,
                 "ai_analysis_requested": ai_analysis_consent,
                 "ai_analysis_completed": bool(analysis_summary),
+                "analysis_summary": analysis_summary or "",
                 "analysis_error": analysis_error,
                 "consent_version": consent_version,
             }

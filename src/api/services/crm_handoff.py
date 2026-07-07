@@ -157,7 +157,13 @@ def estimate_openai_cost_usd(model: str, tokens: dict[str, int]) -> Decimal | No
 
 def _website_url() -> str:
     """Returns the configured public CRM website URL."""
-    return get_settings().website_url.rstrip("/")
+    configured = get_settings().website_url.rstrip("/")
+    if configured in {
+        "https://www.mein-kuechenexperte.de",
+        "http://www.mein-kuechenexperte.de",
+    }:
+        return configured.replace("://www.", "://", 1)
+    return configured
 
 
 def _contact_handoff_endpoint() -> str:
@@ -165,7 +171,7 @@ def _contact_handoff_endpoint() -> str:
     settings = get_settings()
     return (
         settings.crm_contact_handoff_endpoint.strip()
-        or f"{_website_url()}/agent-lead-webhook.php"
+        or f"{_website_url()}/agent-lead-webhook"
     )
 
 
@@ -174,7 +180,7 @@ def _usage_handoff_endpoint() -> str:
     settings = get_settings()
     return (
         settings.crm_usage_handoff_endpoint.strip()
-        or f"{_website_url()}/agent-usage-webhook.php"
+        or f"{_website_url()}/agent-usage-webhook"
     )
 
 
@@ -190,6 +196,8 @@ async def post_voice_contact_to_crm(
     project_summary: str,
     additional_notes: str,
     best_reachability: str,
+    conversation_id: str,
+    project_uploads: list[dict[str, Any]] | None = None,
 ) -> str:
     """Sends a sanitized voice contact handoff to the CRM webhook."""
     settings = get_settings()
@@ -212,6 +220,8 @@ async def post_voice_contact_to_crm(
         "project_summary": project_summary,
         "additional_notes": additional_notes,
         "best_reachability": best_reachability,
+        "conversation_id": conversation_id,
+        "project_uploads": project_uploads or [],
     }
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.post(
