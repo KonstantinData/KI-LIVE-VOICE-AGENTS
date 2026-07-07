@@ -1,10 +1,10 @@
 """
 FastAPI Application Entry Point
 ================================
-What:    Main FastAPI application with all routes, middleware, and WebSocket endpoints.
-Does:    Sets up CORS, tenant isolation, rate limiting; registers all API routes; handles WebSocket chat.
-Why:     Central entry point for the entire backend; orchestrates all HTTP/WS communication.
-Who:     Uvicorn server, all API clients (widget, dashboard, external integrations).
+What:    Main FastAPI application with voice/widget runtime routes and WebSocket endpoints.
+Does:    Sets up CORS, tenant isolation, rate limiting; registers runtime API routes; handles WebSocket chat.
+Why:     Central entry point for voice and widget communication without owning CRM screens.
+Who:     Uvicorn server, website widget, and CRM handoff integrations.
 Depends: fastapi, structlog, uvicorn, src.api.{config, middleware, routes, services, websocket}
 """
 
@@ -19,24 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.config import get_settings
 from src.api.middleware.rate_limit import RateLimitMiddleware
 from src.api.middleware.tenant import TenantMiddleware
-from src.api.routes import auth, health
-from src.api.routes import (
-    appointments,
-    conversations,
-    crm_contact_capture,
-    dashboard,
-    feedback,
-    followups,
-    gdpr,
-    google_calendar,
-    knowledge,
-    leads,
-    studios,
-    upload_admin,
-    uploads,
-    voice,
-    widget_config,
-)
+from src.api.routes import health
+from src.api.routes import uploads, voice, widget_config
 from src.api.services.scheduler import setup_scheduler, shutdown_scheduler
 from src.api.websocket.chat_handler import handle_chat
 
@@ -76,24 +60,11 @@ app.add_middleware(
 app.add_middleware(TenantMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
-# Routes einbinden
+# Runtime routes
 app.include_router(health.router)
-app.include_router(auth.router)
-app.include_router(studios.router)
 app.include_router(voice.router)
 app.include_router(uploads.router)
-app.include_router(upload_admin.router)
-app.include_router(leads.router)
-app.include_router(conversations.router)
-app.include_router(crm_contact_capture.router)
-app.include_router(appointments.router)
-app.include_router(followups.router)
-app.include_router(knowledge.router)
-app.include_router(feedback.router)
-app.include_router(dashboard.router)
 app.include_router(widget_config.router)
-app.include_router(google_calendar.router)
-app.include_router(gdpr.router)
 
 
 # WebSocket Chat-Endpoint

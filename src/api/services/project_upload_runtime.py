@@ -203,7 +203,6 @@ def _allowed_origins() -> set[str]:
     origins.update(
         {
             settings.website_url.rstrip("/"),
-            settings.dashboard_url.rstrip("/"),
             settings.widget_url.rstrip("/"),
         }
     )

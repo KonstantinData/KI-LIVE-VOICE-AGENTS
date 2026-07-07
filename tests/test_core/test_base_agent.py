@@ -77,7 +77,7 @@ def test_kea_system_prompt_contains_controlled_intake_contract():
 
 
 def test_kea_text_agent_disables_appointment_tool_for_mein_kuechenexperte():
-    """KEA may capture intent, but does not book expert-consulting appointments."""
+    """KEA does not register local CRM-writing tools for mein-kuechenexperte."""
     agent = LisaAgent(session=MagicMock())
     studio = Studio(
         id=uuid.uuid4(),
@@ -97,5 +97,5 @@ def test_kea_text_agent_disables_appointment_tool_for_mein_kuechenexperte():
 
     tools = agent.get_contextual_tools(conversation, studio)
 
-    assert "extract_lead_data" in tools.names
+    assert "extract_lead_data" not in tools.names
     assert "book_appointment" not in tools.names

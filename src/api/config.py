@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     mit einer klaren Fehlermeldung.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     # Server
     app_env: str = "development"
@@ -30,9 +32,13 @@ class Settings(BaseSettings):
     log_level: str = "DEBUG"
 
     # Datenbank
-    database_url: str = "postgresql+asyncpg://ki_team:passwort@localhost:5432/ki_mitarbeiter"
-    crm_contact_capture_database_url: str = ""
-    crm_contact_capture_intake_secret: str = ""
+    database_url: str = (
+        "postgresql+asyncpg://ki_team:passwort@localhost:5432/ki_mitarbeiter"
+    )
+    crm_contact_handoff_endpoint: str = ""
+    crm_contact_handoff_secret: str = ""
+    crm_usage_handoff_endpoint: str = ""
+    crm_usage_handoff_secret: str = ""
 
     # OpenAI
     openai_api_key: str = ""
@@ -45,19 +51,7 @@ class Settings(BaseSettings):
     max_voice_session_seconds: int = 900
     max_voice_sdp_chars: int = 200_000
 
-    # Resend E-Mail
-    resend_api_key: str = ""
-    resend_from_email: str = "noreply@example.com"
-    resend_from_name: str = "KI-Assistent"
-    enable_email_sending: bool | None = None
-
-    # Google Calendar OAuth
-    google_client_id: str = ""
-    google_client_secret: str = ""
-    google_redirect_uri: str = "http://localhost:8000/auth/google/callback"
-    enable_calendar_sync: bool = False
-
-    # Auth (Dashboard)
+    # Legacy admin settings (kept for old local tooling; no active dashboard routes)
     admin_username: str = "admin"
     admin_password_hash: str = ""
     admin_studio_slug: str = "mein-kuechenexperte"
@@ -69,9 +63,7 @@ class Settings(BaseSettings):
     # Runtime safety
     max_chat_message_chars: int = 4000
     retention_conversation_days: int = 180
-    retention_unconverted_lead_days: int = 365
     retention_upload_days: int = 180
-    retention_feedback_days: int = 730
     retention_event_days: int = 1095
 
     # Customer project uploads
@@ -88,7 +80,6 @@ class Settings(BaseSettings):
     # URLs
     api_url: str = "http://localhost:8000"
     ws_url: str = "ws://localhost:8000"
-    dashboard_url: str = "http://localhost:5173"
     widget_url: str = "http://localhost:5174"
     website_url: str = "https://www.mein-kuechenexperte.de"
 
@@ -101,6 +92,7 @@ class Settings(BaseSettings):
         """Parst CORS_ORIGINS aus JSON-String oder Liste."""
         if isinstance(v, str):
             import json
+
             return json.loads(v)
         return v
 
@@ -108,22 +100,12 @@ class Settings(BaseSettings):
     def validate_production_settings(self) -> "Settings":
         """Fail fast when production security settings are incomplete."""
         if self.app_env == "production":
-            if self.jwt_secret == "dev-secret-min-32-chars-placeholder!":
-                raise ValueError("JWT_SECRET must be set in production")
-            if not self.admin_password_hash:
-                raise ValueError("ADMIN_PASSWORD_HASH must be set in production")
             if self.allow_demo_login:
                 raise ValueError("ALLOW_DEMO_LOGIN must be false in production")
-        if self.enable_email_sending is True and not self.resend_api_key:
-            raise ValueError("RESEND_API_KEY is required when ENABLE_EMAIL_SENDING=true")
-        if self.enable_calendar_sync and (
-            not self.google_client_id or not self.google_client_secret
-        ):
-            raise ValueError(
-                "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required when ENABLE_CALENDAR_SYNC=true"
-            )
         if self.enable_voice_sessions and not self.openai_api_key:
-            raise ValueError("OPENAI_API_KEY is required when ENABLE_VOICE_SESSIONS=true")
+            raise ValueError(
+                "OPENAI_API_KEY is required when ENABLE_VOICE_SESSIONS=true"
+            )
         return self
 
 

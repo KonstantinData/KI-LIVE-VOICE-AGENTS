@@ -10,7 +10,6 @@ Depends: fastapi, sqlalchemy, src.api.services, src.agents.lisa
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from html import escape
 import re
 from typing import Any
 
@@ -23,14 +22,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.lisa.agent import LisaAgent
 from src.api.config import get_settings
-from src.api.routes.crm_contact_capture import (
-    CRM_TENANT_ID,
-    ContactHandoff,
-    CrmContactCaptureRequest,
-    persist_crm_contact_capture,
+from src.api.services.crm_handoff import (
+    CrmHandoffFailedError,
+    CrmHandoffNotConfiguredError,
+    estimate_openai_cost_usd,
+    normalize_openai_usage,
+    post_openai_usage_to_crm,
+    post_voice_contact_to_crm,
 )
-from src.api.services.cost_tracking import record_openai_cost_event
-from src.api.services.email_service import EmailService, EmailServiceDisabledError
 from src.api.services.openai_realtime import OpenAIRealtimeAdapter
 from src.api.services.voice_sessions import (
     load_voice_conversation,
@@ -43,9 +42,8 @@ from src.api.services.voice_sessions import (
 from src.core.memory import MemoryManager
 from src.db.database import get_session
 from src.db.models.event import Event
-from src.db.models.lead import Lead
 from src.db.models.message import Message
-from src.tenants.registry import agent_display_name, get_tenant_profile_for_studio
+from src.tenants.registry import get_tenant_profile_for_studio
 
 router = APIRouter(prefix="/voice", tags=["Live Voice"])
 log = structlog.get_logger()
@@ -134,7 +132,7 @@ class VoiceUsageEventRequest(BaseModel):
 
 
 class VoiceUsageEventResponse(BaseModel):
-    """Persisted usage tracking result."""
+    """CRM usage handoff result."""
 
     stored: bool
     cost_event_id: str
@@ -198,241 +196,6 @@ def _valid_phone(value: str) -> bool:
         return True
     digits = re.sub(r"\D", "", value)
     return bool(PHONE_RE.match(value)) and 6 <= len(digits) <= 20
-
-
-def _lead_notification_email(studio) -> str:
-    """Returns the configured staff notification mailbox for lead handoff."""
-    config = studio.config or {}
-    return str(
-        config.get("lead_notification_email")
-        or config.get("contact_email")
-        or "beratung@mein-kuechenexperte.de"
-    )
-
-
-def _summary_items(text: str) -> list[str]:
-    """Splits a customer-approved project summary into compact email bullets."""
-    parts = [
-        _clean_contact_text(part, 240)
-        for part in re.split(r"[\n;]+", text)
-        if _clean_contact_text(part, 240)
-    ]
-    if not parts and text:
-        parts = [_clean_contact_text(text, 480)]
-    unique: list[str] = []
-    seen: set[str] = set()
-    for part in parts:
-        key = part.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        unique.append(part)
-        if len(unique) >= 7:
-            break
-    return unique or ["Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung."]
-
-
-def _html_list(items: list[str]) -> str:
-    """Formats escaped bullet points for email HTML."""
-    return "<ul>" + "".join(f"<li>{escape(item)}</li>" for item in items) + "</ul>"
-
-
-def _customer_email_html(
-    *,
-    first_name: str,
-    last_name: str,
-    summary_items: list[str],
-    best_reachability: str,
-) -> str:
-    """Builds the customer confirmation email."""
-    reachability_html = (
-        f"<p><strong>Beste Erreichbarkeit:</strong> {escape(best_reachability)}</p>"
-        if best_reachability
-        else ""
-    )
-    return f"""
-<p>Hallo {escape(first_name)} {escape(last_name)},</p>
-<p>vielen Dank für Ihr Interesse an Mein Küchenexperte. Ihre Anfrage ist bei uns eingegangen.</p>
-<p><strong>Zusammenfassung unseres Gesprächs:</strong></p>
-{_html_list(summary_items)}
-{reachability_html}
-<p>Wir melden uns zeitnah bei Ihnen, um die nächsten Schritte für Ihr Küchenprojekt zu besprechen.</p>
-<p>Mit freundlichen Grüßen<br>Mein Küchenexperte</p>
-"""
-
-
-def _admin_email_html(
-    *,
-    studio,
-    first_name: str,
-    last_name: str,
-    email: str,
-    phone: str,
-    best_reachability: str,
-    summary_items: list[str],
-    additional_notes: str,
-    conversation_id: uuid.UUID,
-    voice_session_id: str,
-    agent_name: str,
-) -> str:
-    """Builds the internal lead handoff email."""
-    phone_html = f"<li>Telefon: {escape(phone)}</li>" if phone else ""
-    reachability_html = (
-        f"<li>Beste Erreichbarkeit: {escape(best_reachability)}</li>"
-        if best_reachability
-        else ""
-    )
-    notes_html = (
-        f"<p><strong>Zusätzliche Hinweise:</strong><br>{escape(additional_notes)}</p>"
-        if additional_notes
-        else ""
-    )
-    return f"""
-<p><strong>Neue {escape(agent_name)}-Kundenanfrage für {escape(studio.name or studio.slug)}</strong></p>
-<p><strong>Kontaktdaten</strong></p>
-<ul>
-  <li>Name: {escape(first_name)} {escape(last_name)}</li>
-  <li>E-Mail: <a href="mailto:{escape(email)}">{escape(email)}</a></li>
-  {phone_html}
-  {reachability_html}
-</ul>
-<p><strong>Gesprächszusammenfassung</strong></p>
-{_html_list(summary_items)}
-{notes_html}
-<p style="font-size:12px;color:#666">
-Conversation: {escape(str(conversation_id))}<br>
-Voice Session: {escape(voice_session_id)}<br>
-Quelle: {escape(agent_name)} Voice Widget
-</p>
-"""
-
-
-def _build_crm_contact_capture(
-    *,
-    studio,
-    conversation_id: uuid.UUID,
-    lead_id: uuid.UUID,
-    voice_session_id: str,
-    visitor_id: str,
-    first_name: str,
-    last_name: str,
-    email: str,
-    phone: str,
-    best_reachability: str,
-    project_summary: str,
-    additional_notes: str,
-    consent_version: str,
-) -> CrmContactCaptureRequest:
-    """Builds the sanitized CRM intake payload for a voice contact handoff."""
-    full_name = f"{first_name} {last_name}".strip()
-    return CrmContactCaptureRequest(
-        tenant_id=CRM_TENANT_ID,
-        channel_type="voice",
-        purpose="consultation_inquiry",
-        case_id=f"voice:{conversation_id}:{lead_id}",
-        decision="accepted",
-        contact_handoff=ContactHandoff(
-            first_name=first_name,
-            last_name=last_name,
-            full_name=full_name,
-            email=email,
-            phone=phone,
-            preferred_channel="unknown",
-        ),
-        consent={
-            "contact_consent_confirmed": True,
-            "consent_version": consent_version,
-            "purpose": "consultation_inquiry",
-        },
-        linked_context={
-            "studio_slug": studio.slug,
-            "conversation_id": str(conversation_id),
-            "lead_id": str(lead_id),
-            "best_reachability": best_reachability,
-            "project_summary": project_summary,
-            "additional_notes": additional_notes,
-        },
-        source={
-            "system": "ki_mitarbeiter_widget",
-            "channel": "voice_contact_form",
-            "visitor_id": visitor_id,
-        },
-        audit_context={
-            "actor": f"voice:{visitor_id}",
-            "voice_session_id": voice_session_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        },
-        retention={
-            "classification": "contact_capture",
-            "raw_audio_stored": False,
-        },
-    )
-
-
-async def _upsert_contact_lead(
-    *,
-    session: AsyncSession,
-    studio,
-    visitor_id: str,
-    conversation,
-    first_name: str,
-    last_name: str,
-    email: str,
-    phone: str,
-    best_reachability: str,
-    project_summary: str,
-    additional_notes: str,
-    consent_version: str,
-) -> Lead:
-    """Creates or updates the lead from the manual secure contact form."""
-    lead = (
-        await session.execute(
-            select(Lead)
-            .where(Lead.studio_id == studio.id)
-            .where(Lead.visitor_id == visitor_id)
-        )
-    ).scalar_one_or_none()
-    if lead is None:
-        lead = Lead(
-            id=uuid.uuid4(),
-            studio_id=studio.id,
-            visitor_id=visitor_id,
-            status="qualified",
-            score=70.0,
-            source_channel="voice_widget",
-            profile={},
-        )
-        session.add(lead)
-        await session.flush()
-
-    full_name = f"{first_name} {last_name}".strip()
-    profile = dict(lead.profile or {})
-    profile.update(
-        {
-            "first_name": first_name,
-            "last_name": last_name,
-            "name": full_name,
-            "email": email,
-            "phone": phone,
-            "best_reachability": best_reachability,
-            "project_summary": project_summary,
-            "additional_notes": additional_notes,
-            "contact_consent_confirmed": True,
-            "contact_consent_version": consent_version,
-            "handoff_channel": "secure_widget_form",
-            "handoff_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
-    lead.name = full_name
-    lead.email = email
-    lead.phone = phone or None
-    lead.summary = project_summary
-    lead.profile = profile
-    lead.score = max(float(lead.score or 0), 85.0)
-    lead.status = "qualified"
-    if conversation.lead_id is None:
-        conversation.lead_id = lead.id
-    return lead
 
 
 def _parse_client_secret(data: dict[str, Any]) -> tuple[str, datetime]:
@@ -776,7 +539,7 @@ async def persist_voice_usage_event(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ) -> VoiceUsageEventResponse:
-    """Persists Realtime token usage reported by the browser data channel."""
+    """Forwards Realtime token usage to the tenant CRM ledger."""
     if not origin_allowed(request):
         raise HTTPException(status_code=403, detail="Origin not allowed")
     if not payload.consent_granted:
@@ -790,33 +553,35 @@ async def persist_voice_usage_event(
         or payload.provider_event_id
         or f"{payload.voice_session_id}:{payload.event_type}"
     )
-    cost_event = await record_openai_cost_event(
-        session=session,
-        studio_id=studio.id,
-        conversation_id=conversation.id,
-        lead_id=conversation.lead_id,
-        event_type=payload.event_type,
-        channel="voice",
-        component="realtime_session",
-        model=payload.model,
-        usage=payload.usage,
-        provider_event_id=provider_event_id,
-        metadata={
-            "voice_session_id": payload.voice_session_id,
-            "consent_version": payload.consent_version,
-            "provider_event_id": payload.provider_event_id,
-            "provider_response_id": payload.provider_response_id,
-        },
-    )
+    normalized_usage = normalize_openai_usage(payload.usage)
+    estimated_cost = estimate_openai_cost_usd(payload.model, normalized_usage)
+    try:
+        usage_id = await post_openai_usage_to_crm(
+            source_event_id=provider_event_id,
+            conversation_id=str(conversation.id),
+            visitor_id=payload.visitor_id,
+            channel_type="voice",
+            component="realtime_session",
+            model=payload.model,
+            usage=payload.usage,
+            metadata={
+                "voice_session_id": payload.voice_session_id,
+                "consent_version": payload.consent_version,
+                "provider_event_id": payload.provider_event_id,
+                "provider_response_id": payload.provider_response_id,
+            },
+        )
+    except CrmHandoffNotConfiguredError as exc:
+        raise HTTPException(
+            status_code=503, detail="crm_usage_handoff_not_configured"
+        ) from exc
+    except CrmHandoffFailedError as exc:
+        raise HTTPException(status_code=502, detail="crm_usage_handoff_failed") from exc
     await session.commit()
     return VoiceUsageEventResponse(
         stored=True,
-        cost_event_id=str(cost_event.id),
-        estimated_cost_usd=(
-            str(cost_event.estimated_cost_usd)
-            if cost_event.estimated_cost_usd is not None
-            else None
-        ),
+        cost_event_id=usage_id,
+        estimated_cost_usd=str(estimated_cost) if estimated_cost is not None else None,
     )
 
 
@@ -826,7 +591,7 @@ async def submit_voice_contact_handoff(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ) -> VoiceContactHandoffResponse:
-    """Stores secure manual contact form data without routing it through voice."""
+    """Forwards secure manual contact form data to the tenant CRM."""
     if not origin_allowed(request):
         raise HTTPException(status_code=403, detail="Origin not allowed")
     if not payload.consent_granted:
@@ -857,92 +622,39 @@ async def submit_voice_contact_handoff(
     if not project_summary:
         project_summary = "Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung."
 
-    lead = await _upsert_contact_lead(
-        session=session,
-        studio=studio,
-        visitor_id=payload.visitor_id,
-        conversation=conversation,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        phone=phone,
-        best_reachability=best_reachability,
-        project_summary=project_summary,
-        additional_notes=additional_notes,
-        consent_version=payload.consent_version,
-    )
-    await session.flush()
-
-    crm_captured = False
     crm_capture_id: str | None = None
     crm_error: str | None = None
     try:
-        crm_capture_id = await persist_crm_contact_capture(
-            _build_crm_contact_capture(
-                studio=studio,
-                conversation_id=conversation.id,
-                lead_id=lead.id,
-                voice_session_id=payload.voice_session_id,
-                visitor_id=payload.visitor_id,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                phone=phone,
-                best_reachability=best_reachability,
-                project_summary=project_summary,
-                additional_notes=additional_notes,
-                consent_version=payload.consent_version,
-            )
+        crm_capture_id = await post_voice_contact_to_crm(
+            run_id=f"voice:{conversation.id}:{payload.voice_session_id}",
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            source_origin=str(request.headers.get("origin") or ""),
+            privacy_accepted=payload.contact_consent_confirmed,
+            project_summary=project_summary,
+            additional_notes=additional_notes,
+            best_reachability=best_reachability,
         )
-        crm_captured = True
-    except Exception as exc:
-        crm_error = "crm_capture_failed"
+    except CrmHandoffNotConfiguredError as exc:
+        crm_error = "crm_handoff_not_configured"
         log.warning(
-            "voice.crm_contact_capture_failed",
+            "voice.crm_contact_handoff_not_configured",
             studio=studio.slug,
             conversation_id=str(conversation.id),
-            lead_id=str(lead.id),
             error=str(exc),
         )
-
-    summary_items = _summary_items(project_summary)
-    handoff_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
-    emails_sent = False
-    email_error: str | None = None
-    try:
-        email_service = EmailService()
-        await email_service.send(
-            to=email,
-            subject="Ihre Anfrage bei Mein Küchenexperte",
-            html=_customer_email_html(
-                first_name=first_name,
-                last_name=last_name,
-                summary_items=summary_items,
-                best_reachability=best_reachability,
-            ),
+        raise HTTPException(status_code=503, detail=crm_error) from exc
+    except CrmHandoffFailedError as exc:
+        crm_error = "crm_handoff_failed"
+        log.warning(
+            "voice.crm_contact_handoff_failed",
+            studio=studio.slug,
+            conversation_id=str(conversation.id),
+            error=str(exc),
         )
-        await email_service.send(
-            to=_lead_notification_email(studio),
-            subject=f"Neue {handoff_agent_name}-Anfrage: {first_name} {last_name}",
-            html=_admin_email_html(
-                studio=studio,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                phone=phone,
-                best_reachability=best_reachability,
-                summary_items=summary_items,
-                additional_notes=additional_notes,
-                conversation_id=conversation.id,
-                voice_session_id=payload.voice_session_id,
-                agent_name=handoff_agent_name,
-            ),
-        )
-        emails_sent = True
-    except EmailServiceDisabledError:
-        email_error = "email_disabled"
-    except Exception:
-        email_error = "email_delivery_failed"
+        raise HTTPException(status_code=502, detail=crm_error) from exc
 
     session.add(
         Event(
@@ -951,22 +663,19 @@ async def submit_voice_contact_handoff(
             actor=f"voice:{payload.visitor_id}",
             payload={
                 "conversation_id": str(conversation.id),
-                "lead_id": str(lead.id),
                 "voice_session_id": payload.voice_session_id,
-                "emails_sent": emails_sent,
-                "email_error": email_error,
-                "crm_captured": crm_captured,
+                "emails_sent": False,
+                "crm_captured": True,
                 "crm_capture_id": crm_capture_id,
-                "crm_error": crm_error,
             },
         )
     )
     await session.commit()
     return VoiceContactHandoffResponse(
         success=True,
-        lead_id=str(lead.id),
-        emails_sent=emails_sent,
-        crm_captured=crm_captured,
+        lead_id=None,
+        emails_sent=False,
+        crm_captured=True,
         crm_capture_id=crm_capture_id,
         error=crm_error,
     )

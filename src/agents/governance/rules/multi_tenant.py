@@ -18,14 +18,9 @@ from src.agents.governance.scanner import FileScanner
 
 # SQLAlchemy models that store tenant-owned or tenant-derived data.
 _TENANT_MODELS = {
-    "Appointment",
-    "Berater",
     "Conversation",
     "Event",
-    "Feedback",
-    "FollowUp",
     "KnowledgeChunk",
-    "Lead",
     "Message",
 }
 
@@ -105,10 +100,10 @@ def check_studio_id_filters(
                     ),
                     fix_example=(
                         "# VORHER (VERSTOSS):\n"
-                        "result = await session.execute(select(Lead))\n\n"
+                        "result = await session.execute(select(Conversation))\n\n"
                         "# NACHHER (COMPLIANT):\n"
                         "result = await session.execute(\n"
-                        "    select(Lead).where(Lead.studio_id == studio_id)\n"
+                        "    select(Conversation).where(Conversation.studio_id == studio_id)\n"
                         ")"
                     ),
                     deadline="Vor Go-Live — Datenlecks zwischen Studios verhindern",

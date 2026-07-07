@@ -20,6 +20,7 @@ def _get_studio_knowledge(studio: Studio) -> str:
         from src.agents.lisa.studio_knowledge.mein_kuechenexperte import (
             get_studio_context_text,
         )
+
         return get_studio_context_text()
 
     # Fallback: Minimal-Kontext aus Studio-Stammdaten
@@ -38,7 +39,7 @@ def build_lisa_system_prompt(
     1. Identität (wer Lisa ist, was ihre Aufgabe ist)
     2. Studio-Wissen (Öffnungszeiten, Sortiment, Berater, FAQ)
     3. Wissensbasis-Snippets (aus pgvector-Suche, falls vorhanden)
-    4. Lead-Kontext (was Lisa bereits über diesen Kunden weiß)
+    4. Besucher-Kontext (was aus früheren Sessions bekannt ist)
     5. Tonalität (wie Lisa spricht)
     6. Regeln (was sie tut und nicht tut)
     7. Tool-Anweisungen (wann sie welches Tool aufruft)
@@ -58,11 +59,9 @@ def build_lisa_system_prompt(
             f"\n## Zusätzliches Wissen aus deiner Wissensbasis\n\n{snippets_text}"
         )
 
-    # 4. Lead-Kontext (Rückkehrender Besucher)
+    # 4. Besucher-Kontext (Rückkehrender Besucher)
     if lead_summary:
-        sections.append(
-            f"\n## Was du bereits über diesen Kunden weißt\n\n{lead_summary}"
-        )
+        sections.append(f"\n## Was aus früheren Sessions bekannt ist\n\n{lead_summary}")
 
     # 5. Tonalität
     sections.append("\n" + KEA_CONVERSATION_CONTRACT)

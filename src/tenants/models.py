@@ -45,6 +45,9 @@ class ContactHandoffPolicy(StrictModel):
 
     secure_form_required: bool
     voice_pii_collection_allowed: bool
+    crm_target: str
+    contact_endpoint: str
+    usage_endpoint: str
 
 
 class LiveVoiceAgentProfile(StrictModel):

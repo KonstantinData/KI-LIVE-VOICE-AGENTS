@@ -34,7 +34,7 @@ class GovernanceConfig:
         default_factory=lambda: ["src", "tests"]
     )
     scan_ts_paths: list[str] = field(
-        default_factory=lambda: ["frontends/widget/src", "frontends/dashboard/src"]
+        default_factory=lambda: ["frontends/widget/src"]
     )
     exclude_dirs: list[str] = field(
         default_factory=lambda: [
@@ -64,7 +64,9 @@ class GovernanceConfig:
         "/health",
         "/ws/chat",
         "/widget-config",
-        "/google-calendar/callback",  # OAuth callback — secured via state param
+        "/voice/session",
+        "/voice/sessions/webrtc",
+        "/uploads/project-file",
     ])
 
     # Patterns that indicate a secret/API key in code

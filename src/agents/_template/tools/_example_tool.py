@@ -2,7 +2,7 @@
 Beispiel-Tool als Vorlage für eigene Tools.
 
 So erstellst du ein neues Tool:
-1. Kopiere diese Datei und benenne sie nach dem Tool (z.B. book_appointment.py)
+1. Kopiere diese Datei und benenne sie nach dem Tool.
 2. Benenne die Klasse um
 3. Setze name, description und input_schema
 4. Implementiere die execute()-Methode

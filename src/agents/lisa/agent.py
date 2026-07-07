@@ -7,13 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.lisa.system_prompt import build_lisa_system_prompt
-from src.agents.lisa.tools.book_appointment import BookAppointmentTool
-from src.agents.lisa.tools.extract_lead_data import ExtractLeadDataTool
 from src.core.base_agent import BaseAgent
 from src.core.llm import LLMClient
 from src.core.tool_registry import ToolRegistry
 from src.db.models.conversation import Conversation
-from src.db.models.lead import Lead
 from src.db.models.message import Message
 from src.db.models.studio import Studio
 
@@ -61,30 +58,12 @@ class LisaAgent(BaseAgent):
 
     def get_tools(self) -> ToolRegistry:
         """
-        Gibt die Tool-Registry mit den auf die aktuelle Konversation
-        zugeschnittenen Tools zurück.
+        Returns the runtime tool registry.
+
+        CRM-writing tools are not registered here. Tenant handoff happens via
+        explicit contact and usage webhooks owned by the website CRM.
         """
-        registry = ToolRegistry()
-
-        if self._current_conversation_id and self._current_studio_id:
-            registry.register(
-                ExtractLeadDataTool(
-                    session=self._session,
-                    studio_id=self._current_studio_id,
-                    conversation_id=self._current_conversation_id,
-                    visitor_id=self._current_visitor_id,
-                )
-            )
-            if self._current_studio_slug != "mein-kuechenexperte":
-                registry.register(
-                    BookAppointmentTool(
-                        session=self._session,
-                        studio_id=self._current_studio_id,
-                        visitor_id=self._current_visitor_id,
-                    )
-                )
-
-        return registry
+        return ToolRegistry()
 
     def get_knowledge_categories(self) -> list[str]:
         """Lisa sucht in allen relevanten Wissenskategorien."""
@@ -138,7 +117,7 @@ class LisaAgent(BaseAgent):
         1. Konversation als "closed" markieren
         2. Alle Nachrichten laden
         3. Zusammenfassung via LLM generieren
-        4. In Lead.summary speichern (falls Lead verknüpft)
+        4. In Conversation.summary speichern
         """
         # Konversation schließen
         conversation.status = "closed"
@@ -159,8 +138,7 @@ class LisaAgent(BaseAgent):
 
         # Gesprächsprotokoll für die Zusammenfassung aufbauen
         transcript = "\n".join(
-            f"{'Kunde' if m.role == 'user' else 'Lisa'}: {m.content}"
-            for m in messages
+            f"{'Kunde' if m.role == 'user' else 'Lisa'}: {m.content}" for m in messages
         )
 
         # Zusammenfassung via LLM generieren
@@ -184,23 +162,7 @@ class LisaAgent(BaseAgent):
             log.warning("lisa.finalize.summary_failed", error=str(e))
             summary = f"[Automatische Zusammenfassung fehlgeschlagen: {e}]"
 
-        # Zusammenfassung im Lead speichern
-        if conversation.lead_id:
-            lead_result = await self._session.execute(
-                select(Lead)
-                .where(Lead.id == conversation.lead_id)
-                .where(Lead.studio_id == studio.id)
-            )
-            lead = lead_result.scalar_one_or_none()
-            if lead:
-                lead.summary = summary
-                log.info(
-                    "lisa.finalize.summary_saved",
-                    lead_id=str(lead.id),
-                    score=lead.score,
-                )
-
-        # Zusammenfassung auch in Conversation speichern
+        # Store the runtime summary on the conversation; CRM lead handling is external.
         conversation.summary = summary
 
         log.info(

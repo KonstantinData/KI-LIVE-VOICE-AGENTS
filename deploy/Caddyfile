@@ -14,12 +14,3 @@ widget.mein-kuechenexperte.de {
     header Cache-Control "public, max-age=31536000, immutable"
     encode gzip
 }
-
-# Dashboard SPA
-app.mein-kuechenexperte.de {
-    root * /var/www/dashboard/dist
-    file_server
-    # SPA Fallback: alle Routen → index.html
-    try_files {path} /index.html
-    encode gzip
-}

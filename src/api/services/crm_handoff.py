@@ -1,23 +1,24 @@
-"""Provider cost tracking helpers.
+"""CRM handoff client.
 
-What: Converts OpenAI usage payloads into tenant-scoped cost events.
-Does: Normalizes token details, applies pricing snapshots, and creates DB rows.
-Why: Per-chat cost reporting needs consistent raw usage and estimated cost storage.
-Who: Voice usage reporting and upload analysis routes.
-Depends on: decimal, sqlalchemy session, ConversationCostEvent model.
+What: Sends sanitized KEA handoff and usage events to the Mein Küchenexperte CRM.
+Does: Normalizes voice contact and provider usage payloads, then posts them to CRM webhooks.
+Why: The CRM source of truth lives in the mein-kuechenexperte repository, not here.
+Who: Voice and upload routes call this service after consent-gated customer actions.
+Depends on: httpx, decimal, src.api.config
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
-import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
+import httpx
 
-from src.db.models.conversation_cost_event import ConversationCostEvent
+from src.api.config import get_settings
 
+CRM_TENANT_ID = "mein-kuechenexperte"
 PRICING_SNAPSHOT = "openai_2026-07-07"
 MILLION = Decimal("1000000")
 
@@ -55,6 +56,14 @@ OPENAI_RATES: dict[str, ModelTokenRates] = {
         image_cached_input=Decimal("0.50"),
     ),
 }
+
+
+class CrmHandoffNotConfiguredError(RuntimeError):
+    """Raised when a CRM handoff webhook or secret is missing."""
+
+
+class CrmHandoffFailedError(RuntimeError):
+    """Raised when the CRM rejects a handoff."""
 
 
 def _rates_for_model(model: str) -> ModelTokenRates | None:
@@ -146,38 +155,130 @@ def estimate_openai_cost_usd(model: str, tokens: dict[str, int]) -> Decimal | No
     return total.quantize(Decimal("0.000001"))
 
 
-async def record_openai_cost_event(
+def _website_url() -> str:
+    """Returns the configured public CRM website URL."""
+    return get_settings().website_url.rstrip("/")
+
+
+def _contact_handoff_endpoint() -> str:
+    """Returns the CRM contact handoff endpoint."""
+    settings = get_settings()
+    return (
+        settings.crm_contact_handoff_endpoint.strip()
+        or f"{_website_url()}/agent-lead-webhook.php"
+    )
+
+
+def _usage_handoff_endpoint() -> str:
+    """Returns the CRM AI usage handoff endpoint."""
+    settings = get_settings()
+    return (
+        settings.crm_usage_handoff_endpoint.strip()
+        or f"{_website_url()}/agent-usage-webhook.php"
+    )
+
+
+async def post_voice_contact_to_crm(
     *,
-    session: AsyncSession,
-    studio_id: uuid.UUID,
-    conversation_id: uuid.UUID | None,
-    event_type: str,
-    channel: str,
+    run_id: str,
+    first_name: str,
+    last_name: str,
+    email: str,
+    phone: str,
+    source_origin: str,
+    privacy_accepted: bool,
+    project_summary: str,
+    additional_notes: str,
+    best_reachability: str,
+) -> str:
+    """Sends a sanitized voice contact handoff to the CRM webhook."""
+    settings = get_settings()
+    secret = settings.crm_contact_handoff_secret.strip()
+    if not secret:
+        raise CrmHandoffNotConfiguredError("crm_contact_handoff_secret_missing")
+
+    payload = {
+        "tenant_id": CRM_TENANT_ID,
+        "run_id": run_id,
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "phone": phone,
+        "wants_quick_check": True,
+        "wants_pdf": False,
+        "privacy_accepted": privacy_accepted,
+        "source_origin": source_origin,
+        "requested_at": datetime.now(timezone.utc).isoformat(),
+        "project_summary": project_summary,
+        "additional_notes": additional_notes,
+        "best_reachability": best_reachability,
+    }
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.post(
+            _contact_handoff_endpoint(),
+            headers={
+                "X-Agent-Webhook-Secret": secret,
+                "Accept": "application/json",
+            },
+            json=payload,
+        )
+    if response.status_code < 200 or response.status_code >= 300:
+        raise CrmHandoffFailedError(f"crm_contact_handoff_http_{response.status_code}")
+    data = response.json()
+    if data.get("success") is not True:
+        raise CrmHandoffFailedError("crm_contact_handoff_rejected")
+    return str(data.get("ledger_id") or data.get("message") or "accepted")
+
+
+async def post_openai_usage_to_crm(
+    *,
+    source_event_id: str,
+    conversation_id: str | None,
+    visitor_id: str | None,
+    channel_type: str,
     component: str,
     model: str,
     usage: dict[str, Any] | None,
-    lead_id: uuid.UUID | None = None,
-    message_id: uuid.UUID | None = None,
-    provider_event_id: str | None = None,
     metadata: dict[str, Any] | None = None,
-) -> ConversationCostEvent:
-    """Stores one normalized OpenAI usage/cost event."""
+) -> str:
+    """Sends normalized AI usage telemetry to the CRM usage ledger."""
+    settings = get_settings()
+    secret = settings.crm_usage_handoff_secret.strip()
+    if not secret:
+        raise CrmHandoffNotConfiguredError("crm_usage_handoff_secret_missing")
+
     normalized = normalize_openai_usage(usage)
-    event = ConversationCostEvent(
-        studio_id=studio_id,
-        conversation_id=conversation_id,
-        lead_id=lead_id,
-        message_id=message_id,
-        event_type=event_type,
-        channel=channel,
-        component=component,
-        provider="openai",
-        provider_event_id=provider_event_id,
-        model=model,
-        estimated_cost_usd=estimate_openai_cost_usd(model, normalized),
-        pricing_snapshot=PRICING_SNAPSHOT if _rates_for_model(model) else None,
-        metadata_=metadata,
+    estimated_cost = estimate_openai_cost_usd(model, normalized)
+    payload = {
+        "tenant_id": CRM_TENANT_ID,
+        "source_system": "ki-live-voice-agents",
+        "source_event_id": source_event_id,
+        "conversation_id": conversation_id or "",
+        "visitor_id": visitor_id or "",
+        "channel_type": channel_type,
+        "component": component,
+        "provider": "openai",
+        "model": model,
         **normalized,
-    )
-    session.add(event)
-    return event
+        "estimated_cost_usd": str(estimated_cost)
+        if estimated_cost is not None
+        else None,
+        "pricing_snapshot": PRICING_SNAPSHOT if _rates_for_model(model) else "",
+        "metadata": metadata or {},
+        "occurred_at": datetime.now(timezone.utc).isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(
+            _usage_handoff_endpoint(),
+            headers={
+                "X-Agent-Usage-Webhook-Secret": secret,
+                "Accept": "application/json",
+            },
+            json=payload,
+        )
+    if response.status_code < 200 or response.status_code >= 300:
+        raise CrmHandoffFailedError(f"crm_usage_handoff_http_{response.status_code}")
+    data = response.json()
+    if data.get("success") is not True:
+        raise CrmHandoffFailedError("crm_usage_handoff_rejected")
+    return str(data.get("usage_id") or "accepted")

@@ -4,7 +4,7 @@
 
 ---
 
-A multi-tenant system for AI-powered live voice and chat agents that helps kitchen and furniture stores handle customer inquiries from first contact to secure staff handoff.
+A multi-tenant system for AI-powered live voice and chat agents that helps kitchen and furniture stores handle customer inquiries from first contact to secure handoff into an external CRM.
 
 ---
 
@@ -52,7 +52,7 @@ A single chat window for the visitor — in the background, a tenant-specific ru
 
 A visitor to `www.mein-kuechenexperte.de` sees a chat button in the corner. They click, write or speak their question, and **KEA** responds immediately. The conversation feels natural. In the background, the system captures relevant project data, evaluates the prospect, and prepares the next step.
 
-The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexperte.de`: which leads have come in, what was discussed, which appointments are upcoming.
+For `mein-kuechenexperte`, the CRM lives in the separate `mein-kuechenexperte` repository. This voice-agent backend only hands off contact and usage data through CRM webhooks and does not run a CRM dashboard.
 
 ---
 
@@ -61,7 +61,7 @@ The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexp
 | Component | URL | Platform |
 | --------- | --- | -------- |
 | **Chat Widget** (for website visitors) | `widget.mein-kuechenexperte.de` | Cloudflare Pages |
-| **Admin Dashboard** (for studio operators) | `app.mein-kuechenexperte.de` | Cloudflare Pages |
+| **CRM / Website App** (separate repo) | `app.mein-kuechenexperte.de` | `mein-kuechenexperte` |
 | **Backend / AI** (invisible in background) | `api.mein-kuechenexperte.de` | Hetzner Cloud (EU) |
 | **Main website** (unchanged) | `www.mein-kuechenexperte.de` | existing |
 
@@ -71,31 +71,30 @@ The kitchen studio sees everything in an admin dashboard at `app.mein-kuechenexp
 
 ### Infrastructure & Backend
 
-- Complete **database schema** (prospects, conversations, appointments, knowledge base, audit trail)
-- **API server** with all necessary endpoints (authentication, chat, studios, leads, appointments, etc.)
+- **Runtime database schema** for studio, conversations, messages, upload context, and audit trail
+- **API server** with runtime endpoints for widget, WebSocket, Live Voice, uploads, and CRM handoff
 - **Real-time chat** via WebSocket — messages are transmitted in milliseconds
 - **Live Voice Agents** via browser WebRTC — voice runs through a server-side OpenAI Realtime broker without browser API keys
 - **Knowledge search**: The system can semantically search a studio's product database and pass relevant information to the AI
-- **Memory system**: Each agent remembers what was discussed in previous conversations with a customer
+- **Memory system**: Each agent uses allowed conversation context without keeping local CRM leads for `mein-kuechenexperte`
 - **Multi-studio operation**: Any number of studios can use the system in parallel — completely separated from each other
 
 ### AI Core
 
 - Pre-built **agent structure**: Each new agent follows the same 7-step process (load context → understand request → retrieve knowledge → use tools → respond → save)
 - Connection to **OpenAI** for natural conversations, live voice, and complex reasoning
-- **Tool system**: Agents can independently perform actions (check appointments, send emails, save data)
+- **Tool system**: Agents use only tenant-allowed runtime tools; `mein-kuechenexperte` uses secure CRM handoffs instead of local lead tools
 - **Tenant registry**: New tenants receive their own profiles, skill packs, policies, and widget identity without a new hard-coded agent
 
 ### Frontend
 
 - **Chat widget**: A `<script>` tag is enough to integrate into any existing website; text chat remains the fallback for voice mode
-- **Admin dashboard**: Web interface for the kitchen studio with login, overviews, and navigation
-- Both frontends **live on Cloudflare Pages** with automatic SSL and custom domains
+- The **CRM dashboard** for `mein-kuechenexperte` lives in the `mein-kuechenexperte` repository
 
 ### Deployment & Operations
 
 - **Backend** runs on a European server (Hetzner, GDPR-compliant)
-- **Frontends** via Cloudflare Pages — fast, worldwide, fail-safe
+- **Widget** via Cloudflare Pages — fast, worldwide, fail-safe
 - Automatic deployments: Every code push triggers a new build
 - Configuration and deployment scripts for quick setup
 
@@ -109,14 +108,13 @@ KI-LIVE-VOICE-AGENTS/
 ├── src/
 │   ├── core/          # Shared core of all agents (LLM, memory, knowledge, tools)
 │   ├── agents/        # Runtime agent implementation and legacy agent modules
-│   ├── api/           # API server (endpoints, WebSocket, authentication)
+│   ├── api/           # Runtime API server (voice, uploads, widget, handoff)
 │   └── db/            # Database models and migrations
 ├── registry/          # Tenant profiles and tenant-specific skill packs
 ├── schemas/           # Machine-readable tenant/runtime contracts
 │
 ├── frontends/
 │   ├── widget/        # Chat widget → widget.mein-kuechenexperte.de
-│   └── dashboard/     # Admin dashboard → app.mein-kuechenexperte.de
 │
 ├── tests/             # Automated tests
 └── deploy/            # Server configuration and deployment scripts
@@ -135,9 +133,8 @@ KI-LIVE-VOICE-AGENTS/
 | Chat | WebSocket | Real-time communication without page reload |
 | Live Voice | OpenAI Realtime + WebRTC | Low latency, VAD, and interruptions in the browser |
 | Widget | React + Vite | Small bundle, runs isolated on any website |
-| Dashboard | React + Tailwind | Modern, maintainable admin interface |
 | Hosting Backend | Hetzner (EU) | GDPR-compliant, reliable, cost-effective |
-| Hosting Frontend | Cloudflare Pages | Global CDN, automatic SSL certificates, free |
+| Hosting Widget | Cloudflare Pages | Global CDN, automatic SSL certificates, free |
 
 ---
 
@@ -167,21 +164,18 @@ make dev
 # 6. Build widget (optional)
 cd frontends/widget && pnpm install && pnpm build
 
-# 7. Build dashboard (optional)
-cd frontends/dashboard && pnpm install && pnpm build
 ```
 
 **Required:** Python 3.12+, Node.js 20+, pnpm, PostgreSQL 16 with pgvector
 
 ### Production-Relevant Configuration
 
-- `ADMIN_PASSWORD_HASH` must be set in production. The test login `admin / secret` only works when `ALLOW_DEMO_LOGIN=true` and `APP_ENV` is not `production`.
-- `JWT_SECRET` must be a long random value and must never be committed.
-- `ENABLE_EMAIL_SENDING` and `ENABLE_CALENDAR_SYNC` default to `false`. External actions only run when the matching API/OAuth credentials are configured and the feature flags are deliberately enabled.
+- This repository does not run a CRM/admin dashboard. CRM dashboard, leads, and cost reports live in the `mein-kuechenexperte` repository.
+- `CRM_CONTACT_HANDOFF_SECRET` and `CRM_USAGE_HANDOFF_SECRET` must be set when contact and usage data should be handed off to the CRM.
 - `ENABLE_VOICE_SESSIONS` is the global kill switch for Live Voice Agents. The tenant profile must also enable voice; the widget can show the tab with `data-voice="true"`.
 - Live Voice Agents use `/voice/sessions/webrtc` and `/voice/session` as server-side OpenAI Realtime brokers. Standard API keys stay in the backend; the browser receives only short-lived client secrets or SDP answers and safe session metadata.
 - In voice mode, microphone access is requested only after consent and an additional click. Raw audio is not stored by default; final transcripts, tool audits, and summaries are stored tenant-safely.
-- `CORS_ORIGINS` must include the public website and dashboard. WebSocket connections are checked server-side against these origins.
+- `CORS_ORIGINS` must include the public website. WebSocket connections are checked server-side against these origins.
 - The widget connects only after GDPR consent and sends `consent=1` to `/ws/chat`.
 
 ### Verification
@@ -196,8 +190,6 @@ python -m mypy src
 DATABASE_URL=sqlite+aiosqlite:///./tmp_migration_check.sqlite3 alembic upgrade head
 
 # Run frontends through the workspace so pnpm allowBuilds applies
-pnpm --filter ki-team-dashboard lint
-pnpm --filter ki-team-dashboard build
 pnpm --filter ki-team-widget lint
 pnpm --filter ki-team-widget build
 ```
@@ -210,18 +202,17 @@ The widget production build aliases React to Preact Compat so the bundled `loade
 
 | Area | Status |
 | ---- | ------ |
-| Database schema | Complete with Alembic migration |
-| API framework | Complete with tenant-scoped MVP routes |
+| Runtime database schema | Complete with Alembic migrations |
+| API framework | Complete with tenant-scoped runtime routes |
 | WebSocket chat | Complete with consent, origin, and size checks |
 | Live Voice Agents | Complete as feature-flagged WebRTC mode with consent, tenant profile, tool bridge, and text fallback |
 | Agent core (base) | Complete |
 | Agent template | Complete |
 | Chat widget | Complete with GDPR consent gate and small IIFE bundle |
-| Admin dashboard | Complete as MVP with real API views |
-| Tenant `mein-kuechenexperte` | Active with public widget name KEA |
+| CRM dashboard | Lives in the separate `mein-kuechenexperte` repository |
+| Tenant `mein-kuechenexperte` | Active with public widget name KEA and CRM handoff |
 | Additional tenants | Prepared through the registry structure |
-| Google Calendar integration | Feature-flagged with secured OAuth routes |
-| Email sending | Feature-flagged through Resend |
+| CRM handoff | Contact and usage webhooks into the `mein-kuechenexperte` repository |
 
 ---
 

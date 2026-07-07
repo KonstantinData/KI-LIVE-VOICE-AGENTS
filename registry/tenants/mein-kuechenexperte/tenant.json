@@ -23,7 +23,7 @@
     },
     {
       "hostname": "app.mein-kuechenexperte.de",
-      "purpose": "dashboard",
+      "purpose": "crm",
       "expected_origin": "https://app.mein-kuechenexperte.de"
     }
   ],
@@ -50,16 +50,14 @@
         "secure-contact-handoff",
         "project-upload-context"
       ],
-      "tools": [
-        "extract-lead-data"
-      ],
+      "tools": [],
       "knowledge_scopes": [
         "mein-kuechenexperte-studio-knowledge"
       ],
       "data_scopes": [
         "tenant-conversation-write",
-        "tenant-lead-write",
-        "tenant-private-upload-write"
+        "tenant-private-upload-write",
+        "tenant-crm-handoff-write"
       ],
       "policies": [
         "strict-tenant-isolation",
@@ -76,7 +74,10 @@
       ],
       "contact_handoff": {
         "secure_form_required": true,
-        "voice_pii_collection_allowed": false
+        "voice_pii_collection_allowed": false,
+        "crm_target": "mein-kuechenexperte",
+        "contact_endpoint": "https://www.mein-kuechenexperte.de/agent-lead-webhook.php",
+        "usage_endpoint": "https://www.mein-kuechenexperte.de/agent-usage-webhook.php"
       }
     }
   ],

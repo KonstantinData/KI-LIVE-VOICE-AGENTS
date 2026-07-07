@@ -41,6 +41,6 @@ ssh root@46.225.221.42 "cd /var/www/ki-team && \
 curl https://api.mein-kuechenexperte.de/health
 ```
 
-Protected dashboard routes should return `401` without a bearer token. For
-example, `/dashboard/costs` returning `401` confirms that the route exists and
-is protected; `404` means the backend deploy did not include the route.
+CRM/dashboard routes are intentionally not served by this backend. For example,
+`/dashboard/costs` should return `404`; AI usage and contact data are handed off
+to the CRM endpoints in the `mein-kuechenexperte` repository.

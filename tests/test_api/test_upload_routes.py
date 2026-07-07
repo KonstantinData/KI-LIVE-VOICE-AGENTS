@@ -9,11 +9,24 @@ import pytest
 from sqlalchemy import select
 
 from src.api.config import get_settings
-from src.db.models.conversation_cost_event import ConversationCostEvent
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
-from tests.test_api.upload_helpers import auth_headers as get_auth_headers
-from tests.test_api.upload_helpers import seed_studio
+from src.db.models.studio import Studio
+
+
+async def seed_studio(db_session, *, slug: str | None = None) -> Studio:
+    """Creates a widget runtime studio for upload tests."""
+    studio = Studio(
+        id=uuid.uuid4(),
+        name="Mein Küchenexperte",
+        slug=slug or f"upload-studio-{uuid.uuid4().hex}",
+        api_key=f"upload-key-{uuid.uuid4()}",
+        config={"agent_name": "KEA", "upload_enabled": True},
+        is_active=True,
+    )
+    db_session.add(studio)
+    await db_session.flush()
+    return studio
 
 
 @pytest.mark.asyncio
@@ -67,54 +80,6 @@ async def test_project_file_upload_stores_private_file_and_message(
     assert "Projektdatei hochgeladen" in messages[0].content
     assert messages[0].tool_calls[0]["relative_path"].endswith(".png")
     assert messages[0].tool_calls[0]["ai_analysis_requested"] is True
-
-
-@pytest.mark.asyncio
-async def test_project_file_upload_supports_protected_dashboard_download(
-    db_client,
-    db_session,
-    tmp_path,
-    monkeypatch,
-):
-    settings = get_settings()
-    monkeypatch.setattr(settings, "upload_storage_dir", str(tmp_path))
-    monkeypatch.setattr(settings, "enable_upload_ai_analysis", False)
-    monkeypatch.setattr(
-        settings, "cors_origins", ["https://www.mein-kuechenexperte.de"]
-    )
-    studio = await seed_studio(db_session)
-    headers = {"Origin": "https://www.mein-kuechenexperte.de"}
-    png_bytes = b"\x89PNG\r\n\x1a\nprivate-dashboard-file"
-
-    upload = await db_client.post(
-        "/uploads/project-file",
-        headers=headers,
-        data={
-            "studio": studio.slug,
-            "visitor_id": "visitor-dashboard-download",
-            "consent_granted": "true",
-            "consent_version": "widget-v1",
-            "ai_analysis_consent": "true",
-        },
-        files={"file": ("kueche.png", png_bytes, "image/png")},
-    )
-    assert upload.status_code == 200
-
-    auth_headers = await get_auth_headers(db_client)
-    file_id = upload.json()["file_id"]
-    list_response = await db_client.get(
-        "/uploads/project-files",
-        headers=auth_headers,
-    )
-    download_response = await db_client.get(
-        f"/uploads/project-files/{file_id}",
-        headers=auth_headers,
-    )
-
-    assert list_response.status_code == 200
-    assert list_response.json()[0]["file_id"] == file_id
-    assert download_response.status_code == 200
-    assert download_response.content == png_bytes
 
 
 @pytest.mark.asyncio
@@ -199,6 +164,7 @@ async def test_pdf_project_file_upload_runs_analysis_path(
         settings, "cors_origins", ["https://www.mein-kuechenexperte.de"]
     )
     studio = await seed_studio(db_session, slug="mein-kuechenexperte-pdf")
+    usage_events: list[dict] = []
 
     async def fake_analysis(**kwargs):
         assert kwargs["content_type"] == "application/pdf"
@@ -215,6 +181,14 @@ async def test_pdf_project_file_upload_runs_analysis_path(
         )
 
     monkeypatch.setattr("src.api.routes.uploads._analyze_project_upload", fake_analysis)
+
+    async def fake_usage_handoff(**kwargs):
+        usage_events.append(kwargs)
+        return "usage-ledger-1"
+
+    monkeypatch.setattr(
+        "src.api.routes.uploads.post_openai_usage_to_crm", fake_usage_handoff
+    )
     response = await db_client.post(
         "/uploads/project-file",
         headers={"Origin": "https://www.mein-kuechenexperte.de"},
@@ -230,20 +204,13 @@ async def test_pdf_project_file_upload_runs_analysis_path(
 
     assert response.status_code == 200
     assert response.json()["analysis_summary"] == "PDF summary"
-    cost_events = (
-        (
-            await db_session.execute(
-                select(ConversationCostEvent).where(
-                    ConversationCostEvent.event_type == "upload_analysis"
-                )
-            )
-        )
-        .scalars()
-        .all()
-    )
-    assert len(cost_events) == 1
-    assert cost_events[0].input_text_tokens == 1200
-    assert cost_events[0].output_text_tokens == 120
+    assert len(usage_events) == 1
+    event = usage_events[0]
+    assert event["channel_type"] == "upload"
+    assert event["component"] == "project_upload_analysis"
+    assert event["model"] == "gpt-4o-mini"
+    assert event["usage"]["prompt_tokens"] == 1200
+    assert event["metadata"]["content_type"] == "application/pdf"
 
 
 @pytest.mark.asyncio

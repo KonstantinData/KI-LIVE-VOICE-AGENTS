@@ -36,7 +36,7 @@ class BaseAgent(ABC):
 
     Jeder Agent durchläuft bei einer eingehenden Nachricht
     den gleichen 7-Schritte-Prozess:
-    1. Kontext laden (Studio, Lead, History)
+    1. Kontext laden (Studio, Conversation, History)
     2. Absicht erkennen
     3. Wissen abrufen (Wissensbasis durchsuchen)
     4. Tools bereitstellen
@@ -86,12 +86,12 @@ class BaseAgent(ABC):
         The 7-step agent loop. NOT overridden by subclasses.
 
         Processes a message and returns the response as a string.
-        
+
         Args:
             user_message: The user's input message
             conversation: Current conversation object
             studio: Studio configuration and context
-            
+
         Returns:
             Agent's response as string
         """
@@ -186,7 +186,7 @@ class BaseAgent(ABC):
     ) -> None:
         """
         Persists a message to the database.
-        
+
         Args:
             conversation_id: ID of the conversation
             role: Message role ("user" or "assistant")

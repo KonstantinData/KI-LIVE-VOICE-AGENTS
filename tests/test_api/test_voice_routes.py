@@ -10,8 +10,6 @@ from sqlalchemy import select
 from src.api.config import get_settings
 from src.api.services.openai_realtime import RealtimeCallResult
 from src.db.models.conversation import Conversation
-from src.db.models.conversation_cost_event import ConversationCostEvent
-from src.db.models.lead import Lead
 from src.db.models.message import Message
 from src.db.models.studio import Studio
 
@@ -341,8 +339,9 @@ async def test_voice_transcript_endpoint_persists_widget_contract(
 async def test_voice_usage_event_persists_realtime_cost(
     db_client,
     db_session,
+    monkeypatch,
 ):
-    """The widget can report Realtime usage for per-chat cost tracking."""
+    """The widget forwards Realtime usage to the CRM cost ledger."""
     studio = await _seed_voice_studio(db_session)
     conversation = Conversation(
         id=uuid.uuid4(),
@@ -353,6 +352,15 @@ async def test_voice_usage_event_persists_realtime_cost(
     )
     db_session.add(conversation)
     await db_session.flush()
+    usage_handoffs: list[dict[str, Any]] = []
+
+    async def fake_usage_handoff(**kwargs):
+        usage_handoffs.append(kwargs)
+        return "crm-usage-1"
+
+    monkeypatch.setattr(
+        "src.api.routes.voice.post_openai_usage_to_crm", fake_usage_handoff
+    )
 
     response = await db_client.post(
         "/voice/usage-events",
@@ -394,27 +402,24 @@ async def test_voice_usage_event_persists_realtime_cost(
     assert response.status_code == 200
     data = response.json()
     assert data["stored"] is True
+    assert data["cost_event_id"] == "crm-usage-1"
     assert data["estimated_cost_usd"] is not None
-    cost_event = await db_session.get(
-        ConversationCostEvent,
-        uuid.UUID(data["cost_event_id"]),
-    )
-    assert cost_event is not None
-    assert cost_event.conversation_id == conversation.id
-    assert cost_event.input_text_tokens == 119
-    assert cost_event.input_audio_tokens == 13
-    assert cost_event.cached_text_tokens == 64
-    assert cost_event.output_audio_tokens == 91
-    assert cost_event.metadata_["voice_session_id"] == "voice-test"
+    assert len(usage_handoffs) == 1
+    event = usage_handoffs[0]
+    assert event["conversation_id"] == str(conversation.id)
+    assert event["visitor_id"] == "visitor-usage"
+    assert event["channel_type"] == "voice"
+    assert event["component"] == "realtime_session"
+    assert event["metadata"]["voice_session_id"] == "voice-test"
 
 
 @pytest.mark.asyncio
-async def test_voice_contact_handoff_stores_lead_from_manual_form(
+async def test_voice_contact_handoff_forwards_manual_form_to_crm(
     db_client,
     db_session,
     monkeypatch,
 ):
-    """Manual contact handoff stores PII server-side without Realtime tools."""
+    """Manual contact handoff sends PII only to the tenant CRM."""
     studio = await _seed_voice_studio(db_session)
     conversation = Conversation(
         id=uuid.uuid4(),
@@ -425,25 +430,14 @@ async def test_voice_contact_handoff_stores_lead_from_manual_form(
     )
     db_session.add(conversation)
     await db_session.flush()
-    sent_to: list[str] = []
-    crm_payloads: list[Any] = []
+    crm_handoffs: list[dict[str, Any]] = []
 
-    async def fake_send(
-        self, *, to: str, subject: str, html: str, from_name=None
-    ) -> str:
-        sent_to.append(to)
-        assert subject
-        assert "OpenAI" not in html
-        return f"message-{len(sent_to)}"
-
-    monkeypatch.setattr("src.api.routes.voice.EmailService.send", fake_send)
-
-    async def fake_crm_capture(payload):
-        crm_payloads.append(payload)
+    async def fake_crm_handoff(**kwargs):
+        crm_handoffs.append(kwargs)
         return "crm-ledger-1"
 
     monkeypatch.setattr(
-        "src.api.routes.voice.persist_crm_contact_capture", fake_crm_capture
+        "src.api.routes.voice.post_voice_contact_to_crm", fake_crm_handoff
     )
 
     response = await db_client.post(
@@ -470,21 +464,14 @@ async def test_voice_contact_handoff_stores_lead_from_manual_form(
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
-    assert data["emails_sent"] is True
+    assert data["lead_id"] is None
+    assert data["emails_sent"] is False
     assert data["crm_captured"] is True
     assert data["crm_capture_id"] == "crm-ledger-1"
-    assert sent_to == ["max@example.com", "beratung@mein-kuechenexperte.de"]
-    lead = await db_session.get(Lead, uuid.UUID(data["lead_id"]))
-    await db_session.refresh(conversation)
-    assert lead is not None
-    assert lead.email == "max@example.com"
-    assert lead.phone == "+49 176 23785746"
-    assert lead.profile["handoff_channel"] == "secure_widget_form"
-    assert conversation.lead_id == lead.id
-    assert len(crm_payloads) == 1
-    crm_payload = crm_payloads[0]
-    assert crm_payload.tenant_id == "mein-kuechenexperte"
-    assert crm_payload.channel_type == "voice"
-    assert crm_payload.contact_handoff.email == "max@example.com"
-    assert crm_payload.linked_context["conversation_id"] == str(conversation.id)
-    assert "transcript" not in str(crm_payload.model_dump()).lower()
+    assert len(crm_handoffs) == 1
+    crm_payload = crm_handoffs[0]
+    assert crm_payload["run_id"] == f"voice:{conversation.id}:voice-test"
+    assert crm_payload["email"] == "max@example.com"
+    assert crm_payload["phone"] == "+49 176 23785746"
+    assert crm_payload["privacy_accepted"] is True
+    assert "transcript" not in str(crm_payload).lower()

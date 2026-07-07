@@ -20,8 +20,17 @@ def test_mein_kuechenexperte_profile_selects_kea_widget_identity():
     assert profile.tenant_id == "mein-kuechenexperte"
     assert profile.public_widget.agent_name == "KEA"
     assert profile.live_voice_agent().agent_type == "live-voice"
+    assert profile.live_voice_agent().tools == ()
     assert "book-appointment" not in profile.live_voice_agent().tools
+    assert "tenant-lead-write" not in profile.live_voice_agent().data_scopes
+    assert "tenant-crm-handoff-write" in profile.live_voice_agent().data_scopes
     assert "no-voice-pii-capture" in profile.live_voice_agent().policies
+    assert (
+        profile.live_voice_agent().contact_handoff.crm_target == "mein-kuechenexperte"
+    )
+    assert profile.live_voice_agent().contact_handoff.usage_endpoint.endswith(
+        "/agent-usage-webhook.php"
+    )
 
 
 def test_widget_config_registry_overrides_legacy_db_agent_name():

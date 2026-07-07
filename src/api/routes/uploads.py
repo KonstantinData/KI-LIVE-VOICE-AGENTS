@@ -31,7 +31,11 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.config import get_settings
-from src.api.services.cost_tracking import record_openai_cost_event
+from src.api.services.crm_handoff import (
+    CrmHandoffFailedError,
+    CrmHandoffNotConfiguredError,
+    post_openai_usage_to_crm,
+)
 from src.api.services.project_upload_runtime import (
     ALLOWED_TYPES,
     analyze_project_upload as _analyze_project_upload,
@@ -206,25 +210,30 @@ async def upload_project_file(
     session.add(message)
     await session.flush()
     if analysis_usage is not None and analysis_model is not None:
-        await record_openai_cost_event(
-            session=session,
-            studio_id=studio_row.id,
-            conversation_id=conversation.id,
-            message_id=message.id,
-            event_type="upload_analysis",
-            channel=conversation.channel,
-            component="project_upload_analysis",
-            model=analysis_model,
-            usage=analysis_usage,
-            provider_event_id=str(message.id),
-            metadata={
-                "file_id": Path(relative_path).stem,
-                "original_filename": original_name,
-                "content_type": content_type,
-                "size_bytes": len(data),
-                "analysis_error": analysis_error,
-            },
-        )
+        try:
+            await post_openai_usage_to_crm(
+                source_event_id=str(message.id),
+                conversation_id=str(conversation.id),
+                visitor_id=visitor_id,
+                channel_type="upload",
+                component="project_upload_analysis",
+                model=analysis_model,
+                usage=analysis_usage,
+                metadata={
+                    "file_id": Path(relative_path).stem,
+                    "original_filename": original_name,
+                    "content_type": content_type,
+                    "size_bytes": len(data),
+                    "analysis_error": analysis_error,
+                },
+            )
+        except (CrmHandoffNotConfiguredError, CrmHandoffFailedError) as exc:
+            log.warning(
+                "upload.crm_usage_handoff_failed",
+                conversation_id=str(conversation.id),
+                message_id=str(message.id),
+                error=str(exc),
+            )
     session.add(
         Event(
             studio_id=studio_row.id,

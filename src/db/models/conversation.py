@@ -18,15 +18,13 @@ class Conversation(UUIDMixin, TimestampMixin, Base):
         ForeignKey("studios.id", ondelete="CASCADE"),
         nullable=False,
     )
-    lead_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("leads.id", ondelete="SET NULL"),
-        nullable=True,
-    )
     visitor_id: Mapped[str] = mapped_column(String(255), nullable=False)
     channel: Mapped[str] = mapped_column(String(50), default="widget", nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="active", nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 
     __table_args__ = (Index("ix_conversations_studio_id", "studio_id"),)
 
