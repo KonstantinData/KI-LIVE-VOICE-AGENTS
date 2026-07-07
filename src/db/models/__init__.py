@@ -4,6 +4,7 @@ from src.db.models.appointment import Appointment
 from src.db.models.base import Base
 from src.db.models.berater import Berater
 from src.db.models.conversation import Conversation
+from src.db.models.conversation_cost_event import ConversationCostEvent
 from src.db.models.event import Event
 from src.db.models.feedback import Feedback
 from src.db.models.followup import FollowUp
@@ -18,6 +19,7 @@ __all__ = [
     "Berater",
     "Lead",
     "Conversation",
+    "ConversationCostEvent",
     "Message",
     "Appointment",
     "FollowUp",

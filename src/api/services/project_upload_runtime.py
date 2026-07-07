@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.config import get_settings
-from src.api.services.project_uploads import analyze_pdf_upload
+from src.api.services.project_uploads import UploadAnalysisResult, analyze_pdf_upload
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
 from src.db.models.studio import Studio
@@ -57,7 +57,9 @@ def sniff_content_type(data: bytes, declared_type: str | None) -> str:
     )
 
 
-def storage_path(*, studio_slug: str, conversation_id: str, extension: str) -> tuple[Path, str]:
+def storage_path(
+    *, studio_slug: str, conversation_id: str, extension: str
+) -> tuple[Path, str]:
     """Builds the private absolute and relative storage paths for an upload."""
     settings = get_settings()
     now = datetime.now(timezone.utc)
@@ -80,7 +82,9 @@ async def load_studio(session: AsyncSession, slug: str) -> Studio:
     result = await session.execute(select(Studio).where(Studio.slug == slug))
     studio = result.scalar_one_or_none()
     if studio is None or not studio.is_active:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="studio_not_found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="studio_not_found"
+        )
     return studio
 
 
@@ -144,7 +148,9 @@ async def enforce_upload_limits(
             .join(Conversation, Message.conversation_id == Conversation.id)
             .where(Conversation.visitor_id == visitor_id)
             .where(Message.created_at >= hour_start)
-            .where(Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%"))
+            .where(
+                Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%")
+            )
         )
     ).scalar_one()
     if int(visitor_count or 0) >= settings.max_uploads_per_visitor_hour:
@@ -157,7 +163,9 @@ async def enforce_upload_limits(
         await session.execute(
             select(func.count(Message.id))
             .where(Message.conversation_id == conversation.id)
-            .where(Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%"))
+            .where(
+                Message.content.like("Der Kunde hat eine Projektdatei hochgeladen:%")
+            )
         )
     ).scalar_one()
     if int(conversation_count or 0) >= settings.max_uploads_per_conversation:
@@ -173,7 +181,7 @@ async def analyze_project_upload(
     data: bytes,
     filename: str,
     agent_name: str,
-) -> str | None:
+) -> UploadAnalysisResult | None:
     """Returns a privacy-minimized OpenAI summary for supported uploads."""
     if content_type in IMAGE_TYPES:
         return await _analyze_image_upload(
@@ -183,18 +191,22 @@ async def analyze_project_upload(
             agent_name=agent_name,
         )
     if content_type == "application/pdf":
-        return await analyze_pdf_upload(data=data, filename=filename, agent_name=agent_name)
+        return await analyze_pdf_upload(
+            data=data, filename=filename, agent_name=agent_name
+        )
     return None
 
 
 def _allowed_origins() -> set[str]:
     settings = get_settings()
     origins = {origin.rstrip("/") for origin in settings.cors_origins if origin}
-    origins.update({
-        settings.website_url.rstrip("/"),
-        settings.dashboard_url.rstrip("/"),
-        settings.widget_url.rstrip("/"),
-    })
+    origins.update(
+        {
+            settings.website_url.rstrip("/"),
+            settings.dashboard_url.rstrip("/"),
+            settings.widget_url.rstrip("/"),
+        }
+    )
     return {origin for origin in origins if origin}
 
 
@@ -204,7 +216,7 @@ async def _analyze_image_upload(
     data: bytes,
     filename: str,
     agent_name: str,
-) -> str | None:
+) -> UploadAnalysisResult | None:
     settings = get_settings()
     if (
         not settings.enable_upload_ai_analysis
@@ -244,4 +256,11 @@ async def _analyze_image_upload(
             },
         ],
     )
-    return (response.choices[0].message.content or "").strip() or None
+    summary = (response.choices[0].message.content or "").strip()
+    if not summary:
+        return None
+    return UploadAnalysisResult(
+        summary=summary,
+        usage=response.usage.model_dump(mode="json") if response.usage else {},
+        model=response.model or settings.openai_chat_model,
+    )

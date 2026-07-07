@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 import base64
 import re
 
@@ -44,6 +45,15 @@ class StoredProjectUpload:
     created_at: datetime
     ai_analysis_completed: bool
     file_deleted: bool = False
+
+
+@dataclass(frozen=True)
+class UploadAnalysisResult:
+    """AI analysis summary plus provider usage metadata."""
+
+    summary: str
+    usage: dict[str, Any]
+    model: str
 
 
 def redact_contact_details(text: str) -> str:
@@ -145,7 +155,7 @@ def render_pdf_pages_as_data_urls(
 
 async def analyze_pdf_upload(
     *, data: bytes, filename: str, agent_name: str
-) -> str | None:
+) -> UploadAnalysisResult | None:
     """Summarizes PDF project content after text extraction and page rendering."""
     settings = get_settings()
     if not settings.enable_upload_ai_analysis or not settings.openai_api_key:
@@ -165,7 +175,11 @@ async def analyze_pdf_upload(
         log.warning("upload.pdf_render_failed", filename=filename, error=str(exc))
 
     if not extracted_text and not rendered_pages:
-        return "Das PDF wurde gespeichert, enthält aber keinen auslesbaren Text."
+        return UploadAnalysisResult(
+            summary="Das PDF wurde gespeichert, enthält aber keinen auslesbaren Text.",
+            usage={},
+            model=settings.openai_chat_model,
+        )
 
     safe_text = redact_contact_details(extracted_text)
     user_content: list[dict[str, object]] = [
@@ -208,7 +222,14 @@ async def analyze_pdf_upload(
             {"role": "user", "content": user_content},
         ],
     )
-    return (response.choices[0].message.content or "").strip() or None
+    summary = (response.choices[0].message.content or "").strip()
+    if not summary:
+        return None
+    return UploadAnalysisResult(
+        summary=summary,
+        usage=response.usage.model_dump(mode="json") if response.usage else {},
+        model=response.model or settings.openai_chat_model,
+    )
 
 
 async def list_stored_project_uploads(

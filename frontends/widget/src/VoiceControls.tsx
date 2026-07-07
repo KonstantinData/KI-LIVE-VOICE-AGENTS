@@ -120,6 +120,7 @@ export function VoiceControls({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const voiceSessionIdRef = useRef<string | null>(null);
+  const voiceModelRef = useRef('gpt-realtime-2.1');
   const storedTranscriptEventsRef = useRef<Set<string>>(new Set());
   const addressModeRef = useRef<AddressMode | null>(null);
   const greetingSentRef = useRef(false);
@@ -281,6 +282,39 @@ export function VoiceControls({
     }
   };
 
+  const reportUsageEvent = async (
+    eventType: 'realtime_response' | 'realtime_input_transcription',
+    usage: unknown,
+    providerEventId: unknown,
+    providerResponseId?: unknown,
+  ) => {
+    const conversationId = conversationIdRef.current;
+    const voiceSessionId = voiceSessionIdRef.current;
+    if (!conversationId || !voiceSessionId || !usage || typeof usage !== 'object') return;
+
+    try {
+      await fetch(`${config.apiHttpUrl}/voice/usage-events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studio: config.studio,
+          visitor_id: visitorId,
+          conversation_id: conversationId,
+          voice_session_id: voiceSessionId,
+          event_type: eventType,
+          provider_event_id: typeof providerEventId === 'string' ? providerEventId : null,
+          provider_response_id: typeof providerResponseId === 'string' ? providerResponseId : null,
+          model: voiceModelRef.current,
+          usage,
+          consent_granted: true,
+          consent_version: config.voiceConsentVersion,
+        }),
+      });
+    } catch {
+      // Cost tracking must never interrupt the customer conversation.
+    }
+  };
+
   const endVoiceSession = async () => {
     const conversationId = conversationIdRef.current;
     const voiceSessionId = voiceSessionIdRef.current;
@@ -420,8 +454,20 @@ export function VoiceControls({
         }
         if (payload.type === 'response.done') {
           setStatus('Sprachmodus aktiv. Sie können weiter sprechen.');
+          void reportUsageEvent(
+            'realtime_response',
+            payload.response?.usage,
+            payload.event_id,
+            payload.response?.id,
+          );
         }
         if (payload.type === 'conversation.item.input_audio_transcription.completed') {
+          void reportUsageEvent(
+            'realtime_input_transcription',
+            payload.usage,
+            payload.event_id,
+            payload.item_id,
+          );
           void persistTranscript('user', payload.transcript, payload.event_id, payload.item_id);
         }
         if (payload.type === 'response.output_audio_transcript.done') {
@@ -493,6 +539,7 @@ export function VoiceControls({
       const session = await createVoiceSession();
       conversationIdRef.current = session.conversation_id;
       voiceSessionIdRef.current = session.voice_session_id;
+      voiceModelRef.current = session.model || voiceModelRef.current;
       onConversationReady?.(session.conversation_id);
       await connectRealtime(session, stream);
       pausedRef.current = false;

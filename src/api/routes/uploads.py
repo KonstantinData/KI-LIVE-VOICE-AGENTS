@@ -17,11 +17,21 @@ from uuid import UUID
 from uuid import uuid4
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.config import get_settings
+from src.api.services.cost_tracking import record_openai_cost_event
 from src.api.services.project_upload_runtime import (
     ALLOWED_TYPES,
     analyze_project_upload as _analyze_project_upload,
@@ -40,6 +50,7 @@ from src.tenants.registry import agent_display_name, get_tenant_profile_for_stud
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
 log = structlog.get_logger()
+
 
 class ProjectUploadResponse(BaseModel):
     """Upload response returned to the widget."""
@@ -69,9 +80,13 @@ async def upload_project_file(
     """Stores a consented project file upload and records it in the conversation."""
     settings = get_settings()
     if not origin_allowed(request.headers.get("origin")):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="origin_not_allowed")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="origin_not_allowed"
+        )
     if not consent_granted:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="consent_required")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="consent_required"
+        )
     if not ai_analysis_consent:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -83,9 +98,14 @@ async def upload_project_file(
     if tenant_profile is not None:
         upload_policy = tenant_profile.upload_policy
         if upload_policy is None or not upload_policy.enabled:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="uploads_disabled")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="uploads_disabled"
+            )
         if content_type := file.content_type:
-            if content_type in ALLOWED_TYPES and content_type not in upload_policy.allowed_content_types:
+            if (
+                content_type in ALLOWED_TYPES
+                and content_type not in upload_policy.allowed_content_types
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                     detail="unsupported_file_type",
@@ -100,9 +120,14 @@ async def upload_project_file(
     )
     data = await file.read(settings.max_upload_file_bytes + 1)
     if not data:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="empty_file")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="empty_file"
+        )
     if len(data) > settings.max_upload_file_bytes:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file_too_large")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="file_too_large",
+        )
 
     content_type = sniff_content_type(data, file.content_type)
     if tenant_profile is not None and tenant_profile.upload_policy is not None:
@@ -122,27 +147,41 @@ async def upload_project_file(
     absolute_path.write_bytes(data)
 
     analysis_summary: str | None = None
+    analysis_usage: dict | None = None
+    analysis_model: str | None = None
     analysis_error: str | None = None
     upload_agent_name = agent_display_name(studio_row.slug, fallback="Live Voice Agent")
     try:
-        analysis_summary = await _analyze_project_upload(
+        analysis_result = await _analyze_project_upload(
             content_type=content_type,
             data=data,
             filename=original_name,
             agent_name=upload_agent_name,
         )
+        if analysis_result is not None:
+            analysis_summary = analysis_result.summary
+            analysis_usage = analysis_result.usage
+            analysis_model = analysis_result.model
     except Exception as exc:
         analysis_error = "analysis_failed"
-        log.warning("upload.analysis_failed", error=str(exc), conversation_id=str(conversation.id))
+        log.warning(
+            "upload.analysis_failed",
+            error=str(exc),
+            conversation_id=str(conversation.id),
+        )
 
     content = (
         f"Der Kunde hat eine Projektdatei hochgeladen: {original_name} "
         f"({content_type}, {len(data)} Bytes)."
     )
     if analysis_summary:
-        content += f"\nKI-Dateizusammenfassung für {upload_agent_name}: {analysis_summary}"
+        content += (
+            f"\nKI-Dateizusammenfassung für {upload_agent_name}: {analysis_summary}"
+        )
     elif content_type == "application/pdf":
-        content += "\nHinweis: Das PDF wurde gespeichert und kann vom Team geprüft werden."
+        content += (
+            "\nHinweis: Das PDF wurde gespeichert und kann vom Team geprüft werden."
+        )
 
     message = Message(
         id=uuid4(),
@@ -165,6 +204,27 @@ async def upload_project_file(
         ],
     )
     session.add(message)
+    await session.flush()
+    if analysis_usage is not None and analysis_model is not None:
+        await record_openai_cost_event(
+            session=session,
+            studio_id=studio_row.id,
+            conversation_id=conversation.id,
+            message_id=message.id,
+            event_type="upload_analysis",
+            channel=conversation.channel,
+            component="project_upload_analysis",
+            model=analysis_model,
+            usage=analysis_usage,
+            provider_event_id=str(message.id),
+            metadata={
+                "file_id": Path(relative_path).stem,
+                "original_filename": original_name,
+                "content_type": content_type,
+                "size_bytes": len(data),
+                "analysis_error": analysis_error,
+            },
+        )
     session.add(
         Event(
             studio_id=studio_row.id,

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from src.api.config import get_settings
 from src.api.services.openai_realtime import RealtimeCallResult
 from src.db.models.conversation import Conversation
+from src.db.models.conversation_cost_event import ConversationCostEvent
 from src.db.models.lead import Lead
 from src.db.models.message import Message
 from src.db.models.studio import Studio
@@ -334,6 +335,77 @@ async def test_voice_transcript_endpoint_persists_widget_contract(
     assert len(messages) == 1
     assert messages[0].role == "assistant"
     assert messages[0].tool_calls[0]["raw_audio_stored"] is False
+
+
+@pytest.mark.asyncio
+async def test_voice_usage_event_persists_realtime_cost(
+    db_client,
+    db_session,
+):
+    """The widget can report Realtime usage for per-chat cost tracking."""
+    studio = await _seed_voice_studio(db_session)
+    conversation = Conversation(
+        id=uuid.uuid4(),
+        studio_id=studio.id,
+        visitor_id="visitor-usage",
+        channel="voice",
+        status="active",
+    )
+    db_session.add(conversation)
+    await db_session.flush()
+
+    response = await db_client.post(
+        "/voice/usage-events",
+        headers={"Origin": "https://www.mein-kuechenexperte.de"},
+        json={
+            "studio": studio.slug,
+            "visitor_id": "visitor-usage",
+            "conversation_id": str(conversation.id),
+            "voice_session_id": "voice-test",
+            "event_type": "realtime_response",
+            "provider_event_id": "event_1",
+            "provider_response_id": "resp_1",
+            "model": "gpt-realtime-2.1",
+            "usage": {
+                "total_tokens": 253,
+                "input_tokens": 132,
+                "output_tokens": 121,
+                "input_token_details": {
+                    "text_tokens": 119,
+                    "audio_tokens": 13,
+                    "image_tokens": 0,
+                    "cached_tokens": 64,
+                    "cached_tokens_details": {
+                        "text_tokens": 64,
+                        "audio_tokens": 0,
+                        "image_tokens": 0,
+                    },
+                },
+                "output_token_details": {
+                    "text_tokens": 30,
+                    "audio_tokens": 91,
+                },
+            },
+            "consent_granted": True,
+            "consent_version": "voice-v1",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["stored"] is True
+    assert data["estimated_cost_usd"] is not None
+    cost_event = await db_session.get(
+        ConversationCostEvent,
+        uuid.UUID(data["cost_event_id"]),
+    )
+    assert cost_event is not None
+    assert cost_event.conversation_id == conversation.id
+    assert cost_event.input_text_tokens == 119
+    assert cost_event.input_audio_tokens == 13
+    assert cost_event.cached_text_tokens == 64
+    assert cost_event.output_audio_tokens == 91
+    assert cost_event.metadata_["voice_session_id"] == "voice-test"
 
 
 @pytest.mark.asyncio

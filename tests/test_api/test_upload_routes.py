@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy import select
 
 from src.api.config import get_settings
+from src.db.models.conversation_cost_event import ConversationCostEvent
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
 from tests.test_api.upload_helpers import auth_headers as get_auth_headers
@@ -201,7 +202,17 @@ async def test_pdf_project_file_upload_runs_analysis_path(
 
     async def fake_analysis(**kwargs):
         assert kwargs["content_type"] == "application/pdf"
-        return "PDF summary"
+        from src.api.services.project_uploads import UploadAnalysisResult
+
+        return UploadAnalysisResult(
+            summary="PDF summary",
+            usage={
+                "prompt_tokens": 1200,
+                "completion_tokens": 120,
+                "total_tokens": 1320,
+            },
+            model="gpt-4o-mini",
+        )
 
     monkeypatch.setattr("src.api.routes.uploads._analyze_project_upload", fake_analysis)
     response = await db_client.post(
@@ -219,6 +230,20 @@ async def test_pdf_project_file_upload_runs_analysis_path(
 
     assert response.status_code == 200
     assert response.json()["analysis_summary"] == "PDF summary"
+    cost_events = (
+        (
+            await db_session.execute(
+                select(ConversationCostEvent).where(
+                    ConversationCostEvent.event_type == "upload_analysis"
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(cost_events) == 1
+    assert cost_events[0].input_text_tokens == 1200
+    assert cost_events[0].output_text_tokens == 120
 
 
 @pytest.mark.asyncio
@@ -241,13 +266,21 @@ async def test_pdf_upload_analysis_uses_rendered_pages_when_text_is_empty(monkey
         async def create(self, **kwargs):
             captured.update(kwargs)
             return SimpleNamespace(
+                model="gpt-4o-mini",
+                usage=SimpleNamespace(
+                    model_dump=lambda mode="json": {
+                        "prompt_tokens": 2000,
+                        "completion_tokens": 100,
+                        "total_tokens": 2100,
+                    }
+                ),
                 choices=[
                     SimpleNamespace(
                         message=SimpleNamespace(
                             content="Grundriss mit Maßangaben erkannt."
                         )
                     )
-                ]
+                ],
             )
 
     class FakeOpenAI:
@@ -265,6 +298,8 @@ async def test_pdf_upload_analysis_uses_rendered_pages_when_text_is_empty(monkey
         agent_name="KEA",
     )
 
-    assert result == "Grundriss mit Maßangaben erkannt."
+    assert result is not None
+    assert result.summary == "Grundriss mit Maßangaben erkannt."
+    assert result.model == "gpt-4o-mini"
     user_message = captured["messages"][1]
     assert user_message["content"][1]["type"] == "image_url"

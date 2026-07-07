@@ -29,6 +29,7 @@ from src.api.routes.crm_contact_capture import (
     CrmContactCaptureRequest,
     persist_crm_contact_capture,
 )
+from src.api.services.cost_tracking import record_openai_cost_event
 from src.api.services.email_service import EmailService, EmailServiceDisabledError
 from src.api.services.openai_realtime import OpenAIRealtimeAdapter
 from src.api.services.voice_sessions import (
@@ -112,6 +113,32 @@ class VoiceFinalTranscriptRequest(BaseModel):
     item_id: str | None = Field(default=None, max_length=255)
     consent_granted: bool
     consent_version: str = Field(min_length=1, max_length=80)
+
+
+class VoiceUsageEventRequest(BaseModel):
+    """Realtime usage event reported by the browser data channel."""
+
+    studio: str = Field(min_length=1, max_length=100)
+    visitor_id: str = Field(min_length=1, max_length=255)
+    conversation_id: uuid.UUID
+    voice_session_id: str = Field(min_length=1, max_length=120)
+    event_type: str = Field(
+        pattern="^(realtime_response|realtime_input_transcription)$"
+    )
+    provider_event_id: str | None = Field(default=None, max_length=255)
+    provider_response_id: str | None = Field(default=None, max_length=255)
+    model: str = Field(default="gpt-realtime-2.1", min_length=1, max_length=120)
+    usage: dict[str, Any] = Field(default_factory=dict)
+    consent_granted: bool
+    consent_version: str = Field(min_length=1, max_length=80)
+
+
+class VoiceUsageEventResponse(BaseModel):
+    """Persisted usage tracking result."""
+
+    stored: bool
+    cost_event_id: str
+    estimated_cost_usd: str | None = None
 
 
 class VoiceEndRequest(BaseModel):
@@ -741,6 +768,56 @@ async def persist_voice_final_transcript(
         "conversation_id": str(conversation.id),
         "message_id": str(message.id),
     }
+
+
+@router.post("/usage-events", response_model=VoiceUsageEventResponse)
+async def persist_voice_usage_event(
+    payload: VoiceUsageEventRequest,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> VoiceUsageEventResponse:
+    """Persists Realtime token usage reported by the browser data channel."""
+    if not origin_allowed(request):
+        raise HTTPException(status_code=403, detail="Origin not allowed")
+    if not payload.consent_granted:
+        raise HTTPException(status_code=401, detail="Voice consent required")
+    studio = await load_voice_studio(session, payload.studio)
+    conversation = await load_voice_conversation(
+        session, studio, payload.visitor_id, payload.conversation_id
+    )
+    provider_event_id = (
+        payload.provider_response_id
+        or payload.provider_event_id
+        or f"{payload.voice_session_id}:{payload.event_type}"
+    )
+    cost_event = await record_openai_cost_event(
+        session=session,
+        studio_id=studio.id,
+        conversation_id=conversation.id,
+        lead_id=conversation.lead_id,
+        event_type=payload.event_type,
+        channel="voice",
+        component="realtime_session",
+        model=payload.model,
+        usage=payload.usage,
+        provider_event_id=provider_event_id,
+        metadata={
+            "voice_session_id": payload.voice_session_id,
+            "consent_version": payload.consent_version,
+            "provider_event_id": payload.provider_event_id,
+            "provider_response_id": payload.provider_response_id,
+        },
+    )
+    await session.commit()
+    return VoiceUsageEventResponse(
+        stored=True,
+        cost_event_id=str(cost_event.id),
+        estimated_cost_usd=(
+            str(cost_event.estimated_cost_usd)
+            if cost_event.estimated_cost_usd is not None
+            else None
+        ),
+    )
 
 
 @router.post("/contact-handoff", response_model=VoiceContactHandoffResponse)
