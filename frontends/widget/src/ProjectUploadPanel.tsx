@@ -172,6 +172,9 @@ export function ProjectUploadPanel({
           <button className="widget-upload-button" disabled={uploadSelectionDisabled} onClick={() => cameraInputRef.current?.click()} type="button">
             Foto
           </button>
+          <button className="widget-upload-submit" disabled={uploadSelectionDisabled || pendingFiles.length === 0} onClick={uploadPendingFiles} type="button">
+            Jetzt hochladen
+          </button>
         </div>
         <button aria-label="Hinweis zu Datei-Uploads" className="widget-upload-info" onClick={() => setShowUploadInfo((visible) => !visible)} type="button">
           i
@@ -195,9 +198,6 @@ export function ProjectUploadPanel({
           ))}
         </div>
       )}
-      <button className="widget-upload-submit" disabled={uploadSelectionDisabled || pendingFiles.length === 0} onClick={uploadPendingFiles} type="button">
-        Jetzt hochladen
-      </button>
       {showUploadInfo && (
         <div className="widget-upload-note">
           PDF, PNG oder JPEG bis 10 MB. Sie können mehrere Dateien auswählen, vor dem Upload prüfen und einzelne Dateien wieder entfernen.

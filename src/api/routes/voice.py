@@ -410,11 +410,21 @@ async def create_ephemeral_voice_session(
             "https://api.openai.com/v1/realtime/client_secrets",
             headers={
                 "Authorization": f"Bearer {settings.openai_api_key}",
+                "Accept": "application/json",
                 "Content-Type": "application/json",
+                "OpenAI-Safety-Identifier": safety_identifier(studio, payload.visitor_id),
             },
             json={"session": config},
         )
     if response.status_code >= 400:
+        log.warning(
+            "voice.openai_client_secret_failed",
+            status=response.status_code,
+            request_id=response.headers.get("x-request-id", ""),
+            body=response.text[:800],
+            model=str(config["model"]),
+            studio=studio.slug,
+        )
         raise HTTPException(status_code=502, detail="openai_realtime_session_failed")
 
     client_secret, expires = _parse_client_secret(response.json())

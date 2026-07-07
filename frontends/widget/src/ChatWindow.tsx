@@ -7,6 +7,8 @@ import { TypingIndicator } from './TypingIndicator';
 import { VoiceControls } from './VoiceControls';
 import { useWebSocket, type Choice } from './hooks/useWebSocket';
 import type { WidgetConfig } from './lib/config';
+import { hasContactIntent, isContactChoice } from './lib/contactIntent';
+import { buildProjectSummary } from './lib/projectSummary';
 
 interface ChatWindowProps {
   config: WidgetConfig;
@@ -19,7 +21,6 @@ interface ContactFormData {
   email: string;
   phone: string;
   best_reachability: string;
-  project_summary: string;
   additional_notes: string;
   contact_consent_confirmed: boolean;
 }
@@ -42,7 +43,6 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
     email: '',
     phone: '',
     best_reachability: '',
-    project_summary: '',
     additional_notes: '',
     contact_consent_confirmed: false,
   });
@@ -51,6 +51,9 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
 
   const handleIncomingMessage = useCallback(
     (message: ChatMessage) => {
+      if (hasContactIntent(message.content)) {
+        setShowContactForm(true);
+      }
       setChatMessages((prev) => [
         ...prev,
         {
@@ -78,6 +81,9 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleSend = () => {
     const text = input.trim();
     if (!text || !connected) return;
+    if (hasContactIntent(text)) {
+      setShowContactForm(true);
+    }
     setChatMessages((prev) => [...prev, { role: 'user', content: text }]);
     send(text);
     setInput('');
@@ -86,6 +92,10 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleChoice = (choice: Choice) => {
     if (!connected) return;
     setChatMessages((prev) => [...prev, { role: 'user', content: choice.label }]);
+    if (isContactChoice(choice)) {
+      setShowContactForm(true);
+      return;
+    }
     sendAction(choice.id, choice.label);
   };
 
@@ -117,6 +127,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
 
   const submitContactForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const projectSummary = buildProjectSummary(chatMessages);
     if (!conversationId) {
       setContactStatus('Bitte warten Sie kurz, bis die Chat-Sitzung verbunden ist.');
       return;
@@ -141,9 +152,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
           email: contactForm.email,
           phone: contactForm.phone || null,
           best_reachability: contactForm.best_reachability || null,
-          project_summary:
-            contactForm.project_summary ||
-            'Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung.',
+          project_summary: projectSummary,
           additional_notes: contactForm.additional_notes || null,
           contact_consent_confirmed: contactForm.contact_consent_confirmed,
           consent_granted: true,
@@ -166,112 +175,97 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
     }
   };
 
-  const renderContactPanel = () => (
-    <>
-      <div className="voice-secure-contact">
-        <button
-          className="voice-link-button"
-          onClick={() => setShowContactForm((visible) => !visible)}
-          type="button"
-        >
-          Kontaktdaten sicher eingeben
-        </button>
-      </div>
+  const renderContactPanel = () => {
+    const projectSummary = buildProjectSummary(chatMessages);
 
-      {showContactForm && (
-        <form className="voice-contact-form" onSubmit={submitContactForm}>
-          <div className="voice-form-grid">
-            <label>
-              <span>Vorname</span>
-              <input
-                autoComplete="given-name"
-                minLength={2}
-                onInput={(event) => updateContactField('first_name', event.currentTarget.value)}
-                required
-                type="text"
-                value={contactForm.first_name}
-              />
-            </label>
-            <label>
-              <span>Nachname</span>
-              <input
-                autoComplete="family-name"
-                minLength={2}
-                onInput={(event) => updateContactField('last_name', event.currentTarget.value)}
-                required
-                type="text"
-                value={contactForm.last_name}
-              />
-            </label>
-          </div>
+    return (
+      <form className="voice-contact-form" onSubmit={submitContactForm}>
+        <div className="voice-form-grid">
           <label>
-            <span>E-Mail-Adresse</span>
+            <span>Vorname</span>
             <input
-              autoComplete="email"
-              onInput={(event) => updateContactField('email', event.currentTarget.value)}
+              autoComplete="given-name"
+              minLength={2}
+              onInput={(event) => updateContactField('first_name', event.currentTarget.value)}
               required
-              type="email"
-              value={contactForm.email}
-            />
-          </label>
-          <label>
-            <span>Telefon optional</span>
-            <input
-              autoComplete="tel"
-              onInput={(event) => updateContactField('phone', event.currentTarget.value)}
-              type="tel"
-              value={contactForm.phone}
-            />
-          </label>
-          <label>
-            <span>Beste Erreichbarkeit optional</span>
-            <input
-              onInput={(event) => updateContactField('best_reachability', event.currentTarget.value)}
-              placeholder="z. B. werktags ab 18 Uhr"
               type="text"
-              value={contactForm.best_reachability}
+              value={contactForm.first_name}
             />
           </label>
           <label>
-            <span>Kurze Projektzusammenfassung optional</span>
-            <textarea
-              maxLength={1600}
-              onInput={(event) => updateContactField('project_summary', event.currentTarget.value)}
-              rows={3}
-              value={contactForm.project_summary}
-            />
-          </label>
-          <label>
-            <span>Weitere Hinweise optional</span>
-            <textarea
-              maxLength={1600}
-              onInput={(event) => updateContactField('additional_notes', event.currentTarget.value)}
-              rows={2}
-              value={contactForm.additional_notes}
-            />
-          </label>
-          <label className="voice-consent-row">
+            <span>Nachname</span>
             <input
-              checked={contactForm.contact_consent_confirmed}
-              onChange={(event) => updateContactField('contact_consent_confirmed', event.currentTarget.checked)}
+              autoComplete="family-name"
+              minLength={2}
+              onInput={(event) => updateContactField('last_name', event.currentTarget.value)}
               required
-              type="checkbox"
+              type="text"
+              value={contactForm.last_name}
             />
-            <span>
-              Ich bin einverstanden, dass Mein Küchenexperte meine Angaben zur
-              Bearbeitung meiner Anfrage, zur Kontaktaufnahme und zum Versand
-              einer Zusammenfassung verarbeitet. Ich kann diese Einwilligung
-              jederzeit mit Wirkung für die Zukunft widerrufen.
-            </span>
           </label>
-          <button className="voice-button voice-button--primary" type="submit">
-            Anfrage senden
-          </button>
-          {contactStatus && <div className="voice-form-status">{contactStatus}</div>}
-        </form>
-      )}
-    </>
-  );
+        </div>
+        <label>
+          <span>E-Mail-Adresse</span>
+          <input
+            autoComplete="email"
+            onInput={(event) => updateContactField('email', event.currentTarget.value)}
+            required
+            type="email"
+            value={contactForm.email}
+          />
+        </label>
+        <label>
+          <span>Telefon optional</span>
+          <input
+            autoComplete="tel"
+            onInput={(event) => updateContactField('phone', event.currentTarget.value)}
+            type="tel"
+            value={contactForm.phone}
+          />
+        </label>
+        <label>
+          <span>Beste Erreichbarkeit optional</span>
+          <input
+            onInput={(event) => updateContactField('best_reachability', event.currentTarget.value)}
+            placeholder="z. B. werktags ab 18 Uhr"
+            type="text"
+            value={contactForm.best_reachability}
+          />
+        </label>
+        <div className="voice-summary-preview">
+          <span>Zusammenfassung</span>
+          <p>{projectSummary}</p>
+        </div>
+        <label>
+          <span>Weitere Hinweise optional</span>
+          <textarea
+            maxLength={1600}
+            onInput={(event) => updateContactField('additional_notes', event.currentTarget.value)}
+            rows={2}
+            value={contactForm.additional_notes}
+          />
+        </label>
+        <label className="voice-consent-row">
+          <input
+            checked={contactForm.contact_consent_confirmed}
+            onChange={(event) => updateContactField('contact_consent_confirmed', event.currentTarget.checked)}
+            required
+            type="checkbox"
+          />
+          <span>
+            Ich bin einverstanden, dass Mein Küchenexperte meine Angaben zur
+            Bearbeitung meiner Anfrage, zur Kontaktaufnahme und zum Versand
+            einer Zusammenfassung verarbeitet. Ich kann diese Einwilligung
+            jederzeit mit Wirkung für die Zukunft widerrufen.
+          </span>
+        </label>
+        <button className="voice-button voice-button--primary" type="submit">
+          Anfrage senden
+        </button>
+        {contactStatus && <div className="voice-form-status">{contactStatus}</div>}
+      </form>
+    );
+  };
 
   return (
     <>
@@ -349,7 +343,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          {renderContactPanel()}
+          {showContactForm && renderContactPanel()}
 
           {renderUploadPanel()}
 

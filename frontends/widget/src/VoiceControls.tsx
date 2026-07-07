@@ -11,6 +11,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import type { WidgetConfig } from './lib/config';
+import { hasContactIntent } from './lib/contactIntent';
+import { buildProjectSummary } from './lib/projectSummary';
 
 type VoiceState = 'idle' | 'connecting' | 'live' | 'paused' | 'error';
 type AddressMode = 'du' | 'sie';
@@ -44,7 +46,6 @@ interface ContactFormData {
   email: string;
   phone: string;
   best_reachability: string;
-  project_summary: string;
   additional_notes: string;
   contact_consent_confirmed: boolean;
 }
@@ -91,7 +92,6 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
     email: '',
     phone: '',
     best_reachability: '',
-    project_summary: '',
     additional_notes: '',
     contact_consent_confirmed: false,
   });
@@ -102,6 +102,7 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
       content: `Hallo, ich bin ${config.agentName}, der Küchen Expert Assistent von Mein Küchenexperte. Wie darf ich Sie hier im Chat ansprechen: per Du oder per Sie?`,
     },
   ]);
+  const projectSummary = buildProjectSummary(voiceMessages);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -151,6 +152,9 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
   const appendVoiceMessage = (role: VoiceMessageRole, content: string) => {
     const normalized = content.trim();
     if (!normalized) return;
+    if (hasContactIntent(normalized)) {
+      setShowContactForm(true);
+    }
     setVoiceMessages((prev) => [
       ...prev,
       {
@@ -266,6 +270,7 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
     event.preventDefault();
     const conversationId = conversationIdRef.current;
     const voiceSessionId = voiceSessionIdRef.current;
+    const projectSummary = buildProjectSummary(voiceMessages);
     if (!conversationId || !voiceSessionId) {
       setContactStatus('Bitte starten Sie zuerst kurz den Sprachmodus, damit wir die Anfrage zuordnen können.');
       return;
@@ -290,9 +295,7 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
           email: contactForm.email,
           phone: contactForm.phone || null,
           best_reachability: contactForm.best_reachability || null,
-          project_summary:
-            contactForm.project_summary ||
-            'Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung.',
+          project_summary: projectSummary,
           additional_notes: contactForm.additional_notes || null,
           contact_consent_confirmed: contactForm.contact_consent_confirmed,
           consent_granted: true,
@@ -394,23 +397,28 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
     await pc.setLocalDescription(offer);
     await waitForIceGatheringComplete(pc);
 
-    const form = new FormData();
-    form.append('sdp', pc.localDescription?.sdp ?? offer.sdp ?? '');
+    const localSdp = pc.localDescription?.sdp ?? offer.sdp ?? '';
 
     const realtimeResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.client_secret}`,
+        'Content-Type': 'application/sdp',
       },
-      body: form,
+      body: localSdp,
     });
     if (!realtimeResponse.ok) {
       throw new Error(`realtime_connect_failed_${realtimeResponse.status}`);
     }
 
+    const remoteSdp = await realtimeResponse.text();
+    if (!remoteSdp.trim()) {
+      throw new Error('realtime_connect_failed_empty_sdp');
+    }
+
     await pc.setRemoteDescription({
       type: 'answer',
-      sdp: await realtimeResponse.text(),
+      sdp: remoteSdp,
     });
   };
 
@@ -526,16 +534,6 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="voice-secure-contact">
-        <button
-          className="voice-link-button"
-          onClick={() => setShowContactForm((visible) => !visible)}
-          type="button"
-        >
-          Kontaktdaten sicher eingeben
-        </button>
-      </div>
-
       {showContactForm && (
         <form className="voice-contact-form" onSubmit={submitContactForm}>
           <div className="voice-form-grid">
@@ -590,15 +588,10 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
               value={contactForm.best_reachability}
             />
           </label>
-          <label>
-            <span>Kurze Projektzusammenfassung optional</span>
-            <textarea
-              maxLength={1600}
-              onInput={(event) => updateContactField('project_summary', event.currentTarget.value)}
-              rows={3}
-              value={contactForm.project_summary}
-            />
-          </label>
+          <div className="voice-summary-preview">
+            <span>Zusammenfassung</span>
+            <p>{projectSummary}</p>
+          </div>
           <label>
             <span>Weitere Hinweise optional</span>
             <textarea

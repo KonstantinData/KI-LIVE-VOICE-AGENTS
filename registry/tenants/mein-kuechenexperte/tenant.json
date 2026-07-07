@@ -43,7 +43,7 @@
       "display_name": "KEA",
       "prompt_profile": "mein-kuechenexperte-project-intake",
       "enabled": true,
-      "model": "gpt-realtime-2",
+      "model": "gpt-realtime",
       "voice": "marin",
       "skills": [
         "project-intake",

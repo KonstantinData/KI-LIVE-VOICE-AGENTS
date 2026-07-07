@@ -299,23 +299,23 @@
 
 .widget-choice-list {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   width: min(100%, 330px);
   align-self: flex-start;
 }
 
 .widget-choice-button {
-  min-height: 38px;
+  min-height: 34px;
   border: 1px solid #cfd6dd;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   background: #fff;
   color: var(--primary-color);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.25;
   text-align: left;
   transition:
     border-color 0.16s ease,
@@ -403,6 +403,9 @@
 
 .widget-upload-actions {
   display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -434,16 +437,18 @@
 }
 
 .widget-upload-submit {
-  min-height: 36px;
+  min-height: 34px;
+  flex: 1 1 142px;
   border: 0;
   border-radius: 8px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   background: var(--accent-color);
   color: var(--primary-color);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 850;
+  white-space: nowrap;
 }
 
 .widget-upload-submit:disabled {
@@ -779,36 +784,8 @@
   line-height: 1.45;
 }
 
-.voice-secure-contact {
-  display: grid;
-  gap: 5px;
-  padding: 9px 10px;
-  border: 1px solid rgba(16, 25, 33, 0.08);
-  border-radius: 8px;
-  background: #f8f9fa;
-}
-
-.widget-window > .voice-secure-contact,
 .widget-window > .voice-contact-form {
   margin: 0 14px;
-}
-
-.voice-link-button {
-  width: fit-content;
-  min-height: 34px;
-  border: 1px solid var(--accent-color);
-  border-radius: 8px;
-  padding: 7px 10px;
-  background: #fff7eb;
-  color: var(--primary-color);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.voice-link-button:hover {
-  background: var(--accent-color);
 }
 
 .voice-contact-form {
@@ -853,6 +830,31 @@
 
 .voice-contact-form textarea {
   resize: vertical;
+}
+
+.voice-summary-preview {
+  display: grid;
+  gap: 5px;
+  padding: 8px 9px;
+  border: 1px solid #d7dce1;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: var(--primary-color);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.voice-summary-preview span {
+  font-weight: 800;
+}
+
+.voice-summary-preview p {
+  max-height: 76px;
+  margin: 0;
+  overflow-y: auto;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .voice-contact-form input:focus,
