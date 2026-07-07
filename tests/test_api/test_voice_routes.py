@@ -140,7 +140,7 @@ async def test_voice_session_creates_conversation_and_returns_sdp(
         assert session_config["model"] == "gpt-realtime-2.1"
         assert session_config["audio"]["input"]["turn_detection"]["interrupt_response"]
         assert "konsequent per Du" in session_config["instructions"]
-        assert "sichere Texteingabe" in session_config["instructions"]
+        assert "Kontaktformular im Chatfenster" in session_config["instructions"]
         assert "nicht an OpenAI" in session_config["instructions"]
         assert "tools" not in session_config
         assert "tool_choice" not in session_config

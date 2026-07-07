@@ -58,7 +58,7 @@ export function ConsentBanner({ config, onAccept, onDecline }: ConsentBannerProp
         <p className="consent-text">
           Name, E-Mail-Adresse und Telefonnummer werden aus Datenschutzgründen
           nicht per Sprache abgefragt. Wenn eine Kontaktaufnahme gewünscht ist,
-          erfolgt die Eingabe manuell über ein separates Formular im Widget.
+          erfolgt die Eingabe manuell über ein separates Formular im Chatfenster.
           Diese Kontaktdaten werden nicht an OpenAI übermittelt, sondern direkt
           an Mein Küchenexperte gesendet und in der von Mein Küchenexperte
           betriebenen Serverumgebung zur Bearbeitung Ihrer Anfrage gespeichert.

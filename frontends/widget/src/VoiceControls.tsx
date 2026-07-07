@@ -130,8 +130,6 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
     streamRef.current = null;
     audioRef.current?.remove();
     audioRef.current = null;
-    conversationIdRef.current = null;
-    voiceSessionIdRef.current = null;
     storedTranscriptEventsRef.current = new Set();
     greetingSentRef.current = false;
     pausedRef.current = false;
@@ -353,8 +351,8 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
       const mode = addressModeRef.current ?? 'sie';
       const instructions =
         mode === 'du'
-          ? 'Die Begrüßung und Selbstvorstellung wurden im Widget bereits angezeigt. Wiederhole nicht, wer du bist. Sage nur: "Worum geht es bei deinem Küchenprojekt?"'
-          : 'Die Begrüßung und Selbstvorstellung wurden im Widget bereits angezeigt. Wiederholen Sie nicht, wer Sie sind. Sagen Sie nur: "Worum geht es bei Ihrem Küchenprojekt?"';
+          ? 'Die Begrüßung und Selbstvorstellung wurden im Chatfenster bereits angezeigt. Wiederhole nicht, wer du bist. Sage nur: "Worum geht es bei deinem Küchenprojekt?"'
+          : 'Die Begrüßung und Selbstvorstellung wurden im Chatfenster bereits angezeigt. Wiederholen Sie nicht, wer Sie sind. Sagen Sie nur: "Worum geht es bei Ihrem Küchenprojekt?"';
       dc.send(JSON.stringify({ type: 'response.create', response: { instructions } }));
     };
     dc.onmessage = (event) => {

@@ -81,7 +81,7 @@ class KeaTextFlow:
                 id="global_upload",
                 text=(
                     "Für eine konkrete Einordnung helfen Angebot, Planung, Grundriss "
-                    "oder Fotos. Nutzen Sie dafür bitte den Upload-Bereich im Widget. "
+                    "oder Fotos. Nutzen Sie dafür bitte den Upload-Bereich im Chatfenster. "
                     "Die Dateien werden erst hochgeladen, wenn Sie den Upload bestätigen."
                 ),
                 choices=(choice("back_start", "Zurück zur Einordnung", START_NODE),),
@@ -90,8 +90,8 @@ class KeaTextFlow:
             return FlowNode(
                 id="global_contact",
                 text=(
-                    "Gern. Bitte nutzen Sie im Widget die Schaltfläche "
-                    "\"Kontaktdaten sicher eingeben\". So vermeiden wir Hör- oder "
+                    "Gern. Bitte nutzen Sie das Kontaktformular hier im Chatfenster. "
+                    "So vermeiden wir Hör- oder "
                     "Übertragungsfehler und können Ihre Anfrage sauber zuordnen."
                 ),
                 choices=(choice("back_start", "Zurück zur Einordnung", START_NODE),),
@@ -210,8 +210,8 @@ class KeaTextFlow:
             conversation,
             content,
             (
-                choice("next_upload", "Unterlagen im Widget hochladen", "global_upload"),
-                choice("next_contact", "Kontaktdaten sicher eingeben", "global_contact"),
+                choice("next_upload", "Unterlagen im Chatfenster hochladen", "global_upload"),
+                choice("next_contact", "Kontaktformular öffnen", "global_contact"),
                 choice("back_start", "Weitere Situation einordnen", START_NODE),
             ),
         )

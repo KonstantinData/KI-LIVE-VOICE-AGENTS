@@ -306,6 +306,7 @@ async def _upsert_contact_lead(
             profile={},
         )
         session.add(lead)
+        await session.flush()
 
     full_name = f"{first_name} {last_name}".strip()
     profile = dict(lead.profile or {})

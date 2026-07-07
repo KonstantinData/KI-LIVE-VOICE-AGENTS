@@ -162,7 +162,7 @@ export function ProjectUploadPanel({
     <div className="widget-upload-panel">
       <label className="widget-upload-consent">
         <input checked={uploadAnalysisConsent} onChange={(event) => setUploadAnalysisConsent(event.currentTarget.checked)} type="checkbox" />
-        <span>Datei zur KI-gestützten Projekteinordnung hochladen und privat speichern.</span>
+        <span>Datei zur KI-gestützten Projekteinordnung hochladen.</span>
       </label>
       <div className="widget-upload-row">
         <div className="widget-upload-actions">

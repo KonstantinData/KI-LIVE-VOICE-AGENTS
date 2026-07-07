@@ -124,7 +124,7 @@ async def test_kea_text_flow_handles_strategy_check_and_upload_intents(db_sessio
         conversation,
         message_text="Ich möchte ein PDF hochladen",
     )
-    assert "Upload-Bereich im Widget" in upload.content
+    assert "Upload-Bereich im Chatfenster" in upload.content
     assert upload.choices[0].id == "back_start"
 
     messages = await _messages(db_session, conversation)
