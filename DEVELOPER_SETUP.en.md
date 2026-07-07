@@ -53,7 +53,7 @@ Format: `<type>(<scope>): <description>`
 
 Examples:
 ```bash
-feat(lisa): add extract_lead_data tool
+feat(kea): add secure contact handoff
 fix(calendar): refresh token before event
 docs(readme): add setup instructions
 ```

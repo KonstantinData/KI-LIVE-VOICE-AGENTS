@@ -20,11 +20,6 @@
       "hostname": "api.mein-kuechenexperte.de",
       "purpose": "api",
       "expected_origin": "https://api.mein-kuechenexperte.de"
-    },
-    {
-      "hostname": "app.mein-kuechenexperte.de",
-      "purpose": "crm",
-      "expected_origin": "https://app.mein-kuechenexperte.de"
     }
   ],
   "public_widget": {

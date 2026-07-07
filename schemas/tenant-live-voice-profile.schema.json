@@ -61,7 +61,7 @@
       "required": ["hostname", "purpose", "expected_origin"],
       "properties": {
         "hostname": { "type": "string", "minLength": 1 },
-        "purpose": { "type": "string", "enum": ["website", "widget", "api", "dashboard"] },
+        "purpose": { "type": "string", "enum": ["website", "widget", "api"] },
         "expected_origin": { "type": "string", "minLength": 1 }
       }
     },

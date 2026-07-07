@@ -1,54 +1,39 @@
-# Verzeichnis der Verarbeitungstätigkeiten
-**Rechtsgrundlage:** Art. 30 DSGVO
-**Stand:** März 2026
-**Verantwortlicher:** [Name und Kontakt eintragen]
+# Processing Register - Runtime Scope
 
----
+**Legal basis:** GDPR Art. 30  
+**Status:** July 2026
 
-## Verarbeitung 1: KI-Chat-Erstberatung (Lisa)
+## Processing 1: Widget Chat And Live Voice Runtime
 
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| Name | KI-Chat-Erstberatung |
-| Zweck | Automatisierte Erstberatung für Küchenstudio-Interessenten |
-| Rechtsgrundlage | Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) |
-| Betroffene Personen | Website-Besucher des Küchenstudios |
-| Datenkategorien | Chat-Verlauf, Name, E-Mail, Telefon (optional), Budget-Angaben |
-| Empfänger intern | Studio-Berater (über Dashboard) |
-| Empfänger extern | OpenAI API (LLM-Verarbeitung, Live Voice, Embeddings) |
-| Drittlandtransfer | USA — OpenAI (SCC-Mechanismus) |
-| Löschfrist | Chat-Rohdaten: 6 Monate; Lead-Daten: 12 Monate nach letztem Kontakt |
-| TOM | TLS-Verschlüsselung, Pseudonymisierung via visitor_id, Zugangskontrolle |
+| Purpose | Provide AI-supported first project intake through chat and voice |
+| Legal basis | Consent for chat/voice processing; legitimate interest for runtime security |
+| Data subjects | Website visitors |
+| Data categories | Visitor ID, conversation messages, final voice transcripts where enabled, project context, consent metadata |
+| Internal recipients | Runtime operators with operational access |
+| External recipients | OpenAI where enabled; external CRM only through handoff payloads |
+| Storage | Hetzner runtime database and private upload storage |
+| Retention | Runtime retention policy in `DATA_RETENTION.md` |
+| Safeguards | TLS, tenant isolation, origin checks, consent checks, no raw audio storage by default |
 
----
+## Processing 2: Project Upload Runtime
 
-## Verarbeitung 2: Lead-Scoring und -Qualifizierung
-
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| Name | Automatisches Lead-Scoring |
-| Zweck | Priorisierung von Beratungsanfragen für Studio-Berater |
-| Rechtsgrundlage | Art. 6 Abs. 1 lit. f DSGVO (Berechtigtes Interesse) |
-| Betroffene Personen | Chat-Nutzer die Kontaktdaten angegeben haben |
-| Datenkategorien | Budget, Zeitrahmen, Küchenstil, Raumgröße, Kontaktdaten |
-| Score-Kriterien | Sachliche Merkmale (Budget, Timeline) — KEINE demografischen Merkmale |
-| Empfänger | Studio-Berater |
-| Drittlandtransfer | USA — OpenAI (Score-Berechnung via LLM) |
-| Löschfrist | Mit Lead-Daten: 12 Monate |
-| TOM | Keine Diskriminierungsmerkmale im Scoring-Algorithmus |
+| Purpose | Store and summarize customer project files for the current inquiry |
+| Legal basis | Consent |
+| Data categories | File metadata, private file content, AI summary, conversation linkage |
+| External recipients | OpenAI for analysis when consented; external CRM receives metadata and signed access flow |
+| Storage | Private backend upload storage |
+| Safeguards | File type/size validation, tenant-scoped metadata, signed short-lived access links, audit events |
 
----
+## Processing 3: External CRM Handoff
 
-## Verarbeitung 3: Terminverwaltung
-
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| Name | Beratungstermin-Buchung |
-| Zweck | Organisation von Beratungsgesprächen |
-| Rechtsgrundlage | Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung) |
-| Betroffene Personen | Interessenten mit Terminwunsch |
-| Datenkategorien | Name, E-Mail, Telefon, Wunschtermin |
-| Empfänger extern | Google Calendar API (OAuth, Studio-Berater-Kalender) |
-| Drittlandtransfer | USA/EU — Google (SCC-Mechanismus + Standardvertragsklauseln) |
-| Löschfrist | 36 Monate (geschäftliche Aufbewahrungspflicht) |
-| TOM | OAuth 2.0, Tokens verschlüsselt gespeichert |
+| Purpose | Transfer accepted contact, usage, and upload metadata to the tenant CRM |
+| Legal basis | Consent and pre-contractual inquiry handling |
+| Data categories | Sanitized contact form data, project summary, upload metadata, usage tokens/cost metadata |
+| Recipient | `mein-kuechenexperte` CRM in the separate website repository |
+| Safeguards | Shared-secret webhook authentication, purpose-limited payloads, no raw audio, no public upload URLs |

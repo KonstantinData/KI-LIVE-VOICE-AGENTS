@@ -52,9 +52,8 @@ echo "✓ Python Dependencies installiert"
 
 # Node.js Dependencies installieren
 echo ""
-echo "--- Node.js Dependencies (Frontends) ---"
+echo "--- Node.js Dependencies (Widget) ---"
 cd frontends/widget && pnpm install && cd ../..
-cd frontends/dashboard && pnpm install && cd ../..
 echo "✓ Node.js Dependencies installiert"
 
 # .env Datei

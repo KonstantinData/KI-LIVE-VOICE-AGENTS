@@ -61,7 +61,7 @@ Für `mein-kuechenexperte` liegt das CRM im separaten Repository `mein-kuechenex
 | Komponente | URL | Plattform |
 | ---------- | --- | --------- |
 | **Chat-Widget** (für Websitebesucher) | `widget.mein-kuechenexperte.de` | Cloudflare Pages |
-| **CRM / Website-App** (separates Repo) | `app.mein-kuechenexperte.de` | `mein-kuechenexperte` |
+| **CRM / Website-App** (separates Repo) | Externes CRM | `mein-kuechenexperte` |
 | **Backend / KI** (unsichtbar im Hintergrund) | `api.mein-kuechenexperte.de` | Hetzner Cloud (EU) |
 | **Hauptwebsite** (unverändert) | `www.mein-kuechenexperte.de` | bestehend |
 
@@ -170,7 +170,7 @@ cd frontends/widget && pnpm install && pnpm build
 
 ### Produktionsrelevante Konfiguration
 
-- Dieses Repo betreibt kein CRM-/Admin-Dashboard. CRM-Dashboard, Leads und Kostenreports liegen im Repository `mein-kuechenexperte`.
+- Dieses Repo betreibt keine CRM-/Admin-Oberfläche. CRM-Arbeitsbereiche, Leads und Kostenreports liegen im Repository `mein-kuechenexperte`.
 - `CRM_CONTACT_HANDOFF_SECRET` und `CRM_USAGE_HANDOFF_SECRET` müssen gesetzt sein, wenn Kontakt- und Usage-Daten an das CRM übergeben werden.
 - `ENABLE_VOICE_SESSIONS` ist ein globaler Kill-Switch für Live Voice Agents. Zusätzlich muss das Tenant-Profil Voice aktivieren; das Widget kann den Tab per `data-voice="true"` anzeigen.
 - Live Voice Agents nutzen `/voice/sessions/webrtc` und `/voice/session` als serverseitige OpenAI-Realtime-Broker. Standard-API-Keys bleiben im Backend; der Browser erhält nur kurzlebige Client-Secrets oder SDP-Antworten und sichere Session-Metadaten.

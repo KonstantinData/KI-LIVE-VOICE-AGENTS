@@ -1,54 +1,40 @@
-# KI-Risikoklassifizierung
-**Rechtsgrundlage:** Art. 6 EU AI Act (Verordnung (EU) 2024/1689)
-**Stand:** März 2026
-**System:** KI-Mitarbeiter-Team — Lisa
+# AI Risk Classification
 
----
+**Legal basis:** EU AI Act  
+**Status:** July 2026  
+**System:** KI-LIVE-VOICE-AGENTS runtime
 
-## Systemübersicht
+## System Overview
 
-| Feld | Inhalt |
+| Field | Content |
 | --- | --- |
-| Systemname | Lisa — KI-Empfangsdame |
-| Version | 1.0.0 |
-| Betreiber | [Studio-Betreiber eintragen] |
-| Anbieter | [Systemanbieter eintragen] |
-| Einsatzzweck | Automatisierte Chat-Erstberatung für Küchen- und Möbelstudio-Interessenten |
-| Betroffene Personen | Website-Besucher (Endkunden) |
-| Geografischer Geltungsbereich | Deutschland / EU |
+| System name | KI-LIVE-VOICE-AGENTS |
+| Tenant example | `mein-kuechenexperte` |
+| Public agent name | KEA |
+| Purpose | AI-supported chat and live voice intake for customer project inquiries |
+| Data boundary | Runtime processing and external CRM handoff only |
 
----
+## Classification
 
-## Risikoklassifizierung
+Current classification: **Limited Risk**
 
-### Ergebnis: LIMITED RISK (Begrenztes Risiko)
+Rationale:
 
-**Begründung:**
-Lisa fällt unter **Art. 50 EU AI Act (Transparenzpflichten)** als "AI system intended to interact with natural persons".
+- The system interacts directly with natural persons and therefore requires
+  transparent AI disclosure.
+- It does not make binding legal, financial, credit, employment, education,
+  law-enforcement, migration, or biometric decisions.
+- It does not own CRM acceptance/rejection decisions or CRM record workflows.
 
-**Nicht High-Risk weil:**
-- Keine Entscheidungen mit rechtlicher Wirkung für Betroffene
-- Kein Einsatz in Hochrisikobereichen (Bildung, Beschäftigung, kritische Infrastruktur)
-- Keine Biometrie
-- Kein Einsatz bei Strafverfolgung, Migration oder Justiz
+## High-Risk Triggers To Avoid
 
-**Mögliche Hochrisiko-Trigger (zu beobachten):**
-- Wenn Lisa Finanzierungsempfehlungen gibt → Annex III Nr. 5b EU AI Act → HIGH RISK
-- Wenn Lead-Score für Kreditentscheidungen genutzt wird → HIGH RISK
+- Using runtime scoring for credit, financing, or legally relevant eligibility.
+- Using protected characteristics for prioritization.
+- Treating AI summaries as binding professional advice without human review.
 
----
+## Required Controls
 
-## Anwendbare Transparenzpflichten (Art. 50 EU AI Act)
-
-- [x] Nutzer müssen informiert werden, dass sie mit einer KI interagieren
-- [x] Information muss klar und verständlich sein
-- [x] Information muss VOR oder BEIM ersten Kontakt erfolgen
-- [ ] Implementierungsstatus: Ausstehend — Consent-Banner noch nicht final
-
----
-
-## Überwachung und Review
-
-**Review-Datum:** Jährlich oder bei wesentlichen Systemänderungen
-**Nächstes Review:** März 2027
-**Verantwortlich:** [Name eintragen]
+- Clear disclosure that users interact with AI.
+- Consent before chat/voice processing.
+- Human review for CRM follow-up and project assessment.
+- Tenant isolation and audit logging.

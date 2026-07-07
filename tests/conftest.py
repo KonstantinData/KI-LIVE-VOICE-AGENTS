@@ -7,8 +7,6 @@ import os
 # Muss vor allen src-Importen gesetzt werden, damit database.py SQLite nutzt
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
-os.environ["ALLOW_DEMO_LOGIN"] = "true"
-os.environ["ADMIN_STUDIO_SLUG"] = "mein-kuechenexperte"
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

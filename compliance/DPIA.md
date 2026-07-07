@@ -1,53 +1,44 @@
-# Datenschutz-Folgenabschätzung (DPIA)
-**Rechtsgrundlage:** Art. 35 DSGVO
-**Stand:** März 2026
-**Verantwortlicher:** [Name des Verantwortlichen eintragen]
+# Data Protection Impact Assessment - Runtime Scope
 
-## 1. Beschreibung der Verarbeitung
+**Legal basis:** GDPR Art. 35  
+**Status:** July 2026
 
-**System:** KI-Mitarbeiter-Team — Lisa (KI-Empfangsdame)
-**Zweck:** Automatisierte Erstberatung und Lead-Qualifizierung für Küchen- und Möbelstudios
-**Verarbeitungsart:** Chat-basierte Erfassung von Interessentendaten, KI-gestützte Profilierung, Lead-Scoring
+## Processing Description
 
-## 2. Notwendigkeit und Verhältnismäßigkeit
+**System:** KI-LIVE-VOICE-AGENTS runtime  
+**Tenant:** `mein-kuechenexperte`  
+**Agent:** KEA  
+**Purpose:** AI-supported chat and live voice project intake, project upload
+handling, and secure handoff to an external CRM.
 
-### Rechtsgrundlage
-- Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) — für Chat-Verarbeitung
-- Berechtigtes Interesse (Art. 6 Abs. 1 lit. f DSGVO) — für Lead-Management
+This repository does not operate the CRM dashboard, CRM record derivation, lead
+CRUD, or CRM reporting.
 
-### Erhobene Datenkategorien
-| Kategorie | Pflicht | Zweck |
+## Data Categories
+
+| Category | Required | Purpose |
 | --- | --- | --- |
-| Name | Nein | Persönliche Ansprache |
-| E-Mail | Nein | Terminbestätigung |
-| Telefon | Nein | Rückruf |
-| Budget-Rahmen | Nein | Lead-Qualifizierung |
-| Zeitrahmen | Nein | Lead-Qualifizierung |
-| Chat-Verlauf | Ja | Kontexterhalt |
+| Visitor/session identifiers | Yes | Runtime conversation assignment |
+| Chat messages and final transcripts | Yes where feature is used | Context and service continuity |
+| Project details | Optional | Inquiry qualification and handoff summary |
+| Uploaded files | Optional and consented | Project context and team review |
+| Contact form data | Optional and consented | External CRM handoff |
 
-## 3. Risikobewertung
+## Risk Assessment
 
-| Risiko | Wahrscheinlichkeit | Schwere | Maßnahme |
+| Risk | Likelihood | Severity | Mitigation |
 | --- | --- | --- | --- |
-| Datenleck durch Multi-Tenant-Fehler | Mittel | Hoch | studio_id auf jeder Query |
-| Profiling ohne Einwilligung | Niedrig | Hoch | Consent-Banner vor Chat |
-| Datenweitergabe an LLM-Provider | Mittel | Mittel | AVV mit OpenAI |
-| Unbegrenzte Datenspeicherung | Hoch | Mittel | Retention-Policy implementiert |
+| Cross-tenant data exposure | Low | High | Tenant profile checks, scoped DB reads, origin validation |
+| Contact details entering voice stream | Medium | Medium | Prompt rules, secure form requirement, no voice PII policy |
+| Upload exposure | Low | High | Private storage, signed short-lived CRM access, no public URLs |
+| Excessive retention | Medium | Medium | Scheduled runtime retention cleanup |
+| Unintended CRM ownership in runtime | Low | Medium | CRM boundary documented in `AGENTS.md`; handoff-only integration |
 
-## 4. Maßnahmen zur Risikominderung
+## Safeguards
 
-- [ ] Consent-Banner vor Chat-Start implementiert
-- [ ] AVV mit OpenAI, Resend, Google abgeschlossen
-- [ ] Retention-Policy: Konversationen 6 Monate, Leads 12 Monate
-- [ ] Multi-Tenant-Isolation: studio_id auf jeder DB-Query
-- [ ] Verschlüsselung: TLS für alle Verbindungen, Tokens verschlüsselt at rest
-
-## 5. Konsultation der Datenschutzbehörde
-
-- Erforderlich: [ ] Ja [ ] Nein
-- Falls ja, Datum der Konsultation: ___________
-
-## 6. Genehmigung
-
-Verantwortlicher: _________________________ Datum: _____________
-Datenschutzbeauftragter (falls vorhanden): _________________________ Datum: _____________
+- Consent gate before chat/voice processing.
+- Microphone access only after explicit browser action.
+- Raw audio is not stored by default.
+- Upload analysis requires explicit consent.
+- Contact and usage data are handed off through authenticated webhooks.
+- CRM screens and CRM persistence live outside this repository.

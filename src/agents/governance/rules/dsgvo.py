@@ -68,20 +68,19 @@ def check_gdpr_endpoints(
                 finding=finding_text,
                 must_be=(
                     f"Implementiere {endpoint_name} mit vollständiger Funktion: "
-                    "Datenexport als JSON über alle Tabellen (leads, conversations, messages, "
-                    "appointments, followups) gefiltert nach visitor_id oder Lead-ID. "
-                    "Löschung muss kaskadierend über alle Tabellen erfolgen."
+                    "Datenexport als JSON über Runtime-Daten (conversations, messages, "
+                    "upload metadata, events) gefiltert nach visitor_id. "
+                    "CRM-Daten müssen im externen CRM-Repository behandelt werden."
                 ),
                 fix_example=(
                     "@router.get('/gdpr/export')\n"
                     "async def gdpr_export(visitor_id: str, session=Depends(get_session)):\n"
-                    "    # Load all data for this visitor across all tables\n"
-                    "    lead = await get_lead_by_visitor(visitor_id, session)\n"
-                    "    return {'lead': lead, 'conversations': [...], 'messages': [...]}\n\n"
+                    "    # Load runtime data for this visitor\n"
+                    "    return {'conversations': [...], 'messages': [...], 'uploads': [...]}\n\n"
                     "@router.delete('/gdpr/delete')\n"
                     "async def gdpr_delete(visitor_id: str, session=Depends(get_session)):\n"
-                    "    # Cascade delete or anonymise all visitor data\n"
-                    "    await anonymise_visitor(visitor_id, session)"
+                    "    # Delete or anonymise runtime data; CRM erasure is external\n"
+                    "    await anonymise_runtime_visitor(visitor_id, session)"
                 ),
                 deadline="Vor Go-Live — Betroffenenrechte müssen implementiert sein",
                 auto_fixable=False,
@@ -234,17 +233,17 @@ def check_retention_policy(
             ),
             must_be=(
                 "Implementiere automatische Lösch-Jobs im Scheduler:\n"
-                "- Konversations-Rohdaten: 6 Monate → löschen\n"
-                "- Lead-Daten ohne Konversion: 12 Monate → anonymisieren\n"
-                "- Feedback-Daten: 24 Monate\n"
-                "- Events/Audit-Trail: 36 Monate (gesetzliche Aufbewahrungspflicht)"
+                "- Konversations-Rohdaten: nach Runtime-Retention löschen\n"
+                "- Upload-Dateien: nach Runtime-Retention löschen\n"
+                "- Events/Audit-Trail: nach Audit-Retention archivieren/löschen\n"
+                "- CRM-Leads/Kontakte: im externen CRM-Repository behandeln"
             ),
             fix_example=(
                 "@scheduler.scheduled_job('cron', hour=2)\n"
                 "async def run_retention_cleanup():\n"
                 "    cutoff = datetime.now(UTC) - timedelta(days=180)\n"
                 "    await delete_old_conversations(cutoff)\n"
-                "    await anonymise_unconverted_leads(cutoff)"
+                "    await delete_expired_upload_files(cutoff)"
             ),
             deadline="Vor Go-Live implementieren",
             auto_fixable=False,

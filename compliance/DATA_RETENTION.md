@@ -1,58 +1,29 @@
-# Datenlösch- und Aufbewahrungskonzept
-**Rechtsgrundlage:** Art. 5 Abs. 1 lit. e DSGVO
-**Stand:** März 2026
+# Data Retention Concept
 
----
+**Legal basis:** GDPR Art. 5(1)(e) storage limitation  
+**Status:** July 2026
 
-## Übersicht Löschfristen
+## Runtime Data In This Repository
 
-| Datenkategorie | Tabelle | Aufbewahrungsfrist | Aktion nach Frist | Status |
-| --- | --- | --- | --- | --- |
-| Chat-Nachrichten (Rohdaten) | messages | 6 Monate | Löschen | ⏳ Geplant |
-| Konversations-Metadaten | conversations | 6 Monate | Löschen | ⏳ Geplant |
-| Lead-Daten (ohne Konversion) | leads | 12 Monate | Anonymisieren | ⏳ Geplant |
-| Lead-Daten (mit Konversion) | leads | 36 Monate | Anonymisieren | ⏳ Geplant |
-| Terminbuchungen | appointments | 36 Monate | Archivieren | ⏳ Geplant |
-| Follow-ups | followups | 24 Monate | Löschen | ⏳ Geplant |
-| Feedback | feedback | 24 Monate | Anonymisieren | ⏳ Geplant |
-| Audit-Trail / Events | events | 36 Monate | Archivieren (gesetzl. Pflicht) | ⏳ Geplant |
-| Google Calendar Tokens | berater.calendar_tokens | Bei Disconnect | Löschen | ✅ Implementiert |
+| Data category | Runtime table/storage | Retention | Action |
+| --- | --- | --- | --- |
+| Conversations | `conversations` | 180 days by default | Delete or anonymize by scheduled cleanup |
+| Messages and transcripts | `messages` | 180 days by default | Delete or anonymize by scheduled cleanup |
+| Private project uploads | private upload storage + message metadata | 180 days by default | Delete file and mark metadata as deleted |
+| Audit events | `events` | 1095 days by default | Retain for operational audit, then archive/delete |
+| Knowledge chunks | `knowledge_chunks` | tenant policy | Remove when source is removed or tenant is deprovisioned |
 
----
+## External CRM Data
 
-## Anonymisierungsregeln
+Lead, contact, activity, cost-report, and CRM workspace retention is owned by
+the `mein-kuechenexperte` repository for the `mein-kuechenexperte` tenant. This
+runtime only sends sanitized handoff payloads and does not retain CRM record
+ownership tables.
 
-Anonymisierung bedeutet: Name, E-Mail, Telefon werden durch Pseudonymwerte ersetzt.
-Die statistischen Daten (Score, Budget-Klasse) bleiben erhalten.
+## Implementation Notes
 
-```sql
--- Anonymisierung eines Leads nach Ablauf der Frist
-UPDATE leads SET
-  name = 'Anonymisiert',
-  email = NULL,
-  phone = NULL,
-  profile = jsonb_set(profile, '{name}', '"Anonymisiert"')
-WHERE created_at < NOW() - INTERVAL '12 months'
-  AND status NOT IN ('appointment', 'customer');
-```
-
----
-
-## Technische Umsetzung (geplant)
-
-Der APScheduler in `src/api/services/scheduler.py` führt täglich um 02:00 Uhr folgende Jobs aus:
-
-- `cleanup_old_conversations()` — Löscht Messages + Conversations älter als 6 Monate
-- `anonymise_old_leads()` — Anonymisiert Leads nach 12/36 Monaten
-- `cleanup_old_followups()` — Löscht abgeschlossene Follow-ups nach 24 Monaten
-
-**Implementierungsstatus:** Ausstehend — muss vor Go-Live implementiert werden.
-
----
-
-## Betroffenenrechte (Art. 17 DSGVO — Recht auf Löschung)
-
-Nutzer können jederzeit die Löschung ihrer Daten beantragen via:
-`DELETE /gdpr/delete?visitor_id=<id>`
-
-**Implementierungsstatus:** Ausstehend — muss vor Go-Live implementiert werden.
+- `src/api/services/scheduler.py` enforces runtime cleanup.
+- Upload cleanup removes known expired files and orphan files below the private
+  upload root.
+- Handoff endpoints must not include raw audio, unrestricted transcripts, or
+  public file URLs.

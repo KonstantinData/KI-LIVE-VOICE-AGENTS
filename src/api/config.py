@@ -52,15 +52,6 @@ class Settings(BaseSettings):
     max_voice_session_seconds: int = 900
     max_voice_sdp_chars: int = 200_000
 
-    # Legacy admin settings (kept for old local tooling; no active dashboard routes)
-    admin_username: str = "admin"
-    admin_password_hash: str = ""
-    admin_studio_slug: str = "mein-kuechenexperte"
-    allow_demo_login: bool = False
-    jwt_secret: str = "dev-secret-min-32-chars-placeholder!"
-    jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 10080
-
     # Runtime safety
     max_chat_message_chars: int = 4000
     retention_conversation_days: int = 180
@@ -100,9 +91,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
         """Fail fast when production security settings are incomplete."""
-        if self.app_env == "production":
-            if self.allow_demo_login:
-                raise ValueError("ALLOW_DEMO_LOGIN must be false in production")
         if self.enable_voice_sessions and not self.openai_api_key:
             raise ValueError(
                 "OPENAI_API_KEY is required when ENABLE_VOICE_SESSIONS=true"

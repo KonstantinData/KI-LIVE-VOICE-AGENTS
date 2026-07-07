@@ -129,9 +129,9 @@ def check_pii_in_logs(
                 ),
                 fix_example=(
                     "# VORHER (VERSTOSS):\n"
-                    'log.info("lead.created", email=lead.email)\n\n'
+                    'log.info("contact_handoff.submitted", email=email)\n\n'
                     "# NACHHER (COMPLIANT):\n"
-                    'log.info("lead.created", lead_id=str(lead.id))'
+                    'log.info("contact_handoff.submitted", conversation_id=str(conversation.id))'
                 ),
                 deadline="Innerhalb von 30 Tagen beheben",
                 auto_fixable=False,

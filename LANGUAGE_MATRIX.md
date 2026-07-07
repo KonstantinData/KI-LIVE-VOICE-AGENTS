@@ -10,7 +10,7 @@ Diese Tabelle definiert klar, welche Sprache in welchem Kontext verwendet wird:
 
 | Bereich | Sprache | Begründung |
 | ------- | ------- | ---------- |
-| **UI-Texte** (Widget, Dashboard) | 🇩🇪 Deutsch | Kundenseitig, deutschsprachige Zielgruppe |
+| **UI-Texte** (Widget) | 🇩🇪 Deutsch | Kundenseitig, deutschsprachige Zielgruppe |
 | **Chat-Antworten** (Lisa, Max, Anna, Tom, Sara) | 🇩🇪 Deutsch | Kundenseitig, natürliche Konversation |
 | **READMEs** | 🇩🇪 Deutsch + 🇬🇧 Englisch | Beide Versionen für internationale Zusammenarbeit |
 | **Code** (Variablen, Funktionen, Klassen) | 🇬🇧 Englisch | Universell lesbar, Standard in der Softwareentwicklung |
@@ -87,11 +87,11 @@ Jede `README.md` (Deutsch) hat eine `README.en.md` (Englisch).
 **Immer auf Englisch:**
 
 ```bash
-✅ feat(lisa): add extract_lead_data tool with incremental scoring
+✅ feat(kea): add secure contact handoff
 ✅ fix(calendar): refresh token before creating event
 ✅ docs(readme): add bilingual setup instructions
 
-❌ feat(lisa): Füge extract_lead_data Tool hinzu
+❌ feat(kea): Füge sichere CRM Übergabe hinzu
 ❌ fix(kalender): Token vor Event-Erstellung erneuern
 ```
 

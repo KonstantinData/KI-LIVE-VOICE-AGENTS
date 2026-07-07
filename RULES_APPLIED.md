@@ -150,7 +150,7 @@ stmt = stmt.order_by(
 **Was wurde gemacht:**
 - ✅ `.gitmessage` Template erstellt mit Conventional Commits Format
 - ✅ Alle Typen dokumentiert (feat, fix, docs, refactor, test, chore, style, perf)
-- ✅ Scope-Beispiele gegeben (lisa, api, core, widget, dashboard, etc.)
+- ✅ Scope-Beispiele gegeben (kea, api, core, widget, handoff, etc.)
 - ✅ Beispiele für gute Commit-Messages
 
 **Aktivierung:**
@@ -169,7 +169,7 @@ git config commit.template .gitmessage
 
 **Beispiele:**
 ```
-feat(lisa): add extract_lead_data tool with incremental scoring
+feat(kea): add secure contact handoff
 fix(calendar): refresh token before creating event
 docs(readme): add bilingual setup instructions
 refactor(core): simplify agent loop error handling

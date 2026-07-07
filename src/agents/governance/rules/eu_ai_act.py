@@ -23,7 +23,7 @@ def check_ai_disclosure(
     counter: list[int],
 ) -> list[Finding]:
     """
-    Check that Lisa explicitly identifies itself as AI in the system prompt and widget.
+    Check that the runtime agent identifies itself as AI in the system prompt and widget.
 
     EU AI Act Art. 50 requires that users are informed they are interacting with AI
     before or at the start of the interaction.
@@ -62,13 +62,13 @@ def check_ai_disclosure(
                     "Nutzer müssen BEVOR sie chatten wissen, dass sie mit einer KI sprechen."
                 ),
                 must_be=(
-                    "Die erste Antwort von Lisa muss klar machen, dass es sich um eine KI handelt. "
-                    'Beispiel: "Ich bin Lisa, die KI-Assistentin von [Studio]. '
+                    "Die erste Antwort des Agenten muss klar machen, dass es sich um eine KI handelt. "
+                    'Beispiel: "Ich bin KEA, der KI-Assistent von [Studio]. '
                     'Ich bin ein automatisiertes System, kein Mensch."'
                 ),
                 fix_example=(
-                    'LISA_IDENTITY = """\n'
-                    "Du bist Lisa, die KI-Assistentin von {studio_name}.\n"
+                    'AGENT_IDENTITY = """\n'
+                    "Du bist KEA, der KI-Assistent von {studio_name}.\n"
                     "WICHTIG: Du bist eine Künstliche Intelligenz (KI), kein Mensch.\n"
                     "Weise dich in deiner ersten Antwort als KI-Assistentin aus.\n"
                     '"""'
@@ -106,7 +106,7 @@ def check_ai_disclosure(
                     "Widget-Header oder Consent-Banner muss 'KI-Assistent' oder 'AI' enthalten. "
                     "Nutzer müssen vor dem ersten Senden wissen, dass sie mit einer KI chatten."
                 ),
-                fix_example="<header>Lisa — KI-Assistentin von {studioName}</header>",
+                fix_example="<header>KEA — KI-Assistent von {studioName}</header>",
                 deadline="Vor Go-Live",
                 auto_fixable=False,
                 references=["Art. 50 Abs. 1 EU AI Act"],
@@ -146,7 +146,7 @@ def check_human_oversight(
                 line=None,
                 finding=(
                     "Studio-Model hat kein is_active-Flag. "
-                    "Es gibt keinen Kill-Switch um Lisa für ein Studio sofort zu deaktivieren."
+                    "Es gibt keinen Kill-Switch um den Agenten für ein Studio sofort zu deaktivieren."
                 ),
                 must_be=(
                     "Studio-Model braucht: is_active: bool = True. "
@@ -209,62 +209,35 @@ def check_score_bias(
     counter: list[int],
 ) -> list[Finding]:
     """
-    Check that the lead scoring algorithm does not use discriminatory inputs (name, language).
+    Check that legacy local lead scoring tools are not present.
 
-    Art. 5 EU AI Act forbids AI that exploits vulnerabilities of persons. Discriminatory
-    scoring based on name origin or language is a potential EU AI Act + DSGVO Art. 22 issue.
+    The current runtime must not own local CRM scoring. CRM scoring and review
+    belong to the external CRM repository for tenant-specific workflows.
 
     Returns:
         Findings if name or language fields are used as scoring inputs.
     """
     findings: list[Finding] = []
 
-    extract_tool_paths = list(
-        (config.repo_root / "src" / "agents").rglob("extract_lead_data.py")
-    )
-    for path in extract_tool_paths:
-        rel = scanner.rel(path)
-        content = scanner.read_file(path)
-        if content is None:
-            continue
-
-        # NOTE: Scoring should only be based on objective criteria (budget, timeline, style)
-        # NOT on subjective/demographic fields (name, language, origin)
-        score_func_match = re.search(
-            r"def _calculate_score.*?(?=\ndef |\nclass |\Z)",
-            content, re.DOTALL
-        )
-        if score_func_match:
-            score_code = score_func_match.group(0)
-            # Check if name is used as scoring input (it should only be used for identification)
-            if re.search(r'score.*name|name.*score|"name".*\+|name.*points', score_code):
-                counter[0] += 1
-                findings.append(Finding(
-                    id=f"{config.finding_id_prefix}-2026-{counter[0]:04d}",
-                    severity=Severity.HOCH,
-                    category=Category.EU_AI_ACT,
-                    subcategory="3.4_BIAS_FAIRNESS",
-                    regulation="Art. 5 EU AI Act + Art. 22 DSGVO",
-                    file=rel,
-                    line=None,
-                    finding=(
-                        "Lead-Score-Berechnung verwendet möglicherweise den Namen als Input. "
-                        "Scoring nach demographischen Merkmalen ist diskriminierend."
-                    ),
-                    must_be=(
-                        "Score nur nach sachlichen Kriterien: Budget, Zeitrahmen, Küchenstil, "
-                        "Raumgröße, Konkretheit der Anfrage. "
-                        "NICHT nach: Name, Sprache, Herkunft, Adresse."
-                    ),
-                    fix_example=(
-                        "# COMPLIANT score factors:\n"
-                        "# budget_range: +20, timeline: +15, kitchen_style: +10\n"
-                        "# room_size: +5, email: +20, phone: +15\n"
-                        "# NOT: name origin, language detected, address"
-                    ),
-                    deadline="Vor Go-Live",
-                    auto_fixable=False,
-                    references=["Art. 5 EU AI Act", "Art. 22 DSGVO"],
-                ))
+    for path in (config.repo_root / "src" / "agents").rglob("extract_lead_data.py"):
+        counter[0] += 1
+        findings.append(Finding(
+            id=f"{config.finding_id_prefix}-2026-{counter[0]:04d}",
+            severity=Severity.HOCH,
+            category=Category.EU_AI_ACT,
+            subcategory="3.4_BIAS_FAIRNESS",
+            regulation="Art. 5 EU AI Act + Art. 22 DSGVO",
+            file=scanner.rel(path),
+            line=None,
+            finding="Legacy local lead scoring tool found in runtime agent code.",
+            must_be=(
+                "Local lead scoring tools must not be registered in this runtime. "
+                "Use secure external CRM handoff and human CRM review instead."
+            ),
+            fix_example="Remove extract_lead_data.py or move CRM scoring into the CRM repository.",
+            deadline="Vor Go-Live",
+            auto_fixable=False,
+            references=["Art. 5 EU AI Act", "Art. 22 DSGVO"],
+        ))
 
     return findings
