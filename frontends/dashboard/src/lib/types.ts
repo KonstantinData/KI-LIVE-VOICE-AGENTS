@@ -91,3 +91,48 @@ export interface DashboardStats {
   feedback_total: number;
   average_lead_score: number;
 }
+
+export interface CostSummary {
+  event_count: number;
+  conversation_count: number;
+  total_tokens: number;
+  input_audio_tokens: number;
+  output_audio_tokens: number;
+  input_image_tokens: number;
+  estimated_cost_usd: number;
+}
+
+export interface CostBreakdownRow {
+  name: string;
+  event_count: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+}
+
+export interface DailyCostRow {
+  date: string;
+  event_count: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+}
+
+export interface ConversationCostRow {
+  conversation_id: string;
+  visitor_id: string;
+  channel: string;
+  event_count: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+  last_event_at?: string | null;
+}
+
+export interface CostReport {
+  studio: { id: string; name: string; slug: string };
+  period_days: number;
+  summary: CostSummary;
+  daily: DailyCostRow[];
+  by_component: CostBreakdownRow[];
+  by_model: CostBreakdownRow[];
+  by_channel: CostBreakdownRow[];
+  top_conversations: ConversationCostRow[];
+}

@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { isAuthenticated } from './lib/auth';
 import { Appointments } from './pages/Appointments';
 import { Conversations } from './pages/Conversations';
+import { Costs } from './pages/Costs';
 import { Dashboard } from './pages/Dashboard';
 import { Feedback } from './pages/Feedback';
 import { FollowUps } from './pages/FollowUps';
@@ -37,6 +38,7 @@ export function App() {
         <Route path="leads" element={<Leads />} />
         <Route path="leads/:id" element={<LeadDetail />} />
         <Route path="conversations" element={<Conversations />} />
+        <Route path="costs" element={<Costs />} />
         <Route path="appointments" element={<Appointments />} />
         <Route path="followups" element={<FollowUps />} />
         <Route path="knowledge" element={<Knowledge />} />

@@ -5,6 +5,7 @@ import uuid
 import pytest
 
 from src.db.models.conversation import Conversation
+from src.db.models.conversation_cost_event import ConversationCostEvent
 from src.db.models.lead import Lead
 from src.db.models.message import Message
 from src.db.models.studio import Studio
@@ -133,6 +134,100 @@ async def test_dashboard_stats_count_current_studio(db_client, db_session):
     assert data["leads_qualified"] == 1
     assert data["active_conversations"] == 1
     assert data["average_lead_score"] == 75
+
+
+@pytest.mark.asyncio
+async def test_dashboard_cost_report_is_tenant_scoped(db_client, db_session):
+    """Dashboard cost report aggregates only the authenticated studio."""
+    studio = await _seed_studio(db_session)
+    other_studio = Studio(
+        id=uuid.uuid4(),
+        name="Other",
+        slug="other-costs",
+        api_key="other-cost-key",
+        is_active=True,
+    )
+    conversation = Conversation(
+        id=uuid.uuid4(),
+        studio_id=studio.id,
+        visitor_id="v-cost",
+        channel="voice",
+        status="active",
+    )
+    other_conversation = Conversation(
+        id=uuid.uuid4(),
+        studio_id=other_studio.id,
+        visitor_id="v-other",
+        channel="voice",
+        status="active",
+    )
+    db_session.add_all([
+        other_studio,
+        conversation,
+        other_conversation,
+        ConversationCostEvent(
+            id=uuid.uuid4(),
+            studio_id=studio.id,
+            conversation_id=conversation.id,
+            event_type="realtime_response",
+            channel="voice",
+            component="voice_realtime",
+            provider="openai",
+            model="gpt-realtime-2.1",
+            total_tokens=100,
+            input_audio_tokens=20,
+            output_audio_tokens=30,
+            estimated_cost_usd=0.01,
+            pricing_snapshot="test",
+        ),
+        ConversationCostEvent(
+            id=uuid.uuid4(),
+            studio_id=studio.id,
+            conversation_id=conversation.id,
+            event_type="upload_analysis",
+            channel="voice",
+            component="project_upload_analysis",
+            provider="openai",
+            model="gpt-4o-mini",
+            total_tokens=50,
+            input_image_tokens=10,
+            estimated_cost_usd=0.02,
+            pricing_snapshot="test",
+        ),
+        ConversationCostEvent(
+            id=uuid.uuid4(),
+            studio_id=other_studio.id,
+            conversation_id=other_conversation.id,
+            event_type="realtime_response",
+            channel="voice",
+            component="voice_realtime",
+            provider="openai",
+            model="gpt-realtime-2.1",
+            total_tokens=999,
+            estimated_cost_usd=9.99,
+            pricing_snapshot="test",
+        ),
+    ])
+    await db_session.flush()
+    headers = await _auth_headers(db_client)
+
+    response = await db_client.get("/dashboard/costs?days=30", headers=headers)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["summary"]["event_count"] == 2
+    assert data["summary"]["conversation_count"] == 1
+    assert data["summary"]["total_tokens"] == 150
+    assert data["summary"]["input_audio_tokens"] == 20
+    assert data["summary"]["output_audio_tokens"] == 30
+    assert data["summary"]["input_image_tokens"] == 10
+    assert data["summary"]["estimated_cost_usd"] == 0.03
+    assert {row["name"] for row in data["by_component"]} == {
+        "voice_realtime",
+        "project_upload_analysis",
+    }
+    assert len(data["top_conversations"]) == 1
+    assert data["top_conversations"][0]["visitor_id"] == "v-cost"
 
 
 @pytest.mark.asyncio

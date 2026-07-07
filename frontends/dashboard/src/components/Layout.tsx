@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '📊' },
   { to: '/leads', label: 'Leads', icon: '👥' },
   { to: '/conversations', label: 'Gespräche', icon: '💬' },
+  { to: '/costs', label: 'Kosten', icon: '€' },
   { to: '/appointments', label: 'Termine', icon: '📅' },
   { to: '/followups', label: 'Follow-ups', icon: '🔔' },
   { to: '/knowledge', label: 'Wissensbasis', icon: '📚' },

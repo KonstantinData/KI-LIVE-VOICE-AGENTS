@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChatViewer } from '../components/ChatViewer';
 import { api } from '../lib/api';
 import type { Conversation, Message } from '../lib/types';
 
 export function Conversations() {
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -13,10 +15,11 @@ export function Conversations() {
     api.get<Conversation[]>('/conversations/')
       .then((rows) => {
         setConversations(rows);
-        setSelected(rows[0] ?? null);
+        const requestedId = searchParams.get('conversation');
+        setSelected(rows.find((row) => row.id === requestedId) ?? rows[0] ?? null);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Fehler beim Laden'));
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!selected) {
