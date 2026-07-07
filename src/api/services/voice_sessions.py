@@ -137,16 +137,7 @@ def realtime_session_config(
             },
         },
         "reasoning": {"effort": "low"},
-        "metadata": {
-            "conversation_id": str(conversation.id),
-            "studio": studio.slug,
-            "tenant_id": profile.tenant_id if profile is not None else studio.slug,
-            "agent_profile_id": voice_agent.id if voice_agent is not None else "legacy-live-voice",
-        },
     }
-    if voice_agent is not None:
-        config["metadata"]["policies"] = ",".join(voice_agent.policies)
-        config["metadata"]["validators"] = ",".join(voice_agent.validators)
     if tools:
         config["tools"] = tools
         config["tool_choice"] = "auto"

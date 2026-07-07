@@ -38,7 +38,7 @@ def test_widget_config_registry_overrides_legacy_db_agent_name():
 
 
 def test_realtime_session_config_uses_tenant_runtime_profile():
-    """Realtime config includes tenant-selected model, voice, and policy metadata."""
+    """Realtime config includes tenant-selected model and voice."""
     studio = Studio(
         id=uuid.uuid4(),
         name="Mein Küchenexperte",
@@ -65,8 +65,7 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
 
     assert config["model"] == "gpt-realtime-2.1"
     assert config["audio"]["output"]["voice"] == "marin"
-    assert config["metadata"]["tenant_id"] == "mein-kuechenexperte"
-    assert config["metadata"]["agent_profile_id"] == "kea-project-intake"
+    assert "metadata" not in config
     assert "Du bist KEA" in config["instructions"]
     assert "kein Kuechenfachberater" in config["instructions"]
     assert "Angebotsfragen" in config["instructions"]
