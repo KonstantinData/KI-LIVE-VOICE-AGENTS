@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-4o-mini"
     openai_chat_max_tokens: int = 1024
-    openai_realtime_model: str = "gpt-realtime"
+    openai_realtime_model: str = "gpt-realtime-2.1"
     openai_realtime_voice: str = "marin"
     enable_voice_sessions: bool = False
     max_voice_session_seconds: int = 900

@@ -63,7 +63,7 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
         address_mode="sie",
     )
 
-    assert config["model"] == "gpt-realtime"
+    assert config["model"] == "gpt-realtime-2.1"
     assert config["audio"]["output"]["voice"] == "marin"
     assert config["metadata"]["tenant_id"] == "mein-kuechenexperte"
     assert config["metadata"]["agent_profile_id"] == "kea-project-intake"

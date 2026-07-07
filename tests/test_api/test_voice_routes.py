@@ -137,7 +137,7 @@ async def test_voice_session_creates_conversation_and_returns_sdp(
 
     async def fake_create_call(self, *, client_sdp, session_config, safety_identifier):
         assert client_sdp == "v=0"
-        assert session_config["model"] == "gpt-realtime"
+        assert session_config["model"] == "gpt-realtime-2.1"
         assert session_config["audio"]["input"]["turn_detection"]["interrupt_response"]
         assert "konsequent per Du" in session_config["instructions"]
         assert "sichere Texteingabe" in session_config["instructions"]
