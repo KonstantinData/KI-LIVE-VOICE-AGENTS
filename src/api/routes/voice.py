@@ -23,6 +23,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.agents.lisa.agent import LisaAgent
 from src.api.config import get_settings
+from src.api.routes.crm_contact_capture import (
+    CRM_TENANT_ID,
+    ContactHandoff,
+    CrmContactCaptureRequest,
+    persist_crm_contact_capture,
+)
 from src.api.services.email_service import EmailService, EmailServiceDisabledError
 from src.api.services.openai_realtime import OpenAIRealtimeAdapter
 from src.api.services.voice_sessions import (
@@ -141,6 +147,8 @@ class VoiceContactHandoffResponse(BaseModel):
     success: bool
     lead_id: str | None = None
     emails_sent: bool = False
+    crm_captured: bool = False
+    crm_capture_id: str | None = None
     error: str | None = None
 
 
@@ -272,6 +280,68 @@ Quelle: {escape(agent_name)} Voice Widget
 """
 
 
+def _build_crm_contact_capture(
+    *,
+    studio,
+    conversation_id: uuid.UUID,
+    lead_id: uuid.UUID,
+    voice_session_id: str,
+    visitor_id: str,
+    first_name: str,
+    last_name: str,
+    email: str,
+    phone: str,
+    best_reachability: str,
+    project_summary: str,
+    additional_notes: str,
+    consent_version: str,
+) -> CrmContactCaptureRequest:
+    """Builds the sanitized CRM intake payload for a voice contact handoff."""
+    full_name = f"{first_name} {last_name}".strip()
+    return CrmContactCaptureRequest(
+        tenant_id=CRM_TENANT_ID,
+        channel_type="voice",
+        purpose="consultation_inquiry",
+        case_id=f"voice:{conversation_id}:{lead_id}",
+        decision="accepted",
+        contact_handoff=ContactHandoff(
+            first_name=first_name,
+            last_name=last_name,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            preferred_channel="unknown",
+        ),
+        consent={
+            "contact_consent_confirmed": True,
+            "consent_version": consent_version,
+            "purpose": "consultation_inquiry",
+        },
+        linked_context={
+            "studio_slug": studio.slug,
+            "conversation_id": str(conversation_id),
+            "lead_id": str(lead_id),
+            "best_reachability": best_reachability,
+            "project_summary": project_summary,
+            "additional_notes": additional_notes,
+        },
+        source={
+            "system": "ki_mitarbeiter_widget",
+            "channel": "voice_contact_form",
+            "visitor_id": visitor_id,
+        },
+        audit_context={
+            "actor": f"voice:{visitor_id}",
+            "voice_session_id": voice_session_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        },
+        retention={
+            "classification": "contact_capture",
+            "raw_audio_stored": False,
+        },
+    )
+
+
 async def _upsert_contact_lead(
     *,
     session: AsyncSession,
@@ -310,20 +380,22 @@ async def _upsert_contact_lead(
 
     full_name = f"{first_name} {last_name}".strip()
     profile = dict(lead.profile or {})
-    profile.update({
-        "first_name": first_name,
-        "last_name": last_name,
-        "name": full_name,
-        "email": email,
-        "phone": phone,
-        "best_reachability": best_reachability,
-        "project_summary": project_summary,
-        "additional_notes": additional_notes,
-        "contact_consent_confirmed": True,
-        "contact_consent_version": consent_version,
-        "handoff_channel": "secure_widget_form",
-        "handoff_at": datetime.now(timezone.utc).isoformat(),
-    })
+    profile.update(
+        {
+            "first_name": first_name,
+            "last_name": last_name,
+            "name": full_name,
+            "email": email,
+            "phone": phone,
+            "best_reachability": best_reachability,
+            "project_summary": project_summary,
+            "additional_notes": additional_notes,
+            "contact_consent_confirmed": True,
+            "contact_consent_version": consent_version,
+            "handoff_channel": "secure_widget_form",
+            "handoff_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
     lead.name = full_name
     lead.email = email
     lead.phone = phone or None
@@ -390,7 +462,15 @@ async def create_ephemeral_voice_session(
         "address_mode": payload.address_mode,
     }
     voice_session_id = payload.session_id or f"voice_{uuid.uuid4()}"
-    config = realtime_session_config(studio, conversation, [], None, payload.address_mode)
+    memory = MemoryManager(session)
+    context = await memory.get_context(conversation.id, studio.id)
+    config = realtime_session_config(
+        studio,
+        conversation,
+        [],
+        context.lead_summary,
+        payload.address_mode,
+    )
     profile = get_tenant_profile_for_studio(studio.slug)
     voice_agent = profile.live_voice_agent() if profile is not None else None
     config["tracing"] = {
@@ -398,7 +478,9 @@ async def create_ephemeral_voice_session(
         "group_id": str(conversation.id),
         "metadata": {
             "tenant_id": profile.tenant_id if profile is not None else studio.slug,
-            "agent_profile_id": voice_agent.id if voice_agent is not None else "legacy-live-voice",
+            "agent_profile_id": voice_agent.id
+            if voice_agent is not None
+            else "legacy-live-voice",
             "studio": studio.slug,
             "voice_session_id": voice_session_id,
             "consent_version": payload.consent_version,
@@ -413,7 +495,9 @@ async def create_ephemeral_voice_session(
                 "Authorization": f"Bearer {settings.openai_api_key}",
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "OpenAI-Safety-Identifier": safety_identifier(studio, payload.visitor_id),
+                "OpenAI-Safety-Identifier": safety_identifier(
+                    studio, payload.visitor_id
+                ),
             },
             json={"session": config},
         )
@@ -429,19 +513,21 @@ async def create_ephemeral_voice_session(
         raise HTTPException(status_code=502, detail="openai_realtime_session_failed")
 
     client_secret, expires = _parse_client_secret(response.json())
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_session_created",
-        actor=f"voice:{payload.visitor_id}",
-        payload={
-            "conversation_id": str(conversation.id),
-            "voice_session_id": voice_session_id,
-            "consent_version": payload.consent_version,
-            "raw_audio_stored": False,
-            "model": str(config["model"]),
-            "address_mode": payload.address_mode,
-        },
-    ))
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_session_created",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "voice_session_id": voice_session_id,
+                "consent_version": payload.consent_version,
+                "raw_audio_stored": False,
+                "model": str(config["model"]),
+                "address_mode": payload.address_mode,
+            },
+        )
+    )
     await session.commit()
     return EphemeralVoiceSessionResponse(
         client_secret=client_secret,
@@ -495,20 +581,26 @@ async def create_webrtc_voice_session(
         safety_identifier=safety_identifier(studio, payload.visitor_id),
     )
     voice_session_id = str(uuid.uuid4())
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_session_requested",
-        actor=f"voice:{payload.visitor_id}",
-        payload={
-            "conversation_id": str(conversation.id),
-            "voice_session_id": voice_session_id,
-            "provider_call_id": call.provider_call_id,
-            "consent_version": payload.consent_version,
-            "address_mode": payload.address_mode,
-        },
-    ))
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_session_requested",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "voice_session_id": voice_session_id,
+                "provider_call_id": call.provider_call_id,
+                "consent_version": payload.consent_version,
+                "address_mode": payload.address_mode,
+            },
+        )
+    )
     await session.commit()
-    log.info("voice.session_created", studio=studio.slug, conversation_id=str(conversation.id))
+    log.info(
+        "voice.session_created",
+        studio=studio.slug,
+        conversation_id=str(conversation.id),
+    )
     return {
         "conversation_id": str(conversation.id),
         "voice_session_id": voice_session_id,
@@ -554,23 +646,29 @@ async def persist_voice_transcript(
     conversation = await load_voice_conversation(
         session, studio, payload.visitor_id, payload.conversation_id
     )
-    session.add(Message(
-        id=uuid.uuid4(),
-        conversation_id=conversation.id,
-        role=payload.role,
-        content=payload.text,
-        tool_calls=[{"provider_event_id": payload.provider_event_id, "channel": "voice"}],
-    ))
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_transcript_finalized",
-        actor=f"voice:{payload.visitor_id}",
-        payload={
-            "conversation_id": str(conversation.id),
-            "role": payload.role,
-            "provider_event_id": payload.provider_event_id,
-        },
-    ))
+    session.add(
+        Message(
+            id=uuid.uuid4(),
+            conversation_id=conversation.id,
+            role=payload.role,
+            content=payload.text,
+            tool_calls=[
+                {"provider_event_id": payload.provider_event_id, "channel": "voice"}
+            ],
+        )
+    )
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_transcript_finalized",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "role": payload.role,
+                "provider_event_id": payload.provider_event_id,
+            },
+        )
+    )
     await session.commit()
     return {"status": "stored"}
 
@@ -622,19 +720,21 @@ async def persist_voice_final_transcript(
         ],
     )
     session.add(message)
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_transcript_finalized",
-        actor=f"voice:{payload.visitor_id}",
-        payload={
-            "conversation_id": str(conversation.id),
-            "message_id": str(message.id),
-            "role": payload.role,
-            "provider_event_id": payload.provider_event_id,
-            "voice_session_id": payload.voice_session_id,
-            "raw_audio_stored": False,
-        },
-    ))
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_transcript_finalized",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "message_id": str(message.id),
+                "role": payload.role,
+                "provider_event_id": payload.provider_event_id,
+                "voice_session_id": payload.voice_session_id,
+                "raw_audio_stored": False,
+            },
+        )
+    )
     await session.commit()
     return {
         "stored": True,
@@ -668,7 +768,9 @@ async def submit_voice_contact_handoff(
     additional_notes = _clean_contact_text(payload.additional_notes, 1600)
 
     if not payload.contact_consent_confirmed:
-        return VoiceContactHandoffResponse(success=False, error="contact_consent_required")
+        return VoiceContactHandoffResponse(
+            success=False, error="contact_consent_required"
+        )
     if len(first_name) < 2 or len(last_name) < 2:
         return VoiceContactHandoffResponse(success=False, error="invalid_name")
     if not _valid_email(email):
@@ -693,6 +795,38 @@ async def submit_voice_contact_handoff(
         consent_version=payload.consent_version,
     )
     await session.flush()
+
+    crm_captured = False
+    crm_capture_id: str | None = None
+    crm_error: str | None = None
+    try:
+        crm_capture_id = await persist_crm_contact_capture(
+            _build_crm_contact_capture(
+                studio=studio,
+                conversation_id=conversation.id,
+                lead_id=lead.id,
+                voice_session_id=payload.voice_session_id,
+                visitor_id=payload.visitor_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                best_reachability=best_reachability,
+                project_summary=project_summary,
+                additional_notes=additional_notes,
+                consent_version=payload.consent_version,
+            )
+        )
+        crm_captured = True
+    except Exception as exc:
+        crm_error = "crm_capture_failed"
+        log.warning(
+            "voice.crm_contact_capture_failed",
+            studio=studio.slug,
+            conversation_id=str(conversation.id),
+            lead_id=str(lead.id),
+            error=str(exc),
+        )
 
     summary_items = _summary_items(project_summary)
     handoff_agent_name = agent_display_name(studio.slug, fallback="Live Voice Agent")
@@ -733,23 +867,31 @@ async def submit_voice_contact_handoff(
     except Exception:
         email_error = "email_delivery_failed"
 
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_lead_handoff",
-        actor=f"voice:{payload.visitor_id}",
-        payload={
-            "conversation_id": str(conversation.id),
-            "lead_id": str(lead.id),
-            "voice_session_id": payload.voice_session_id,
-            "emails_sent": emails_sent,
-            "email_error": email_error,
-        },
-    ))
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_lead_handoff",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "lead_id": str(lead.id),
+                "voice_session_id": payload.voice_session_id,
+                "emails_sent": emails_sent,
+                "email_error": email_error,
+                "crm_captured": crm_captured,
+                "crm_capture_id": crm_capture_id,
+                "crm_error": crm_error,
+            },
+        )
+    )
     await session.commit()
     return VoiceContactHandoffResponse(
         success=True,
         lead_id=str(lead.id),
         emails_sent=emails_sent,
+        crm_captured=crm_captured,
+        crm_capture_id=crm_capture_id,
+        error=crm_error,
     )
 
 
@@ -768,11 +910,16 @@ async def end_voice_session(
         session, studio, payload.visitor_id, payload.conversation_id
     )
     await LisaAgent(session=session).finalize_conversation(conversation, studio)
-    session.add(Event(
-        studio_id=studio.id,
-        type="voice_session_ended",
-        actor=f"voice:{payload.visitor_id}",
-        payload={"conversation_id": str(conversation.id), "reason": payload.close_reason},
-    ))
+    session.add(
+        Event(
+            studio_id=studio.id,
+            type="voice_session_ended",
+            actor=f"voice:{payload.visitor_id}",
+            payload={
+                "conversation_id": str(conversation.id),
+                "reason": payload.close_reason,
+            },
+        )
+    )
     await session.commit()
     return {"status": "ended"}

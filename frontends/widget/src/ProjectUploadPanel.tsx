@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { WidgetConfig } from './lib/config';
 
 const MAX_UPLOAD_FILES = 10;
+const MAX_UPLOAD_FILE_BYTES = 10 * 1024 * 1024;
 
 interface ProjectUploadPanelProps {
   config: WidgetConfig;
@@ -11,6 +12,7 @@ interface ProjectUploadPanelProps {
   send: (text: string) => void;
   onConversationAssigned: (conversationId: string) => void;
   onLocalMessage: (message: { role: 'user' | 'assistant'; content: string }) => void;
+  onUploadContext?: (context: string) => void;
 }
 
 interface PendingProjectFile {
@@ -35,6 +37,7 @@ export function ProjectUploadPanel({
   send,
   onConversationAssigned,
   onLocalMessage,
+  onUploadContext,
 }: ProjectUploadPanelProps) {
   const [pendingFiles, setPendingFiles] = useState<PendingProjectFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -53,10 +56,21 @@ export function ProjectUploadPanel({
   const addPendingFiles = (files: FileList | File[] | null) => {
     const selected = Array.from(files ?? []);
     if (selected.length === 0 || uploadSelectionDisabled) return;
+    const oversized = selected.filter((file) => file.size > MAX_UPLOAD_FILE_BYTES);
+    const allowed = selected.filter((file) => file.size <= MAX_UPLOAD_FILE_BYTES);
+    if (oversized.length > 0) {
+      const names = oversized.map((file) => `${file.name} (${formatFileSize(file.size)})`).join(', ');
+      setUploadStatus(`Diese Datei ist größer als 10 MB pro Datei: ${names}.`);
+    }
+    if (allowed.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      return;
+    }
     setPendingFiles((current) => {
       const existing = new Set(current.map((item) => fileKey(item.file)));
       const next = [...current];
-      for (const file of selected) {
+      for (const file of allowed) {
         if (next.length >= MAX_UPLOAD_FILES) break;
         const key = fileKey(file);
         if (existing.has(key)) continue;
@@ -65,9 +79,9 @@ export function ProjectUploadPanel({
       }
       return next;
     });
-    if (selected.length + pendingFiles.length > MAX_UPLOAD_FILES) {
+    if (allowed.length + pendingFiles.length > MAX_UPLOAD_FILES) {
       setUploadStatus(`Es sind höchstens ${MAX_UPLOAD_FILES} Dateien pro Upload möglich.`);
-    } else {
+    } else if (oversized.length === 0) {
       setUploadStatus('');
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -100,13 +114,17 @@ export function ProjectUploadPanel({
       body: form,
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.success) throw new Error(`upload_failed_${response.status}`);
+    if (!response.ok || !payload.success) {
+      const detail = typeof payload.detail === 'string' ? payload.detail : '';
+      throw new Error(detail || `upload_failed_${response.status}`);
+    }
     const assignedConversationId =
       typeof payload.conversation_id === 'string' ? payload.conversation_id : null;
     if (assignedConversationId) onConversationAssigned(assignedConversationId);
     return {
       filename: String(payload.filename || file.name),
       conversationId: assignedConversationId,
+      analysisSummary: typeof payload.analysis_summary === 'string' ? payload.analysis_summary : '',
     };
   };
 
@@ -121,6 +139,7 @@ export function ProjectUploadPanel({
     const files = pendingFiles.map((item) => item.file);
     try {
       const uploadedNames: string[] = [];
+      const analysisSummaries: string[] = [];
       let activeConversationId = conversationId;
       for (const [index, file] of files.entries()) {
         const upload = await uploadSingleProjectFile(
@@ -130,6 +149,9 @@ export function ProjectUploadPanel({
           activeConversationId,
         );
         uploadedNames.push(upload.filename);
+        if (upload.analysisSummary) {
+          analysisSummaries.push(`${upload.filename}: ${upload.analysisSummary}`);
+        }
         activeConversationId = upload.conversationId ?? activeConversationId;
       }
       const userMessage =
@@ -145,14 +167,26 @@ export function ProjectUploadPanel({
           content: 'Die Dateien wurden hochgeladen und für die Beratung gespeichert.',
         });
       }
+      onUploadContext?.(
+        analysisSummaries.length > 0
+          ? `${userMessage} KI-Zusammenfassung: ${analysisSummaries.join(' | ')}`
+          : userMessage,
+      );
       setPendingFiles([]);
       setUploadStatus(
         uploadedNames.length === 1
           ? 'Upload abgeschlossen.'
           : `${uploadedNames.length} Dateien wurden hochgeladen.`,
       );
-    } catch {
-      setUploadStatus('Mindestens eine Datei konnte nicht hochgeladen werden. Bitte prüfen Sie Format und Größe.');
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : '';
+      const messageByDetail: Record<string, string> = {
+        file_too_large: 'Mindestens eine Datei ist größer als 10 MB pro Datei.',
+        unsupported_file_type: 'Bitte laden Sie nur PDF, PNG oder JPEG hoch.',
+        upload_rate_limit_exceeded: 'Es wurden gerade zu viele Dateien hochgeladen. Bitte versuchen Sie es später erneut.',
+        conversation_upload_limit_exceeded: 'Für dieses Gespräch wurden bereits viele Dateien hochgeladen. Bitte senden Sie die Anfrage oder entfernen Sie Dateien.',
+      };
+      setUploadStatus(messageByDetail[detail] || 'Mindestens eine Datei konnte nicht hochgeladen werden. Bitte prüfen Sie Format und Größe.');
     } finally {
       setUploading(false);
     }
@@ -200,7 +234,7 @@ export function ProjectUploadPanel({
       )}
       {showUploadInfo && (
         <div className="widget-upload-note">
-          PDF, PNG oder JPEG bis 10 MB. Sie können mehrere Dateien auswählen, vor dem Upload prüfen und einzelne Dateien wieder entfernen.
+          PDF, PNG oder JPEG bis 10 MB pro Datei. Sie können mehrere Dateien auswählen, vor dem Upload prüfen und einzelne Dateien wieder entfernen.
         </div>
       )}
       {uploadStatus && <div className="widget-upload-status">{uploadStatus}</div>}

@@ -37,6 +37,8 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactStatus, setContactStatus] = useState('');
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [voiceUploadNotice, setVoiceUploadNotice] = useState('');
   const [contactForm, setContactForm] = useState<ContactFormData>({
     first_name: '',
     last_name: '',
@@ -51,7 +53,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
 
   const handleIncomingMessage = useCallback(
     (message: ChatMessage) => {
-      if (hasContactIntent(message.content)) {
+      if (!contactSubmitted && hasContactIntent(message.content)) {
         setShowContactForm(true);
       }
       setChatMessages((prev) => [
@@ -63,7 +65,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
         },
       ]);
     },
-    [],
+    [contactSubmitted],
   );
 
   const { send, sendAction, connected, connecting, typing } = useWebSocket({
@@ -81,7 +83,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleSend = () => {
     const text = input.trim();
     if (!text || !connected) return;
-    if (hasContactIntent(text)) {
+    if (!contactSubmitted && hasContactIntent(text)) {
       setShowContactForm(true);
     }
     setChatMessages((prev) => [...prev, { role: 'user', content: text }]);
@@ -92,7 +94,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleChoice = (choice: Choice) => {
     if (!connected) return;
     setChatMessages((prev) => [...prev, { role: 'user', content: choice.label }]);
-    if (isContactChoice(choice)) {
+    if (!contactSubmitted && isContactChoice(choice)) {
       setShowContactForm(true);
       return;
     }
@@ -108,6 +110,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
       send={send}
       onConversationAssigned={setConversationId}
       onLocalMessage={handleIncomingMessage}
+      onUploadContext={setVoiceUploadNotice}
     />
   );
 
@@ -127,6 +130,10 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
 
   const submitContactForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (contactSubmitted) {
+      setContactStatus('Ihre Anfrage wurde bereits gespeichert.');
+      return;
+    }
     const projectSummary = buildProjectSummary(chatMessages);
     if (!conversationId) {
       setContactStatus('Bitte warten Sie kurz, bis die Chat-Sitzung verbunden ist.');
@@ -167,6 +174,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
       const sentText = payload.emails_sent
         ? 'Ihre Anfrage wurde übermittelt. Die Bestätigungs-E-Mail ist unterwegs.'
         : 'Ihre Anfrage wurde gespeichert. Die E-Mail-Bestätigung wird intern nachgefasst.';
+      setContactSubmitted(true);
       setContactStatus(sentText);
       setChatMessages((prev) => [...prev, { role: 'assistant', content: sentText }]);
       setShowContactForm(false);
@@ -259,8 +267,8 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
             jederzeit mit Wirkung für die Zukunft widerrufen.
           </span>
         </label>
-        <button className="voice-button voice-button--primary" type="submit">
-          Anfrage senden
+        <button className="voice-button voice-button--primary" disabled={contactSubmitted} type="submit">
+          {contactSubmitted ? 'Anfrage gespeichert' : 'Anfrage senden'}
         </button>
         {contactStatus && <div className="voice-form-status">{contactStatus}</div>}
       </form>
@@ -310,6 +318,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
             config={config}
             visitorId={visitorId}
             onConversationReady={setConversationId}
+            projectUploadNotice={voiceUploadNotice}
           />
           {renderUploadPanel()}
         </>

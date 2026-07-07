@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 import uuid
 
 import pytest
@@ -163,7 +164,9 @@ async def test_project_file_upload_uses_explicit_conversation_id(
     messages = (
         (
             await db_session.execute(
-                select(Message).where(Message.conversation_id == current_conversation.id)
+                select(Message).where(
+                    Message.conversation_id == current_conversation.id
+                )
             )
         )
         .scalars()
@@ -216,3 +219,52 @@ async def test_pdf_project_file_upload_runs_analysis_path(
 
     assert response.status_code == 200
     assert response.json()["analysis_summary"] == "PDF summary"
+
+
+@pytest.mark.asyncio
+async def test_pdf_upload_analysis_uses_rendered_pages_when_text_is_empty(monkeypatch):
+    """PDF analysis falls back to vision when a plan has no extractable text."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "enable_upload_ai_analysis", True)
+    monkeypatch.setattr(settings, "openai_api_key", "sk-test")
+    monkeypatch.setattr(settings, "openai_chat_model", "gpt-4o-mini")
+    monkeypatch.setattr(
+        "src.api.services.project_uploads.extract_pdf_text", lambda data: ""
+    )
+    monkeypatch.setattr(
+        "src.api.services.project_uploads.render_pdf_pages_as_data_urls",
+        lambda data: ["data:image/png;base64,test"],
+    )
+    captured: dict[str, object] = {}
+
+    class FakeCompletions:
+        async def create(self, **kwargs):
+            captured.update(kwargs)
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content="Grundriss mit Maßangaben erkannt."
+                        )
+                    )
+                ]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, *, api_key: str):
+            assert api_key == "sk-test"
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setattr("src.api.services.project_uploads.AsyncOpenAI", FakeOpenAI)
+
+    from src.api.services.project_uploads import analyze_pdf_upload
+
+    result = await analyze_pdf_upload(
+        data=b"%PDF-1.4",
+        filename="grundriss.pdf",
+        agent_name="KEA",
+    )
+
+    assert result == "Grundriss mit Maßangaben erkannt."
+    user_message = captured["messages"][1]
+    assert user_message["content"][1]["type"] == "image_url"

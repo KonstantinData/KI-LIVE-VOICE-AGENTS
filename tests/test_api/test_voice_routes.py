@@ -65,7 +65,9 @@ def _voice_settings(monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "enable_voice_sessions", True)
     monkeypatch.setattr(settings, "openai_api_key", "sk-test")
-    monkeypatch.setattr(settings, "cors_origins", ["https://www.mein-kuechenexperte.de"])
+    monkeypatch.setattr(
+        settings, "cors_origins", ["https://www.mein-kuechenexperte.de"]
+    )
 
 
 @pytest.mark.asyncio
@@ -172,7 +174,9 @@ async def test_voice_session_creates_conversation_and_returns_sdp(
     data = response.json()
     assert data["sdp_answer"] == "v=0-answer"
     assert "sk-test" not in str(data)
-    conversation = await db_session.get(Conversation, uuid.UUID(data["conversation_id"]))
+    conversation = await db_session.get(
+        Conversation, uuid.UUID(data["conversation_id"])
+    )
     assert conversation is not None
     assert conversation.channel == "voice"
     assert conversation.metadata_["voice_consent"]["raw_audio_stored"] is False
@@ -269,10 +273,14 @@ async def test_voice_transcript_persists_final_messages(db_client, db_session):
 
     assert response.status_code == 200
     messages = (
-        await db_session.execute(
-            select(Message).where(Message.conversation_id == conversation.id)
+        (
+            await db_session.execute(
+                select(Message).where(Message.conversation_id == conversation.id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(messages) == 1
     assert messages[0].content == "Ich suche eine moderne Küche."
 
@@ -315,10 +323,14 @@ async def test_voice_transcript_endpoint_persists_widget_contract(
     data = response.json()
     assert data["stored"] is True
     messages = (
-        await db_session.execute(
-            select(Message).where(Message.conversation_id == conversation.id)
+        (
+            await db_session.execute(
+                select(Message).where(Message.conversation_id == conversation.id)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(messages) == 1
     assert messages[0].role == "assistant"
     assert messages[0].tool_calls[0]["raw_audio_stored"] is False
@@ -342,14 +354,25 @@ async def test_voice_contact_handoff_stores_lead_from_manual_form(
     db_session.add(conversation)
     await db_session.flush()
     sent_to: list[str] = []
+    crm_payloads: list[Any] = []
 
-    async def fake_send(self, *, to: str, subject: str, html: str, from_name=None) -> str:
+    async def fake_send(
+        self, *, to: str, subject: str, html: str, from_name=None
+    ) -> str:
         sent_to.append(to)
         assert subject
         assert "OpenAI" not in html
         return f"message-{len(sent_to)}"
 
     monkeypatch.setattr("src.api.routes.voice.EmailService.send", fake_send)
+
+    async def fake_crm_capture(payload):
+        crm_payloads.append(payload)
+        return "crm-ledger-1"
+
+    monkeypatch.setattr(
+        "src.api.routes.voice.persist_crm_contact_capture", fake_crm_capture
+    )
 
     response = await db_client.post(
         "/voice/contact-handoff",
@@ -376,6 +399,8 @@ async def test_voice_contact_handoff_stores_lead_from_manual_form(
     data = response.json()
     assert data["success"] is True
     assert data["emails_sent"] is True
+    assert data["crm_captured"] is True
+    assert data["crm_capture_id"] == "crm-ledger-1"
     assert sent_to == ["max@example.com", "beratung@mein-kuechenexperte.de"]
     lead = await db_session.get(Lead, uuid.UUID(data["lead_id"]))
     await db_session.refresh(conversation)
@@ -384,3 +409,10 @@ async def test_voice_contact_handoff_stores_lead_from_manual_form(
     assert lead.phone == "+49 176 23785746"
     assert lead.profile["handoff_channel"] == "secure_widget_form"
     assert conversation.lead_id == lead.id
+    assert len(crm_payloads) == 1
+    crm_payload = crm_payloads[0]
+    assert crm_payload.tenant_id == "mein-kuechenexperte"
+    assert crm_payload.channel_type == "voice"
+    assert crm_payload.contact_handoff.email == "max@example.com"
+    assert crm_payload.linked_context["conversation_id"] == str(conversation.id)
+    assert "transcript" not in str(crm_payload.model_dump()).lower()

@@ -28,6 +28,7 @@ interface VoiceControlsProps {
   config: WidgetConfig;
   visitorId: string;
   onConversationReady?: (conversationId: string) => void;
+  projectUploadNotice?: string;
 }
 
 interface VoiceSessionResponse {
@@ -48,6 +49,10 @@ interface ContactFormData {
   best_reachability: string;
   additional_notes: string;
   contact_consent_confirmed: boolean;
+}
+
+interface AppendVoiceMessageOptions {
+  detectContactIntent?: boolean;
 }
 
 function makeVoiceSessionId(): string {
@@ -80,12 +85,18 @@ function waitForIceGatheringComplete(peer: RTCPeerConnection): Promise<void> {
   });
 }
 
-export function VoiceControls({ config, visitorId, onConversationReady }: VoiceControlsProps) {
+export function VoiceControls({
+  config,
+  visitorId,
+  onConversationReady,
+  projectUploadNotice,
+}: VoiceControlsProps) {
   const [state, setState] = useState<VoiceState>('idle');
   const [status, setStatus] = useState('Bitte wählen Sie zuerst Du oder Sie.');
   const [addressMode, setAddressMode] = useState<AddressMode | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactStatus, setContactStatus] = useState('');
+  const [contactSubmitted, setContactSubmitted] = useState(false);
   const [contactForm, setContactForm] = useState<ContactFormData>({
     first_name: '',
     last_name: '',
@@ -112,6 +123,7 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
   const storedTranscriptEventsRef = useRef<Set<string>>(new Set());
   const addressModeRef = useRef<AddressMode | null>(null);
   const greetingSentRef = useRef(false);
+  const lastProjectUploadNoticeRef = useRef('');
   const pausedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -147,10 +159,14 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [voiceMessages.length]);
 
-  const appendVoiceMessage = (role: VoiceMessageRole, content: string) => {
+  const appendVoiceMessage = (
+    role: VoiceMessageRole,
+    content: string,
+    options: AppendVoiceMessageOptions = {},
+  ) => {
     const normalized = content.trim();
     if (!normalized) return;
-    if (hasContactIntent(normalized)) {
+    if (options.detectContactIntent !== false && !contactSubmitted && hasContactIntent(normalized)) {
       setShowContactForm(true);
     }
     setVoiceMessages((prev) => [
@@ -162,6 +178,32 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
       },
     ]);
   };
+
+  useEffect(() => {
+    const text = projectUploadNotice?.trim();
+    if (!text || text === lastProjectUploadNoticeRef.current) return;
+    lastProjectUploadNoticeRef.current = text;
+    appendVoiceMessage('user', text, { detectContactIntent: false });
+
+    const channel = dcRef.current;
+    if (channel?.readyState !== 'open') return;
+    const safeText = text.slice(0, 1800);
+    channel.send(JSON.stringify({
+      type: 'conversation.item.create',
+      item: {
+        type: 'message',
+        role: 'user',
+        content: [{ type: 'input_text', text: `Upload-Kontext aus dem Chatfenster: ${safeText}` }],
+      },
+    }));
+    channel.send(JSON.stringify({
+      type: 'response.create',
+      response: {
+        instructions:
+          'Berücksichtige den neuen Upload-Kontext für die weitere Einordnung. Sprich nur über sicher erkennbare Punkte, markiere Unsicherheiten und bleibe beim geführten Erstkontakt.',
+      },
+    }));
+  }, [projectUploadNotice, contactSubmitted]);
 
   const chooseAddressMode = (mode: AddressMode) => {
     setAddressMode(mode);
@@ -266,6 +308,10 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
 
   const submitContactForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (contactSubmitted) {
+      setContactStatus('Ihre Anfrage wurde bereits gespeichert.');
+      return;
+    }
     const conversationId = conversationIdRef.current;
     const voiceSessionId = voiceSessionIdRef.current;
     const projectSummary = buildProjectSummary(voiceMessages);
@@ -308,8 +354,9 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
       const sentText = payload.emails_sent
         ? 'Ihre Anfrage wurde übermittelt. Die Bestätigungs-E-Mail ist unterwegs.'
         : 'Ihre Anfrage wurde gespeichert. Die E-Mail-Bestätigung wird intern nachgefasst.';
+      setContactSubmitted(true);
       setContactStatus(sentText);
-      appendVoiceMessage('assistant', sentText);
+      appendVoiceMessage('assistant', sentText, { detectContactIntent: false });
       setShowContactForm(false);
     } catch {
       setContactStatus('Die Kontaktdaten konnten gerade nicht übermittelt werden. Bitte versuchen Sie es später erneut.');
@@ -613,8 +660,8 @@ export function VoiceControls({ config, visitorId, onConversationReady }: VoiceC
               jederzeit mit Wirkung für die Zukunft widerrufen.
             </span>
           </label>
-          <button className="voice-button voice-button--primary" type="submit">
-            Anfrage senden
+          <button className="voice-button voice-button--primary" disabled={contactSubmitted} type="submit">
+            {contactSubmitted ? 'Anfrage gespeichert' : 'Anfrage senden'}
           </button>
           {contactStatus && <div className="voice-form-status">{contactStatus}</div>}
         </form>

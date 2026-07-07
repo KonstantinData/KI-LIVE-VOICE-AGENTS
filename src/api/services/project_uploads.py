@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
+import base64
 import re
 
 import structlog
@@ -71,7 +72,9 @@ def extract_uploads_from_message(message: Message) -> list[StoredProjectUpload]:
                 conversation_id=str(message.conversation_id),
                 message_id=str(message.id),
                 original_filename=str(call.get("original_filename") or file_id),
-                content_type=str(call.get("content_type") or "application/octet-stream"),
+                content_type=str(
+                    call.get("content_type") or "application/octet-stream"
+                ),
                 size_bytes=int(call.get("size_bytes") or 0),
                 relative_path=relative_path,
                 created_at=message.created_at,
@@ -113,17 +116,79 @@ def extract_pdf_text(data: bytes, *, max_chars: int = 12_000) -> str:
     return "\n\n".join(chunks)[:max_chars].strip()
 
 
-async def analyze_pdf_upload(*, data: bytes, filename: str, agent_name: str) -> str | None:
-    """Summarizes PDF project content after local text extraction and redaction."""
+def render_pdf_pages_as_data_urls(
+    data: bytes,
+    *,
+    max_pages: int = 3,
+    zoom: float = 1.6,
+) -> list[str]:
+    """Renders the first PDF pages to PNG data URLs for vision analysis."""
+    try:
+        import fitz
+    except ImportError as exc:
+        raise RuntimeError("PyMuPDF is required for PDF page rendering") from exc
+
+    data_urls: list[str] = []
+    document = fitz.open(stream=data, filetype="pdf")
+    try:
+        matrix = fitz.Matrix(zoom, zoom)
+        for index in range(min(max_pages, document.page_count)):
+            page = document.load_page(index)
+            pixmap = page.get_pixmap(matrix=matrix, alpha=False)
+            png_bytes = pixmap.tobytes("png")
+            encoded = base64.b64encode(png_bytes).decode("ascii")
+            data_urls.append(f"data:image/png;base64,{encoded}")
+    finally:
+        document.close()
+    return data_urls
+
+
+async def analyze_pdf_upload(
+    *, data: bytes, filename: str, agent_name: str
+) -> str | None:
+    """Summarizes PDF project content after text extraction and page rendering."""
     settings = get_settings()
     if not settings.enable_upload_ai_analysis or not settings.openai_api_key:
         return None
 
-    extracted_text = extract_pdf_text(data)
-    if not extracted_text:
+    extracted_text = ""
+    rendered_pages: list[str] = []
+    try:
+        extracted_text = extract_pdf_text(data)
+    except Exception as exc:
+        log.warning(
+            "upload.pdf_text_extraction_failed", filename=filename, error=str(exc)
+        )
+    try:
+        rendered_pages = render_pdf_pages_as_data_urls(data)
+    except Exception as exc:
+        log.warning("upload.pdf_render_failed", filename=filename, error=str(exc))
+
+    if not extracted_text and not rendered_pages:
         return "Das PDF wurde gespeichert, enthält aber keinen auslesbaren Text."
 
     safe_text = redact_contact_details(extracted_text)
+    user_content: list[dict[str, object]] = [
+        {
+            "type": "text",
+            "text": (
+                f"Datei: {filename}. Fasse die für {agent_name} relevanten "
+                "Planungsdetails kurz auf Deutsch zusammen. Beschreibe erkennbare "
+                "Grundriss-, Raum-, Maß-, Anschluss- und Bestandsinformationen, "
+                "aber gib keine verbindliche Planungsempfehlung."
+            ),
+        }
+    ]
+    if safe_text:
+        user_content.append(
+            {
+                "type": "text",
+                "text": f"Aus dem PDF lokal extrahierter Text:\n\n{safe_text}",
+            }
+        )
+    for data_url in rendered_pages:
+        user_content.append({"type": "image_url", "image_url": {"url": data_url}})
+
     client = AsyncOpenAI(api_key=settings.openai_api_key)
     response = await client.chat.completions.create(
         model=settings.openai_chat_model,
@@ -133,18 +198,14 @@ async def analyze_pdf_upload(*, data: bytes, filename: str, agent_name: str) -> 
                 "role": "system",
                 "content": (
                     "Du analysierst PDF-Unterlagen für eine Küchenberatung. "
-                    "Fasse nur projektbezogene, nicht-sensitive Inhalte zusammen: "
-                    "Raummaße, Bestand, Wünsche, Materialien, Geräte, offene Fragen. "
-                    "Kontaktdaten wurden entfernt und dürfen nicht rekonstruiert werden."
+                    "Fasse nur projektbezogene, nicht-sensitive Inhalte als Entwurf "
+                    "zusammen: Raummaße, Grundrisshinweise, Bestand, Wünsche, "
+                    "Materialien, Geräte, offene Fragen. Wenn etwas unsicher oder "
+                    "schlecht lesbar ist, markiere es als unsicher. Erstelle keine "
+                    "verbindliche Fachberatung und transkribiere keine Kontaktdaten."
                 ),
             },
-            {
-                "role": "user",
-                "content": (
-                    f"Datei: {filename}. Fasse die für {agent_name} relevanten "
-                    f"Planungsdetails kurz auf Deutsch zusammen.\n\n{safe_text}"
-                ),
-            },
+            {"role": "user", "content": user_content},
         ],
     )
     return (response.choices[0].message.content or "").strip() or None
@@ -236,7 +297,9 @@ def _delete_orphan_files(cutoff: datetime) -> int:
             path.unlink()
             deleted += 1
         except OSError as exc:
-            log.warning("upload.retention_delete_failed", path=str(path), error=str(exc))
+            log.warning(
+                "upload.retention_delete_failed", path=str(path), error=str(exc)
+            )
 
     for directory in sorted((p for p in root.rglob("*") if p.is_dir()), reverse=True):
         try:

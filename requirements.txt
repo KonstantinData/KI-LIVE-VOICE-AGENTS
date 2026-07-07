@@ -40,3 +40,4 @@ httpx>=0.28.0
 structlog>=24.4.0
 python-dateutil>=2.9.0
 pypdf>=5.1.0
+PyMuPDF>=1.24.14
