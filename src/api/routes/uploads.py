@@ -13,6 +13,8 @@ Depends: fastapi, sqlalchemy, openai, src.api.config, src.db.models
 from __future__ import annotations
 
 from pathlib import Path
+import hmac
+import time
 from uuid import UUID
 from uuid import uuid4
 
@@ -25,8 +27,10 @@ from fastapi import (
     HTTPException,
     Request,
     UploadFile,
+    Query,
     status,
 )
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,6 +51,7 @@ from src.api.services.project_upload_runtime import (
     sniff_content_type,
     storage_path,
 )
+from src.api.services.project_uploads import list_stored_project_uploads, resolve_upload_path
 from src.db.database import get_session
 from src.db.models.event import Event
 from src.db.models.message import Message
@@ -67,6 +72,44 @@ class ProjectUploadResponse(BaseModel):
     size_bytes: int
     analysis_summary: str | None = None
     message: str
+
+
+def _upload_access_secret() -> str:
+    settings = get_settings()
+    return settings.crm_upload_access_secret or settings.crm_contact_handoff_secret
+
+
+def _upload_access_signature(
+    *, tenant_id: str, conversation_id: str, file_id: str, expires: int, secret: str
+) -> str:
+    payload = f"{tenant_id}\n{conversation_id}\n{file_id}\n{expires}".encode("utf-8")
+    return hmac.new(secret.encode("utf-8"), payload, "sha256").hexdigest()
+
+
+def _verify_upload_access_signature(
+    *, tenant_id: str, conversation_id: str, file_id: str, expires: int, signature: str
+) -> None:
+    secret = _upload_access_secret()
+    if not secret:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
+        )
+    now = int(time.time())
+    if expires < now or expires > now + 3600:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="upload_link_expired"
+        )
+    expected = _upload_access_signature(
+        tenant_id=tenant_id,
+        conversation_id=conversation_id,
+        file_id=file_id,
+        expires=expires,
+        secret=secret,
+    )
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="upload_access_denied"
+        )
 
 
 @router.post("/project-file", response_model=ProjectUploadResponse)
@@ -266,4 +309,83 @@ async def upload_project_file(
             if analysis_summary
             else "Die Datei wurde hochgeladen und für die Beratung gespeichert."
         ),
+    )
+
+
+@router.get("/project-file/{file_id}/content")
+async def download_project_file(
+    file_id: str,
+    tenant_id: str = Query(..., min_length=1, max_length=100),
+    conversation_id: UUID = Query(...),
+    expires: int = Query(...),
+    signature: str = Query(..., min_length=64, max_length=64),
+    session: AsyncSession = Depends(get_session),
+) -> FileResponse:
+    """Streams a CRM-authorized project upload after tenant-scoped HMAC validation."""
+    if not file_id or not all(c.isalnum() or c == "-" for c in file_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
+        )
+    _verify_upload_access_signature(
+        tenant_id=tenant_id,
+        conversation_id=str(conversation_id),
+        file_id=file_id,
+        expires=expires,
+        signature=signature,
+    )
+
+    studio_row = await load_studio(session, tenant_id)
+    uploads = await list_stored_project_uploads(
+        session=session,
+        studio_id=studio_row.id,
+        conversation_id=conversation_id,
+        limit=100,
+    )
+    upload = next(
+        (
+            stored_upload
+            for stored_upload in uploads
+            if stored_upload.file_id == file_id and not stored_upload.file_deleted
+        ),
+        None,
+    )
+    if upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
+        )
+    try:
+        path = resolve_upload_path(upload.relative_path)
+    except ValueError as exc:
+        log.warning("upload.access_invalid_path", file_id=file_id, error=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
+        ) from exc
+    if not path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
+        )
+
+    session.add(
+        Event(
+            studio_id=studio_row.id,
+            type="project_file_accessed",
+            actor="crm:file-view",
+            payload={
+                "conversation_id": str(conversation_id),
+                "message_id": upload.message_id,
+                "file_id": upload.file_id,
+                "original_filename": upload.original_filename,
+                "content_type": upload.content_type,
+                "size_bytes": upload.size_bytes,
+            },
+        )
+    )
+    await session.commit()
+
+    return FileResponse(
+        path,
+        media_type=upload.content_type,
+        filename=upload.original_filename,
+        content_disposition_type="inline",
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
     )

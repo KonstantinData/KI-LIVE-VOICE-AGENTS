@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     crm_contact_handoff_secret: str = ""
     crm_usage_handoff_endpoint: str = ""
     crm_usage_handoff_secret: str = ""
+    crm_upload_access_secret: str = ""
 
     # OpenAI
     openai_api_key: str = ""

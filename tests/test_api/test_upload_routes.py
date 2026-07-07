@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+import hmac
+import time
 import uuid
 
 import pytest
@@ -149,6 +151,69 @@ async def test_project_file_upload_uses_explicit_conversation_id(
     )
     assert len(messages) == 1
     assert other_messages == []
+
+
+@pytest.mark.asyncio
+async def test_project_file_download_requires_signed_crm_access(
+    db_client,
+    db_session,
+    tmp_path,
+    monkeypatch,
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "upload_storage_dir", str(tmp_path))
+    monkeypatch.setattr(settings, "enable_upload_ai_analysis", False)
+    monkeypatch.setattr(settings, "crm_upload_access_secret", "download-secret")
+    monkeypatch.setattr(settings, "crm_contact_handoff_secret", "")
+    monkeypatch.setattr(
+        settings, "cors_origins", ["https://www.mein-kuechenexperte.de"]
+    )
+    studio = await seed_studio(db_session, slug="mein-kuechenexperte-download")
+
+    upload_response = await db_client.post(
+        "/uploads/project-file",
+        headers={"Origin": "https://www.mein-kuechenexperte.de"},
+        data={
+            "studio": studio.slug,
+            "visitor_id": "visitor-download",
+            "consent_granted": "true",
+            "consent_version": "widget-v1",
+            "ai_analysis_consent": "true",
+        },
+        files={"file": ("kueche.png", b"\x89PNG\r\n\x1a\ndownload", "image/png")},
+    )
+    assert upload_response.status_code == 200
+    upload = upload_response.json()
+    expires = int(time.time()) + 300
+    canonical = (
+        f"{studio.slug}\n{upload['conversation_id']}\n{upload['file_id']}\n{expires}"
+    ).encode("utf-8")
+    signature = hmac.new(b"download-secret", canonical, "sha256").hexdigest()
+
+    download_response = await db_client.get(
+        f"/uploads/project-file/{upload['file_id']}/content",
+        params={
+            "tenant_id": studio.slug,
+            "conversation_id": upload["conversation_id"],
+            "expires": str(expires),
+            "signature": signature,
+        },
+    )
+
+    assert download_response.status_code == 200
+    assert download_response.headers["content-type"] == "image/png"
+    assert download_response.content.startswith(b"\x89PNG")
+
+    denied_response = await db_client.get(
+        f"/uploads/project-file/{upload['file_id']}/content",
+        params={
+            "tenant_id": studio.slug,
+            "conversation_id": upload["conversation_id"],
+            "expires": str(expires),
+            "signature": "0" * 64,
+        },
+    )
+    assert denied_response.status_code == 403
 
 
 @pytest.mark.asyncio
