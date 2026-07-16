@@ -8,14 +8,27 @@ from src.agents.lisa.prompts.identity import LISA_IDENTITY
 from src.agents.lisa.prompts.rules import LISA_RULES, LISA_TOOL_INSTRUCTIONS
 from src.agents.lisa.prompts.tonality import LISA_TONALITY
 from src.db.models.studio import Studio
+from src.tenants.knowledge import (
+    format_tenant_knowledge_for_prompt,
+    get_tenant_knowledge_for_studio,
+)
 
 
 def _get_studio_knowledge(studio: Studio) -> str:
     """
-    Lädt die Studio-spezifische Wissensdatei anhand des Studio-Slugs.
+    Loads tenant-owned studio knowledge for the current runtime agent.
 
-    Für jedes neue Studio eine Datei in studio_knowledge/ anlegen.
+    Registry-backed knowledge is preferred because it is scoped to the tenant
+    profile. The legacy Python module remains as a compatibility fallback.
     """
+    source = get_tenant_knowledge_for_studio(studio.slug)
+    if source is not None:
+        return (
+            f"## Dein Studio: {studio.name}\n\n"
+            f"Knowledge Scope: {source.scope_id}\n\n"
+            f"{format_tenant_knowledge_for_prompt(source)}"
+        )
+
     if studio.slug == "mein-kuechenexperte":
         from src.agents.lisa.studio_knowledge.mein_kuechenexperte import (
             get_studio_context_text,

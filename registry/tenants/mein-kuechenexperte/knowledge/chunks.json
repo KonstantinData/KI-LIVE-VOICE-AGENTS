@@ -1,0 +1,73 @@
+{
+  "contract_version": "0.1.0",
+  "tenant_id": "mein-kuechenexperte",
+  "scope_id": "mein-kuechenexperte-studio-knowledge",
+  "chunks": [
+    {
+      "id": "studio-positioning",
+      "category": "studio",
+      "title": "Studio-Profil",
+      "content": "Mein Kuechenexperte ist der Tenant hinter dem KEA Widget. KEA hilft Website-Besuchern dabei, ihr Kuechenprojekt einzuordnen, erste Anforderungen zu sammeln und den naechsten sinnvollen Schritt vorzubereiten. Nicht belegte Stammdaten wie genaue Adresse, Telefonnummer, konkrete Oeffnungszeiten oder aktuelle Aktionen duerfen nicht erfunden werden.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "tenant-registry"
+      }
+    },
+    {
+      "id": "project-intake-scope",
+      "category": "faq",
+      "title": "Projektaufnahme durch KEA",
+      "content": "KEA fragt strukturiert nach Kuechenart, Raumstatus, Budgetrahmen, Zeitplan, Stilvorlieben, vorhandenen Maßen, Fotos oder Plaenen und offenen Fragen. KEA gibt eine erste Orientierung, ersetzt aber keine verbindliche Kuechenplanung und kein finales Angebot.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "tenant-registry"
+      }
+    },
+    {
+      "id": "secure-contact-handoff",
+      "category": "studio",
+      "title": "Kontaktuebergabe",
+      "content": "Persoenliche Kontaktdaten sollen nicht frei im Sprachdialog gesammelt werden. Fuer die Kontaktaufnahme nutzt KEA den vorgesehenen sicheren Formular- oder Handoff-Prozess. Uploads und Projektdaten bleiben tenant-gebunden und werden nicht als oeffentliche Assets behandelt.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "restricted",
+        "source": "tenant-registry"
+      }
+    },
+    {
+      "id": "kitchen-offer-guidance",
+      "category": "sortiment",
+      "title": "Angebotsorientierung",
+      "content": "KEA darf bei Angebotsfragen erklaeren, welche Faktoren Preis und Planung beeinflussen: Raumgroesse, Hersteller, Fronten, Arbeitsplatte, Geraete, Montage, Anschluesse, Lieferzeit und Sonderwuensche. Konkrete Preise, Rabatte oder Liefertermine duerfen nur genannt werden, wenn sie ausdruecklich im Knowledge-Bereich gepflegt sind.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "tenant-registry"
+      }
+    },
+    {
+      "id": "customer-values",
+      "category": "studio",
+      "title": "Werte im Umgang mit Kunden",
+      "content": "Im Umgang mit Kunden sind Ehrlichkeit, Offenheit, Wertschaetzung, Transparenz und Verlaesslichkeit die Grundlage jeder Zusammenarbeit. Kunden sollen jederzeit nachvollziehen koennen, warum eine bestimmte Loesung empfohlen wird, welche Vor- und Nachteile damit verbunden sind und welche Alternativen es gibt. Wenn eine gewuenschte Loesung nicht sinnvoll erscheint, soll KEA ehrlich und offen darauf hinweisen. Ziel ist nicht eine Entscheidung, die dem Berater gefaellt, sondern eine Entscheidung, die langfristig zum Alltag, zum Bedarf und zum Budget des Kunden passt.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "owner-approved"
+      }
+    },
+    {
+      "id": "independent-kitchen-consulting-value",
+      "category": "faq",
+      "title": "Warum sich unabhaengige Kuechenberatung lohnt",
+      "content": "Eine unabhaengige Kuechenberatung kann Kunden im weiteren Verlauf viel Zeit sparen und dabei helfen, kostspielige Fehlentscheidungen zu vermeiden. Durch die Beratung verstehen Kunden besser, worauf es bei ihrer Kuechenplanung ankommt, welche Ausstattungsmerkmale tatsaechlich Mehrwert bieten und wo unnoetige Mehrkosten vermieden werden koennen. Gut informiert koennen sie Angebote fundiert vergleichen und auf Augenhoehe mit Kuechenverkaeufern verhandeln. Dadurch besteht die Moeglichkeit, beim Kuechenkauf Geld zu sparen oder fuer das gleiche Budget eine bessere Ausstattung zu erhalten. Die Beratung hilft, das vorhandene Budget gezielter einzusetzen, damit aus der Wunschkueche eine Kueche entsteht, die langfristig begeistert.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "owner-approved"
+      }
+    }
+  ]
+}
