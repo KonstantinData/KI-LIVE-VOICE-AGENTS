@@ -73,7 +73,7 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
     )
 
     assert config["model"] == "gpt-realtime-2.1"
-    assert config["audio"]["output"]["voice"] == "marin"
+    assert config["audio"]["output"]["voice"] == "shimmer"
     assert "metadata" not in config
     assert "Du bist KEA" in config["instructions"]
     assert "kein Kuechenfachberater" in config["instructions"]

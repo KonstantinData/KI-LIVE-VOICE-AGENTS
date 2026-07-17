@@ -88,6 +88,30 @@ async def test_usage_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_usage_handoff_accepts_crm_env_secret_alias(monkeypatch):
+    """Runtime usage handoff can use the secret name configured on the CRM side."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "crm_usage_handoff_secret", "")
+    monkeypatch.setenv("AGENT_USAGE_WEBHOOK_SECRET", "usage-alias-secret")
+    _FakeAsyncClient.calls = []
+    _FakeAsyncClient.response = _FakeResponse({"success": True, "usage_id": "usage-1"})
+    monkeypatch.setattr(crm_handoff.httpx, "AsyncClient", _FakeAsyncClient)
+
+    await crm_handoff.post_openai_usage_to_crm(
+        source_event_id="resp_alias",
+        conversation_id="conversation-1",
+        visitor_id="visitor-1",
+        channel_type="voice",
+        component="realtime_session",
+        model="gpt-realtime-2.1",
+        usage={"input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+    )
+
+    call = _FakeAsyncClient.calls[0]
+    assert call["headers"]["X-Agent-Usage-Webhook-Secret"] == "usage-alias-secret"
+
+
+@pytest.mark.asyncio
 async def test_contact_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
     """Contact data is forwarded to the CRM webhook with the shared secret."""
     settings = get_settings()
@@ -130,3 +154,33 @@ async def test_contact_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
     assert call["json"]["privacy_accepted"] is True
     assert call["json"]["conversation_id"] == "conversation-1"
     assert call["json"]["project_uploads"][0]["original_filename"] == "grundriss.pdf"
+
+
+@pytest.mark.asyncio
+async def test_contact_handoff_accepts_crm_env_secret_alias(monkeypatch):
+    """Runtime contact handoff can use the secret name configured on the CRM side."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "crm_contact_handoff_secret", "")
+    monkeypatch.setenv("AGENT_WEBHOOK_SECRET", "contact-alias-secret")
+    _FakeAsyncClient.calls = []
+    _FakeAsyncClient.response = _FakeResponse(
+        {"success": True, "ledger_id": "ledger-1"}
+    )
+    monkeypatch.setattr(crm_handoff.httpx, "AsyncClient", _FakeAsyncClient)
+
+    await crm_handoff.post_voice_contact_to_crm(
+        run_id="voice:conversation:session",
+        first_name="Max",
+        last_name="Mustermann",
+        email="max@example.test",
+        phone="",
+        source_origin="https://www.mein-kuechenexperte.de",
+        privacy_accepted=True,
+        project_summary="Küche mit Insel",
+        additional_notes="",
+        best_reachability="",
+        conversation_id="conversation-1",
+    )
+
+    call = _FakeAsyncClient.calls[0]
+    assert call["headers"]["X-Agent-Webhook-Secret"] == "contact-alias-secret"

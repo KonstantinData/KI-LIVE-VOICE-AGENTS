@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
+import os
 from typing import Any
 
 import httpx
@@ -184,6 +185,33 @@ def _usage_handoff_endpoint() -> str:
     )
 
 
+def _configured_secret(*values: str) -> str:
+    """Returns the first configured shared secret from canonical and legacy names."""
+    for value in values:
+        secret = value.strip()
+        if secret:
+            return secret
+    return ""
+
+
+def _contact_handoff_secret() -> str:
+    """Returns the contact webhook secret, including the CRM-side env alias."""
+    settings = get_settings()
+    return _configured_secret(
+        settings.crm_contact_handoff_secret,
+        os.getenv("AGENT_WEBHOOK_SECRET", ""),
+    )
+
+
+def _usage_handoff_secret() -> str:
+    """Returns the usage webhook secret, including the CRM-side env alias."""
+    settings = get_settings()
+    return _configured_secret(
+        settings.crm_usage_handoff_secret,
+        os.getenv("AGENT_USAGE_WEBHOOK_SECRET", ""),
+    )
+
+
 async def post_voice_contact_to_crm(
     *,
     run_id: str,
@@ -200,8 +228,7 @@ async def post_voice_contact_to_crm(
     project_uploads: list[dict[str, Any]] | None = None,
 ) -> str:
     """Sends a sanitized voice contact handoff to the CRM webhook."""
-    settings = get_settings()
-    secret = settings.crm_contact_handoff_secret.strip()
+    secret = _contact_handoff_secret()
     if not secret:
         raise CrmHandoffNotConfiguredError("crm_contact_handoff_secret_missing")
 
@@ -252,8 +279,7 @@ async def post_openai_usage_to_crm(
     metadata: dict[str, Any] | None = None,
 ) -> str:
     """Sends normalized AI usage telemetry to the CRM usage ledger."""
-    settings = get_settings()
-    secret = settings.crm_usage_handoff_secret.strip()
+    secret = _usage_handoff_secret()
     if not secret:
         raise CrmHandoffNotConfiguredError("crm_usage_handoff_secret_missing")
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hmac
+import os
 import time
 from uuid import UUID
 from uuid import uuid4
@@ -74,9 +75,22 @@ class ProjectUploadResponse(BaseModel):
     message: str
 
 
-def _upload_access_secret() -> str:
+def _upload_access_secrets() -> list[str]:
     settings = get_settings()
-    return settings.crm_upload_access_secret or settings.crm_contact_handoff_secret
+    candidates = [
+        settings.crm_upload_access_secret,
+        os.getenv("VOICE_UPLOAD_ACCESS_SECRET", ""),
+        settings.crm_contact_handoff_secret,
+    ]
+    secrets: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        secret = candidate.strip()
+        if not secret or secret in seen:
+            continue
+        seen.add(secret)
+        secrets.append(secret)
+    return secrets
 
 
 def _upload_access_signature(
@@ -89,8 +103,8 @@ def _upload_access_signature(
 def _verify_upload_access_signature(
     *, tenant_id: str, conversation_id: str, file_id: str, expires: int, signature: str
 ) -> None:
-    secret = _upload_access_secret()
-    if not secret:
+    secrets = _upload_access_secrets()
+    if not secrets:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="upload_not_found"
         )
@@ -99,14 +113,19 @@ def _verify_upload_access_signature(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="upload_link_expired"
         )
-    expected = _upload_access_signature(
-        tenant_id=tenant_id,
-        conversation_id=conversation_id,
-        file_id=file_id,
-        expires=expires,
-        secret=secret,
-    )
-    if not hmac.compare_digest(expected, signature):
+    if not any(
+        hmac.compare_digest(
+            _upload_access_signature(
+                tenant_id=tenant_id,
+                conversation_id=conversation_id,
+                file_id=file_id,
+                expires=expires,
+                secret=secret,
+            ),
+            signature,
+        )
+        for secret in secrets
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="upload_access_denied"
         )

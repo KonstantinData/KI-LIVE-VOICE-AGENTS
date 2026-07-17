@@ -39,7 +39,7 @@
       "prompt_profile": "mein-kuechenexperte-project-intake",
       "enabled": true,
       "model": "gpt-realtime-2.1",
-      "voice": "marin",
+      "voice": "shimmer",
       "skills": [
         "project-intake",
         "secure-contact-handoff",

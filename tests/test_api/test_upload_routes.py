@@ -217,6 +217,72 @@ async def test_project_file_download_requires_signed_crm_access(
 
 
 @pytest.mark.asyncio
+async def test_project_file_download_accepts_crm_secret_aliases(
+    db_client,
+    db_session,
+    tmp_path,
+    monkeypatch,
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "upload_storage_dir", str(tmp_path))
+    monkeypatch.setattr(settings, "enable_upload_ai_analysis", False)
+    monkeypatch.setattr(
+        settings, "cors_origins", ["https://www.mein-kuechenexperte.de"]
+    )
+    studio = await seed_studio(db_session, slug="mein-kuechenexperte-aliases")
+
+    upload_response = await db_client.post(
+        "/uploads/project-file",
+        headers={"Origin": "https://www.mein-kuechenexperte.de"},
+        data={
+            "studio": studio.slug,
+            "visitor_id": "visitor-download-alias",
+            "consent_granted": "true",
+            "consent_version": "widget-v1",
+            "ai_analysis_consent": "true",
+        },
+        files={"file": ("kueche.png", b"\x89PNG\r\n\x1a\nalias", "image/png")},
+    )
+    assert upload_response.status_code == 200
+    upload = upload_response.json()
+
+    monkeypatch.setattr(settings, "crm_upload_access_secret", "runtime-secret")
+    monkeypatch.setattr(settings, "crm_contact_handoff_secret", "agent-secret")
+    expires = int(time.time()) + 300
+    canonical = (
+        f"{studio.slug}\n{upload['conversation_id']}\n{upload['file_id']}\n{expires}"
+    ).encode("utf-8")
+    agent_signature = hmac.new(b"agent-secret", canonical, "sha256").hexdigest()
+
+    agent_secret_response = await db_client.get(
+        f"/uploads/project-file/{upload['file_id']}/content",
+        params={
+            "tenant_id": studio.slug,
+            "conversation_id": upload["conversation_id"],
+            "expires": str(expires),
+            "signature": agent_signature,
+        },
+    )
+    assert agent_secret_response.status_code == 200
+
+    monkeypatch.setattr(settings, "crm_upload_access_secret", "")
+    monkeypatch.setattr(settings, "crm_contact_handoff_secret", "")
+    monkeypatch.setenv("VOICE_UPLOAD_ACCESS_SECRET", "voice-secret")
+    voice_signature = hmac.new(b"voice-secret", canonical, "sha256").hexdigest()
+
+    voice_secret_response = await db_client.get(
+        f"/uploads/project-file/{upload['file_id']}/content",
+        params={
+            "tenant_id": studio.slug,
+            "conversation_id": upload["conversation_id"],
+            "expires": str(expires),
+            "signature": voice_signature,
+        },
+    )
+    assert voice_secret_response.status_code == 200
+
+
+@pytest.mark.asyncio
 async def test_pdf_project_file_upload_runs_analysis_path(
     db_client,
     db_session,
