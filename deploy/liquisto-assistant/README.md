@@ -34,6 +34,11 @@ The compose file fixes `LIQUISTO_ASSISTANT_LLM_BASE_URL` to the only production
 host accepted by runtime validation. `OPENAI_API_KEY` is neither required nor
 used by this service.
 
+The production provider timeout is 60 seconds. This covers bounded Cockpit
+requests on the approved CPU-only host, where prompt evaluation can exceed 20
+seconds even while the local model is already resident. Provider failures still
+fail closed and never activate a remote or cross-tenant fallback.
+
 ## Verification
 
 Liveness is intentionally unauthenticated and contains no configuration:
