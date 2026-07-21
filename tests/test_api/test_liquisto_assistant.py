@@ -343,6 +343,7 @@ def test_deployment_contract_matches_scas_internal_endpoint():
     assert "liquisto-local-assistant:" in compose
     assert "name: liquisto-assistant" in compose
     assert "127.0.0.1:8080/healthz" in compose
+    assert 'LIQUISTO_ASSISTANT_LLM_TIMEOUT_SECONDS: "60"' in compose
     assert "EXPOSE 8080" in dockerfile
     assert '"--port", "8080"' in dockerfile
     assert (
