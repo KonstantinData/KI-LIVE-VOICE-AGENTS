@@ -1,0 +1,57 @@
+{
+  "contract_version": "0.1.0",
+  "id": "liquisto-intake",
+  "tenant_id": "liquisto",
+  "display_name": "Liquisto intake",
+  "status": "setup",
+  "task_types": [
+    "guided-intake",
+    "contact-handoff"
+  ],
+  "required_capabilities": [
+    "voice-conversation",
+    "secure-contact-handoff"
+  ],
+  "ui_binding": {
+    "surface_ids": [
+      "public-widget",
+      "voice-tab"
+    ],
+    "entrypoint_label": "Liquisto Anfrage starten",
+    "confirmation_required": true,
+    "grants_runtime_authority": false
+  },
+  "composition": {
+    "selection_path": "tenant-registry-policy-profile",
+    "candidate_modules": [
+      "secure-contact-handoff"
+    ],
+    "policies": [
+      "strict-tenant-isolation",
+      "no-cross-tenant-access",
+      "no-voice-pii-capture",
+      "secure-contact-form-required",
+      "no-raw-audio-storage"
+    ],
+    "validators": [
+      "tenant-profile-validator",
+      "voice-consent-validator",
+      "contact-handoff-validator"
+    ],
+    "requires_immutable_runtime_profile": true
+  },
+  "audit_evidence": {
+    "required_fields": [
+      "tenant_id",
+      "studio_slug",
+      "agent_profile_id",
+      "selected_module_ids",
+      "policy_ids",
+      "validator_ids",
+      "voice_session_id",
+      "conversation_id",
+      "consent_version"
+    ],
+    "retention_plane": "hetzner-runtime-plane"
+  }
+}

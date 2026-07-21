@@ -7,7 +7,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Widget } from './Widget';
-import { loadConfig } from './lib/config';
+import { loadConfigAsync } from './lib/config';
 import widgetStyles from './styles/widget.css?inline';
 
 function generateVisitorId(): string {
@@ -20,8 +20,9 @@ function generateVisitorId(): string {
   return id;
 }
 
-function mount(): void {
-  const config = loadConfig();
+async function mount(): Promise<void> {
+  if (document.getElementById('ki-team-widget-root')) return;
+  const config = await loadConfigAsync();
   const visitorId = generateVisitorId();
 
   // Container und Shadow DOM erstellen
@@ -47,7 +48,9 @@ function mount(): void {
 
 // Auto-Mount wenn DOM bereit ist
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mount);
+  document.addEventListener('DOMContentLoaded', () => {
+    void mount();
+  });
 } else {
-  mount();
+  void mount();
 }

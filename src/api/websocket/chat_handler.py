@@ -15,6 +15,7 @@ from src.api.websocket.manager import manager
 from src.db.database import AsyncSessionLocal
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
+from src.tenants.registry import agent_display_name, get_tenant_profile_for_studio
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -45,9 +46,7 @@ async def _send_flow_response(websocket: WebSocket, response: FlowResponse) -> N
 
 def _public_agent_name(studio_slug: str) -> str:
     """Returns the public assistant name used in user-facing error messages."""
-    if studio_slug == "mein-kuechenexperte":
-        return "KEA"
-    return "Live Voice Agent"
+    return agent_display_name(studio_slug)
 
 
 async def handle_chat(
@@ -101,6 +100,16 @@ async def handle_chat(
             await websocket.send_json({
                 "type": "error",
                 "message": "Dieses Studio ist derzeit nicht aktiv.",
+            })
+            await websocket.close(code=4003)
+            manager.disconnect(connection_key)
+            return
+
+        profile = get_tenant_profile_for_studio(studio.slug)
+        if profile is not None and studio.slug != "mein-kuechenexperte":
+            await websocket.send_json({
+                "type": "error",
+                "message": "Der Textchat ist für diesen Tenant noch nicht konfiguriert.",
             })
             await websocket.close(code=4003)
             manager.disconnect(connection_key)
