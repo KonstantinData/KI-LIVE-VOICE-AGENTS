@@ -16,10 +16,14 @@ from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.lisa.voice_prompt import build_lisa_voice_prompt
+from src.agents.lisa.voice_prompt import (
+    build_lisa_voice_prompt,
+    kea_voice_contract_sections,
+)
 from src.api.config import get_settings
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
+from src.tenants.models import LiveVoiceAgentProfile
 from src.tenants.registry import get_tenant_profile_for_studio
 
 
@@ -32,13 +36,25 @@ def origin_allowed(request: Request) -> bool:
     return origin in settings.cors_origins
 
 
-def voice_enabled(studio: Studio) -> bool:
+def selected_voice_agent(
+    studio: Studio, agent_id: str | None = None
+) -> LiveVoiceAgentProfile | None:
+    """Returns the tenant-selected voice agent without crossing tenant boundaries."""
+    profile = get_tenant_profile_for_studio(studio.slug)
+    if profile is None:
+        return None
+    try:
+        return profile.live_voice_agent(agent_id)
+    except ValueError:
+        return None
+
+
+def voice_enabled(studio: Studio, agent_id: str | None = None) -> bool:
     """Checks the global and studio-level voice kill switches."""
     profile = get_tenant_profile_for_studio(studio.slug)
     if profile is not None:
-        try:
-            voice_agent = profile.live_voice_agent()
-        except ValueError:
+        voice_agent = selected_voice_agent(studio, agent_id)
+        if voice_agent is None:
             return False
         return (
             get_settings().enable_voice_sessions
@@ -102,11 +118,14 @@ def realtime_session_config(
     tools: list[dict],
     lead_summary: str | None,
     address_mode: str = "sie",
+    agent_id: str | None = None,
 ) -> dict[str, Any]:
     """Builds the OpenAI Realtime session configuration for a tenant live voice agent."""
     settings = get_settings()
     profile = get_tenant_profile_for_studio(studio.slug)
-    voice_agent = profile.live_voice_agent() if profile is not None else None
+    voice_agent = selected_voice_agent(studio, agent_id)
+    if profile is not None and voice_agent is None:
+        raise ValueError("Tenant voice agent profile is not available.")
     model = voice_agent.model if voice_agent is not None else settings.openai_realtime_model
     voice = voice_agent.voice if voice_agent is not None else settings.openai_realtime_voice
     agent_name = (
@@ -114,6 +133,19 @@ def realtime_session_config(
         if voice_agent is not None
         else str((studio.config or {}).get("agent_name") or "Live Voice Agent")
     )
+    domain_guidance = None
+    contract_sections: tuple[str, ...] = ()
+    if (
+        voice_agent is not None
+        and voice_agent.prompt_profile == "mein-kuechenexperte-project-intake"
+    ):
+        domain_guidance = (
+            "Du bist kein Kuechenfachberater im Sprachchat. Du klaerst Kuechen- "
+            "und Moebelprojekte vor, beantwortest Angebotsfragen vorsichtig und "
+            "verweist fuer vertiefte Fachberatung auf passende Angebote, "
+            "Expertentermine oder die App KI-KUECHENBERATER."
+        )
+        contract_sections = kea_voice_contract_sections()
     config: dict[str, Any] = {
         "type": "realtime",
         "model": model,
@@ -122,6 +154,8 @@ def realtime_session_config(
             lead_summary,
             address_mode,
             agent_display_name=agent_name,
+            domain_guidance=domain_guidance,
+            contract_sections=contract_sections,
         ),
         "audio": {
             "output": {"voice": voice},

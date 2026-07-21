@@ -88,6 +88,33 @@ async def test_usage_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_usage_handoff_can_target_configured_tenant_endpoint(monkeypatch):
+    """Usage handoff routing is supplied by the selected tenant profile."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "crm_usage_handoff_secret", "secret")
+    _FakeAsyncClient.calls = []
+    _FakeAsyncClient.response = _FakeResponse({"success": True, "usage_id": "usage-7"})
+    monkeypatch.setattr(crm_handoff.httpx, "AsyncClient", _FakeAsyncClient)
+
+    usage_id = await crm_handoff.post_openai_usage_to_crm(
+        tenant_id="liquisto",
+        usage_endpoint="https://liquisto.cloud/agent-usage-webhook",
+        source_event_id="resp_7",
+        conversation_id="conversation-7",
+        visitor_id="visitor-7",
+        channel_type="voice",
+        component="realtime_session",
+        model="gpt-realtime-2.1",
+        usage={"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
+    )
+
+    assert usage_id == "usage-7"
+    call = _FakeAsyncClient.calls[0]
+    assert call["url"] == "https://liquisto.cloud/agent-usage-webhook"
+    assert call["json"]["tenant_id"] == "liquisto"
+
+
+@pytest.mark.asyncio
 async def test_usage_handoff_accepts_crm_env_secret_alias(monkeypatch):
     """Runtime usage handoff can use the secret name configured on the CRM side."""
     settings = get_settings()
@@ -154,6 +181,39 @@ async def test_contact_handoff_posts_to_mein_kuechenexperte_crm(monkeypatch):
     assert call["json"]["privacy_accepted"] is True
     assert call["json"]["conversation_id"] == "conversation-1"
     assert call["json"]["project_uploads"][0]["original_filename"] == "grundriss.pdf"
+
+
+@pytest.mark.asyncio
+async def test_contact_handoff_can_target_configured_tenant_endpoint(monkeypatch):
+    """Contact handoff routing is supplied by the selected tenant profile."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "crm_contact_handoff_secret", "secret")
+    _FakeAsyncClient.calls = []
+    _FakeAsyncClient.response = _FakeResponse(
+        {"success": True, "ledger_id": "ledger-7"}
+    )
+    monkeypatch.setattr(crm_handoff.httpx, "AsyncClient", _FakeAsyncClient)
+
+    ledger_id = await crm_handoff.post_voice_contact_to_crm(
+        tenant_id="liquisto",
+        contact_endpoint="https://liquisto.cloud/agent-lead-webhook",
+        run_id="voice:conversation:session",
+        first_name="Max",
+        last_name="Mustermann",
+        email="max@example.test",
+        phone="+49 171 1234567",
+        source_origin="https://liquisto.cloud",
+        privacy_accepted=True,
+        project_summary="Allgemeine Anfrage",
+        additional_notes="Samstag erreichbar",
+        best_reachability="Samstag",
+        conversation_id="conversation-7",
+    )
+
+    assert ledger_id == "ledger-7"
+    call = _FakeAsyncClient.calls[0]
+    assert call["url"] == "https://liquisto.cloud/agent-lead-webhook"
+    assert call["json"]["tenant_id"] == "liquisto"
 
 
 @pytest.mark.asyncio

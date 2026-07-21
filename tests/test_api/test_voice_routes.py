@@ -58,6 +58,21 @@ async def _seed_voice_studio(db_session, *, voice_enabled: bool = True) -> Studi
     return studio
 
 
+async def _seed_registered_studio(db_session, *, slug: str, name: str) -> Studio:
+    """Creates a database studio that matches a tenant registry profile."""
+    studio = Studio(
+        id=uuid.uuid4(),
+        name=name,
+        slug=slug,
+        api_key=f"voice-api-key-{uuid.uuid4()}",
+        config={"agent_name": "Legacy Agent", "voice_enabled": True},
+        is_active=True,
+    )
+    db_session.add(studio)
+    await db_session.flush()
+    return studio
+
+
 @pytest.fixture(autouse=True)
 def _voice_settings(monkeypatch):
     """Enables voice settings without relying on developer-local .env files."""
@@ -105,6 +120,38 @@ async def test_voice_session_rejects_disabled_studio(db_client, db_session):
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_voice_session_rejects_disabled_tenant_agent(db_client, db_session):
+    """A registered tenant cannot start a disabled or foreign voice agent."""
+    await _seed_registered_studio(db_session, slug="liquisto", name="Liquisto")
+
+    disabled_response = await db_client.post(
+        "/voice/sessions/webrtc",
+        json={
+            "studio": "liquisto",
+            "agent_id": "liquisto-intake",
+            "visitor_id": "visitor-1",
+            "client_sdp": "v=0",
+            "consent_granted": True,
+            "consent_version": "voice-v1",
+        },
+    )
+    foreign_response = await db_client.post(
+        "/voice/sessions/webrtc",
+        json={
+            "studio": "liquisto",
+            "agent_id": "kea-project-intake",
+            "visitor_id": "visitor-1",
+            "client_sdp": "v=0",
+            "consent_granted": True,
+            "consent_version": "voice-v1",
+        },
+    )
+
+    assert disabled_response.status_code == 403
+    assert foreign_response.status_code == 403
 
 
 @pytest.mark.asyncio

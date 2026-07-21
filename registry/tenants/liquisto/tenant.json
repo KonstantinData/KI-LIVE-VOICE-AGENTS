@@ -1,0 +1,115 @@
+{
+  "contract_version": "0.1.0",
+  "tenant_id": "liquisto",
+  "studio_slug": "liquisto",
+  "display_name": "Liquisto",
+  "status": "setup",
+  "default_locale": "de-DE",
+  "hostnames": [
+    {
+      "hostname": "liquisto.cloud",
+      "purpose": "website",
+      "expected_origin": "https://liquisto.cloud"
+    },
+    {
+      "hostname": "widget.liquisto.cloud",
+      "purpose": "widget",
+      "expected_origin": "https://widget.liquisto.cloud"
+    },
+    {
+      "hostname": "api.liquisto.cloud",
+      "purpose": "api",
+      "expected_origin": "https://api.liquisto.cloud"
+    }
+  ],
+  "public_widget": {
+    "agent_name": "Liquisto",
+    "agent_subtitle": "KI-Assistent",
+    "welcome_message": "Hallo, ich bin der Liquisto KI-Assistent. Moechten Sie Ihr Anliegen kurz einordnen?",
+    "privacy_url": "/datenschutz",
+    "retention_days": 90,
+    "voice_enabled": false,
+    "upload_enabled": false
+  },
+  "live_voice_agents": [
+    {
+      "id": "liquisto-intake",
+      "agent_type": "live-voice",
+      "display_name": "Liquisto",
+      "prompt_profile": "liquisto-intake",
+      "enabled": false,
+      "model": "gpt-realtime-2.1",
+      "voice": "shimmer",
+      "skills": [
+        "secure-contact-handoff"
+      ],
+      "tools": [],
+      "knowledge_scopes": [
+        "liquisto-runtime-knowledge"
+      ],
+      "data_scopes": [
+        "tenant-conversation-write",
+        "tenant-crm-handoff-write"
+      ],
+      "policies": [
+        "strict-tenant-isolation",
+        "no-cross-tenant-access",
+        "no-voice-pii-capture",
+        "secure-contact-form-required",
+        "no-raw-audio-storage"
+      ],
+      "validators": [
+        "tenant-profile-validator",
+        "voice-consent-validator",
+        "contact-handoff-validator"
+      ],
+      "contact_handoff": {
+        "secure_form_required": true,
+        "voice_pii_collection_allowed": false,
+        "crm_target": "liquisto",
+        "contact_endpoint": "https://liquisto.cloud/agent-lead-webhook",
+        "usage_endpoint": "https://liquisto.cloud/agent-usage-webhook"
+      }
+    }
+  ],
+  "upload_policy": {
+    "enabled": false,
+    "ai_analysis_allowed": false,
+    "allowed_content_types": [
+      "application/pdf",
+      "image/jpeg",
+      "image/png"
+    ]
+  },
+  "knowledge": {
+    "scope_id": "liquisto-runtime-knowledge",
+    "indexes": [
+      "liquisto-knowledge-chunks"
+    ]
+  },
+  "data_sources": [
+    {
+      "id": "liquisto-website",
+      "tenant_id": "liquisto",
+      "type": "website",
+      "display_name": "Liquisto Website",
+      "access_modes": [
+        "read"
+      ],
+      "status": "planned",
+      "sensitivity": "public"
+    }
+  ],
+  "policy_bundle": [
+    "strict-tenant-isolation",
+    "no-cross-tenant-access",
+    "fail-closed-unknown-scope",
+    "no-raw-audio-storage"
+  ],
+  "validators": [
+    "tenant-profile-validator",
+    "voice-consent-validator",
+    "widget-origin-validator",
+    "contact-handoff-validator"
+  ]
+}

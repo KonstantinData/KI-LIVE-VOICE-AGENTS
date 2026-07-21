@@ -102,16 +102,18 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   };
 
   const renderUploadPanel = () => (
-    <ProjectUploadPanel
-      config={config}
-      visitorId={visitorId}
-      conversationId={conversationId}
-      connected={connected}
-      send={send}
-      onConversationAssigned={setConversationId}
-      onLocalMessage={handleIncomingMessage}
-      onUploadContext={setVoiceUploadNotice}
-    />
+    config.uploadEnabled ? (
+      <ProjectUploadPanel
+        config={config}
+        visitorId={visitorId}
+        conversationId={conversationId}
+        connected={connected}
+        send={send}
+        onConversationAssigned={setConversationId}
+        onLocalMessage={handleIncomingMessage}
+        onUploadContext={setVoiceUploadNotice}
+      />
+    ) : null
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

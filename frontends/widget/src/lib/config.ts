@@ -18,7 +18,16 @@ export interface WidgetConfig {
   agentName: string;
   welcomeMessage: string;
   voiceEnabled: boolean;
+  uploadEnabled: boolean;
   voiceConsentVersion: string;
+}
+
+interface RuntimeWidgetConfig {
+  agent_name?: string;
+  welcome_message?: string;
+  primary_color?: string;
+  voice_enabled?: boolean;
+  upload_enabled?: boolean;
 }
 
 function getScriptTag(): HTMLOrSVGScriptElement | null {
@@ -35,12 +44,30 @@ function toHttpUrl(url: string): string {
   return url.replace(/\/$/, '');
 }
 
-export function loadConfig(): WidgetConfig {
-  const script = getScriptTag();
+function explicitAttribute(
+  script: HTMLOrSVGScriptElement | null,
+  name: string,
+): string | null {
+  if (!script?.hasAttribute(name)) return null;
+  return script.getAttribute(name);
+}
+
+function explicitBooleanAttribute(
+  script: HTMLOrSVGScriptElement | null,
+  ...names: string[]
+): boolean | null {
+  for (const name of names) {
+    const value = explicitAttribute(script, name);
+    if (value === null) continue;
+    return value === 'true';
+  }
+  return null;
+}
+
+function loadConfigFromScript(script: HTMLOrSVGScriptElement | null): WidgetConfig {
   const apiUrl = script?.getAttribute('data-api') ?? getDefaultApiUrl();
-  const voiceEnabled =
-    script?.getAttribute('data-voice-enabled') === 'true' ||
-    script?.getAttribute('data-voice') === 'true';
+  const voiceEnabled = explicitBooleanAttribute(script, 'data-voice-enabled', 'data-voice') ?? false;
+  const uploadEnabled = explicitBooleanAttribute(script, 'data-upload-enabled', 'data-upload') ?? true;
 
   return {
     studio: script?.getAttribute('data-studio') ?? 'default',
@@ -53,6 +80,84 @@ export function loadConfig(): WidgetConfig {
       script?.getAttribute('data-welcome') ??
       'Hallo, ich bin KEA, der Küchen Expert Assistent von Mein Küchenexperte. Möchten Sie Ihr Küchenprojekt kurz einordnen?',
     voiceEnabled,
+    uploadEnabled,
     voiceConsentVersion: script?.getAttribute('data-voice-consent-version') ?? 'voice-v1',
   };
+}
+
+function runtimeConfigUrl(config: WidgetConfig): string {
+  const url = new URL('/widget-config/', config.apiHttpUrl);
+  url.searchParams.set('studio', config.studio);
+  return url.toString();
+}
+
+function runtimeConfigTimeoutMs(script: HTMLOrSVGScriptElement | null): number {
+  const raw = script?.getAttribute('data-runtime-config-timeout-ms');
+  const parsed = raw ? Number.parseInt(raw, 10) : 1500;
+  if (!Number.isFinite(parsed)) return 1500;
+  return Math.min(Math.max(parsed, 300), 5000);
+}
+
+function mergeRuntimeConfig(
+  base: WidgetConfig,
+  runtime: RuntimeWidgetConfig,
+  script: HTMLOrSVGScriptElement | null,
+): WidgetConfig {
+  const explicitVoice = explicitBooleanAttribute(script, 'data-voice-enabled', 'data-voice');
+  const explicitUpload = explicitBooleanAttribute(script, 'data-upload-enabled', 'data-upload');
+  const useRuntimeTheme = script?.getAttribute('data-runtime-theme') === 'true';
+
+  return {
+    ...base,
+    primaryColor:
+      explicitAttribute(script, 'data-color') ??
+      (useRuntimeTheme ? runtime.primary_color : undefined) ??
+      base.primaryColor,
+    agentName:
+      explicitAttribute(script, 'data-agent') ??
+      runtime.agent_name ??
+      base.agentName,
+    welcomeMessage:
+      explicitAttribute(script, 'data-welcome') ??
+      runtime.welcome_message ??
+      base.welcomeMessage,
+    voiceEnabled:
+      explicitVoice ??
+      runtime.voice_enabled ??
+      base.voiceEnabled,
+    uploadEnabled:
+      explicitUpload ??
+      runtime.upload_enabled ??
+      base.uploadEnabled,
+  };
+}
+
+export function loadConfig(): WidgetConfig {
+  return loadConfigFromScript(getScriptTag());
+}
+
+export async function loadConfigAsync(): Promise<WidgetConfig> {
+  const script = getScriptTag();
+  const base = loadConfigFromScript(script);
+  if (script?.getAttribute('data-runtime-config') === 'false') return base;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort(),
+    runtimeConfigTimeoutMs(script),
+  );
+
+  try {
+    const response = await fetch(runtimeConfigUrl(base), {
+      headers: { Accept: 'application/json' },
+      credentials: 'omit',
+      signal: controller.signal,
+    });
+    if (!response.ok) return base;
+    const runtime = (await response.json()) as RuntimeWidgetConfig;
+    return mergeRuntimeConfig(base, runtime, script);
+  } catch {
+    return base;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }

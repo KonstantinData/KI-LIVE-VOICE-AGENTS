@@ -1,8 +1,8 @@
 """CRM handoff client.
 
-What: Sends sanitized KEA handoff and usage events to the Mein Küchenexperte CRM.
-Does: Normalizes voice contact and provider usage payloads, then posts them to CRM webhooks.
-Why: The CRM source of truth lives in the mein-kuechenexperte repository, not here.
+What: Sends sanitized tenant handoff and usage events to the configured CRM.
+Does: Normalizes voice contact and provider usage payloads, then posts them to tenant webhooks.
+Why: CRM records remain outside this runtime and must be addressed through tenant profiles.
 Who: Voice and upload routes call this service after consent-gated customer actions.
 Depends on: httpx, decimal, src.api.config
 """
@@ -19,7 +19,7 @@ import httpx
 
 from src.api.config import get_settings
 
-CRM_TENANT_ID = "mein-kuechenexperte"
+DEFAULT_CRM_TENANT_ID = "mein-kuechenexperte"
 PRICING_SNAPSHOT = "openai_2026-07-07"
 MILLION = Decimal("1000000")
 
@@ -214,6 +214,8 @@ def _usage_handoff_secret() -> str:
 
 async def post_voice_contact_to_crm(
     *,
+    tenant_id: str = DEFAULT_CRM_TENANT_ID,
+    contact_endpoint: str | None = None,
     run_id: str,
     first_name: str,
     last_name: str,
@@ -233,7 +235,7 @@ async def post_voice_contact_to_crm(
         raise CrmHandoffNotConfiguredError("crm_contact_handoff_secret_missing")
 
     payload = {
-        "tenant_id": CRM_TENANT_ID,
+        "tenant_id": tenant_id,
         "run_id": run_id,
         "first_name": first_name,
         "last_name": last_name,
@@ -252,7 +254,7 @@ async def post_voice_contact_to_crm(
     }
     async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.post(
-            _contact_handoff_endpoint(),
+            (contact_endpoint or _contact_handoff_endpoint()).strip(),
             headers={
                 "X-Agent-Webhook-Secret": secret,
                 "Accept": "application/json",
@@ -269,6 +271,8 @@ async def post_voice_contact_to_crm(
 
 async def post_openai_usage_to_crm(
     *,
+    tenant_id: str = DEFAULT_CRM_TENANT_ID,
+    usage_endpoint: str | None = None,
     source_event_id: str,
     conversation_id: str | None,
     visitor_id: str | None,
@@ -286,7 +290,7 @@ async def post_openai_usage_to_crm(
     normalized = normalize_openai_usage(usage)
     estimated_cost = estimate_openai_cost_usd(model, normalized)
     payload = {
-        "tenant_id": CRM_TENANT_ID,
+        "tenant_id": tenant_id,
         "source_system": "ki-live-voice-agents",
         "source_event_id": source_event_id,
         "conversation_id": conversation_id or "",
@@ -305,7 +309,7 @@ async def post_openai_usage_to_crm(
     }
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(
-            _usage_handoff_endpoint(),
+            (usage_endpoint or _usage_handoff_endpoint()).strip(),
             headers={
                 "X-Agent-Usage-Webhook-Secret": secret,
                 "Accept": "application/json",

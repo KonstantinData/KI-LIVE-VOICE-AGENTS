@@ -25,6 +25,7 @@ from src.api.config import get_settings
 from src.api.services.crm_handoff import (
     CrmHandoffFailedError,
     CrmHandoffNotConfiguredError,
+    DEFAULT_CRM_TENANT_ID,
     estimate_openai_cost_usd,
     normalize_openai_usage,
     post_openai_usage_to_crm,
@@ -38,12 +39,14 @@ from src.api.services.voice_sessions import (
     origin_allowed,
     realtime_session_config,
     safety_identifier,
+    selected_voice_agent,
     voice_enabled,
 )
 from src.core.memory import MemoryManager
 from src.db.database import get_session
 from src.db.models.event import Event
 from src.db.models.message import Message
+from src.db.models.studio import Studio
 from src.tenants.registry import get_tenant_profile_for_studio
 
 router = APIRouter(prefix="/voice", tags=["Live Voice"])
@@ -55,6 +58,7 @@ PHONE_RE = re.compile(r"^[+()0-9\s./-]{6,50}$")
 
 class VoiceSessionRequest(BaseModel):
     studio: str = Field(min_length=1, max_length=100)
+    agent_id: str | None = Field(default=None, min_length=1, max_length=100)
     visitor_id: str = Field(min_length=1, max_length=255)
     client_sdp: str = Field(min_length=1)
     consent_granted: bool
@@ -64,6 +68,7 @@ class VoiceSessionRequest(BaseModel):
 
 class EphemeralVoiceSessionRequest(BaseModel):
     studio: str = Field(min_length=1, max_length=100)
+    agent_id: str | None = Field(default=None, min_length=1, max_length=100)
     visitor_id: str = Field(min_length=1, max_length=255)
     consent_granted: bool
     consent_version: str = Field(min_length=1, max_length=80)
@@ -118,6 +123,7 @@ class VoiceUsageEventRequest(BaseModel):
     """Realtime usage event reported by the browser data channel."""
 
     studio: str = Field(min_length=1, max_length=100)
+    agent_id: str | None = Field(default=None, min_length=1, max_length=100)
     visitor_id: str = Field(min_length=1, max_length=255)
     conversation_id: uuid.UUID
     voice_session_id: str = Field(min_length=1, max_length=120)
@@ -152,6 +158,7 @@ class VoiceContactHandoffRequest(BaseModel):
     """Manual contact form submission sent directly to the private API."""
 
     studio: str = Field(min_length=1, max_length=100)
+    agent_id: str | None = Field(default=None, min_length=1, max_length=100)
     visitor_id: str = Field(min_length=1, max_length=255)
     conversation_id: uuid.UUID
     voice_session_id: str = Field(min_length=1, max_length=120)
@@ -221,6 +228,24 @@ def _parse_client_secret(data: dict[str, Any]) -> tuple[str, datetime]:
     return str(secret), expires
 
 
+def _tenant_handoff_kwargs(studio: Studio, agent_id: str | None = None) -> dict[str, str]:
+    """Returns tenant-scoped CRM handoff routing for the selected agent."""
+    profile = get_tenant_profile_for_studio(studio.slug)
+    voice_agent = selected_voice_agent(studio, agent_id)
+    if profile is None or voice_agent is None:
+        return {}
+    if not profile.public_widget.voice_enabled or not voice_agent.enabled:
+        raise HTTPException(status_code=403, detail="tenant_voice_agent_disabled")
+    handoff = voice_agent.contact_handoff
+    if handoff.crm_target != profile.tenant_id:
+        raise HTTPException(status_code=503, detail="tenant_handoff_mismatch")
+    return {
+        "tenant_id": handoff.crm_target,
+        "contact_endpoint": handoff.contact_endpoint,
+        "usage_endpoint": handoff.usage_endpoint,
+    }
+
+
 @router.post("/session", response_model=EphemeralVoiceSessionResponse)
 async def create_ephemeral_voice_session(
     payload: EphemeralVoiceSessionRequest,
@@ -239,7 +264,7 @@ async def create_ephemeral_voice_session(
         raise HTTPException(status_code=503, detail="Voice provider is not configured")
 
     studio = await load_voice_studio(session, payload.studio)
-    if not voice_enabled(studio):
+    if not voice_enabled(studio, payload.agent_id):
         raise HTTPException(status_code=403, detail="Voice is disabled for this studio")
     conversation = await load_voice_conversation(session, studio, payload.visitor_id)
     conversation.channel = "voice"
@@ -261,9 +286,10 @@ async def create_ephemeral_voice_session(
         [],
         context.lead_summary,
         payload.address_mode,
+        payload.agent_id,
     )
     profile = get_tenant_profile_for_studio(studio.slug)
-    voice_agent = profile.live_voice_agent() if profile is not None else None
+    voice_agent = selected_voice_agent(studio, payload.agent_id)
     config["tracing"] = {
         "workflow_name": f"live_voice_{studio.slug}",
         "group_id": str(conversation.id),
@@ -348,7 +374,7 @@ async def create_webrtc_voice_session(
         raise HTTPException(status_code=503, detail="Voice provider is not configured")
 
     studio = await load_voice_studio(session, payload.studio)
-    if not voice_enabled(studio):
+    if not voice_enabled(studio, payload.agent_id):
         raise HTTPException(status_code=403, detail="Voice is disabled for this studio")
 
     conversation = await load_voice_conversation(session, studio, payload.visitor_id)
@@ -367,7 +393,12 @@ async def create_webrtc_voice_session(
     call = await OpenAIRealtimeAdapter(settings).create_webrtc_call(
         client_sdp=payload.client_sdp,
         session_config=realtime_session_config(
-            studio, conversation, [], context.lead_summary, payload.address_mode
+            studio,
+            conversation,
+            [],
+            context.lead_summary,
+            payload.address_mode,
+            payload.agent_id,
         ),
         safety_identifier=safety_identifier(studio, payload.visitor_id),
     )
@@ -556,8 +587,11 @@ async def persist_voice_usage_event(
     )
     normalized_usage = normalize_openai_usage(payload.usage)
     estimated_cost = estimate_openai_cost_usd(payload.model, normalized_usage)
+    handoff_kwargs = _tenant_handoff_kwargs(studio, payload.agent_id)
     try:
         usage_id = await post_openai_usage_to_crm(
+            tenant_id=handoff_kwargs.get("tenant_id", DEFAULT_CRM_TENANT_ID),
+            usage_endpoint=handoff_kwargs.get("usage_endpoint"),
             source_event_id=provider_event_id,
             conversation_id=str(conversation.id),
             visitor_id=payload.visitor_id,
@@ -621,7 +655,7 @@ async def submit_voice_contact_handoff(
     if not _valid_phone(phone):
         return VoiceContactHandoffResponse(success=False, error="invalid_phone")
     if not project_summary:
-        project_summary = "Der Kunde wünscht eine Kontaktaufnahme zur Küchenberatung."
+        project_summary = "Der Kunde wünscht eine Kontaktaufnahme zur Beratung."
     uploads = await list_stored_project_uploads(
         session=session,
         studio_id=studio.id,
@@ -646,8 +680,11 @@ async def submit_voice_contact_handoff(
 
     crm_capture_id: str | None = None
     crm_error: str | None = None
+    handoff_kwargs = _tenant_handoff_kwargs(studio, payload.agent_id)
     try:
         crm_capture_id = await post_voice_contact_to_crm(
+            tenant_id=handoff_kwargs.get("tenant_id", DEFAULT_CRM_TENANT_ID),
+            contact_endpoint=handoff_kwargs.get("contact_endpoint"),
             run_id=f"voice:{conversation.id}:{payload.voice_session_id}",
             first_name=first_name,
             last_name=last_name,

@@ -123,10 +123,19 @@
         "contact_handoff": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["secure_form_required", "voice_pii_collection_allowed"],
+          "required": [
+            "secure_form_required",
+            "voice_pii_collection_allowed",
+            "crm_target",
+            "contact_endpoint",
+            "usage_endpoint"
+          ],
           "properties": {
             "secure_form_required": { "type": "boolean", "const": true },
-            "voice_pii_collection_allowed": { "type": "boolean", "const": false }
+            "voice_pii_collection_allowed": { "type": "boolean", "const": false },
+            "crm_target": { "$ref": "#/$defs/id" },
+            "contact_endpoint": { "type": "string", "minLength": 1 },
+            "usage_endpoint": { "type": "string", "minLength": 1 }
           }
         }
       }
