@@ -211,6 +211,7 @@ The widget production build aliases React to Preact Compat so the bundled `loade
 | Chat widget | Complete with GDPR consent gate and small IIFE bundle |
 | CRM dashboard | Lives in the separate `mein-kuechenexperte` repository |
 | Tenant `mein-kuechenexperte` | Active with public widget name KEA and CRM handoff |
+| Tenant `liquisto` | Internal tool-free analysis-only assistant with a local provider prepared; not live deployed ([contract](docs/liquisto-assistant-runtime.md)) |
 | Additional tenants | Prepared through the registry structure |
 | CRM handoff | Contact and usage webhooks into the `mein-kuechenexperte` repository |
 

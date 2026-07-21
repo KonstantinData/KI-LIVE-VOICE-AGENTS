@@ -11,6 +11,8 @@ Depends: pydantic
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -69,6 +71,24 @@ class LiveVoiceAgentProfile(StrictModel):
     contact_handoff: ContactHandoffPolicy
 
 
+class AssistantAgentProfile(StrictModel):
+    """Tenant-selected internal text assistant profile."""
+
+    id: str
+    agent_type: Literal["text-assistant"]
+    display_name: str
+    prompt_profile: str
+    enabled: bool
+    provider: Literal["openai-compatible-local"]
+    model_env: Literal["LIQUISTO_ASSISTANT_LLM_MODEL"]
+    allowed_surfaces: tuple[Literal["cockpit", "crm", "trade", "control"], ...]
+    allowed_modes: tuple[Literal["analysis-only"], ...]
+    tools: tuple[str, ...]
+    knowledge_scopes: tuple[str, ...]
+    policies: tuple[str, ...]
+    validators: tuple[str, ...]
+
+
 class UploadPolicy(StrictModel):
     """Tenant upload policy for project files and photos."""
 
@@ -108,6 +128,7 @@ class TenantProfile(StrictModel):
     hostnames: tuple[HostnameRecord, ...]
     public_widget: PublicWidgetProfile
     live_voice_agents: tuple[LiveVoiceAgentProfile, ...]
+    assistant_agents: tuple[AssistantAgentProfile, ...] = ()
     upload_policy: UploadPolicy | None = None
     knowledge: ScopeConfig | None = None
     data_sources: tuple[DataSource, ...] = ()
@@ -130,3 +151,10 @@ class TenantProfile(StrictModel):
             if agent.enabled:
                 return agent
         raise ValueError("Tenant has no enabled live voice agent profile.")
+
+    def assistant_agent(self, agent_id: str) -> AssistantAgentProfile:
+        """Returns one explicitly selected internal assistant profile."""
+        for agent in self.assistant_agents:
+            if agent.id == agent_id and agent.enabled:
+                return agent
+        raise ValueError(f"Unknown or disabled assistant agent profile: {agent_id}")

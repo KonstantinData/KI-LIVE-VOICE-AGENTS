@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     max_voice_session_seconds: int = 900
     max_voice_sdp_chars: int = 200_000
 
+    # Liquisto internal assistant. These settings never fall back to OpenAI cloud.
+    liquisto_assistant_service_token: str = ""
+    liquisto_assistant_llm_base_url: str = ""
+    liquisto_assistant_llm_model: str = ""
+    liquisto_assistant_llm_timeout_seconds: float = 20.0
+    liquisto_assistant_llm_max_output_tokens: int = 1200
+
     # Runtime safety
     max_chat_message_chars: int = 4000
     retention_conversation_days: int = 180

@@ -72,6 +72,43 @@
       }
     }
   ],
+  "assistant_agents": [
+    {
+      "id": "liquisto-lotse",
+      "agent_type": "text-assistant",
+      "display_name": "Liquisto Lotse",
+      "prompt_profile": "liquisto-lotse",
+      "enabled": true,
+      "provider": "openai-compatible-local",
+      "model_env": "LIQUISTO_ASSISTANT_LLM_MODEL",
+      "allowed_surfaces": [
+        "cockpit",
+        "crm",
+        "trade",
+        "control"
+      ],
+      "allowed_modes": [
+        "analysis-only"
+      ],
+      "tools": [],
+      "knowledge_scopes": [
+        "request-bounded-context"
+      ],
+      "policies": [
+        "strict-tenant-isolation",
+        "analysis-only",
+        "no-external-web",
+        "no-runtime-tools",
+        "no-context-snapshot-persistence"
+      ],
+      "validators": [
+        "service-token-validator",
+        "local-provider-url-validator",
+        "bounded-context-validator",
+        "assistant-contract-validator"
+      ]
+    }
+  ],
   "upload_policy": {
     "enabled": false,
     "ai_analysis_allowed": false,
