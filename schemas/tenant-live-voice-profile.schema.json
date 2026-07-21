@@ -37,6 +37,11 @@
       "minItems": 1,
       "uniqueItems": true
     },
+    "assistant_agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assistantAgent" },
+      "uniqueItems": true
+    },
     "upload_policy": { "$ref": "#/$defs/uploadPolicy" },
     "knowledge": { "$ref": "#/$defs/scopeConfig" },
     "data_sources": {
@@ -138,6 +143,50 @@
             "usage_endpoint": { "type": "string", "minLength": 1 }
           }
         }
+      }
+    },
+    "assistantAgent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "agent_type",
+        "display_name",
+        "prompt_profile",
+        "enabled",
+        "provider",
+        "model_env",
+        "allowed_surfaces",
+        "allowed_modes",
+        "tools",
+        "knowledge_scopes",
+        "policies",
+        "validators"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "agent_type": { "type": "string", "const": "text-assistant" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "prompt_profile": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean" },
+        "provider": { "type": "string", "const": "openai-compatible-local" },
+        "model_env": { "type": "string", "const": "LIQUISTO_ASSISTANT_LLM_MODEL" },
+        "allowed_surfaces": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["cockpit", "crm", "trade", "control"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "allowed_modes": {
+          "type": "array",
+          "items": { "type": "string", "const": "analysis-only" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "tools": { "type": "array", "maxItems": 0 },
+        "knowledge_scopes": { "$ref": "#/$defs/idArray" },
+        "policies": { "$ref": "#/$defs/idArray" },
+        "validators": { "$ref": "#/$defs/idArray" }
       }
     },
     "uploadPolicy": {
