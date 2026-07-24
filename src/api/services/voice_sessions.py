@@ -20,6 +20,7 @@ from src.agents.lisa.voice_prompt import (
     build_lisa_voice_prompt,
     kea_voice_contract_sections,
 )
+from src.agents.liquisto_assistant.prompt import build_liquisto_assistant_voice_prompt
 from src.api.config import get_settings
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
@@ -60,6 +61,7 @@ def voice_enabled(studio: Studio, agent_id: str | None = None) -> bool:
             get_settings().enable_voice_sessions
             and profile.public_widget.voice_enabled
             and voice_agent.enabled
+            and voice_agent.audience == "public"
         )
     config = studio.config or {}
     return bool(config.get("voice_enabled")) and get_settings().enable_voice_sessions
@@ -146,17 +148,29 @@ def realtime_session_config(
             "Expertentermine oder die App KI-KUECHENBERATER."
         )
         contract_sections = kea_voice_contract_sections()
-    config: dict[str, Any] = {
-        "type": "realtime",
-        "model": model,
-        "instructions": build_lisa_voice_prompt(
+    if voice_agent is not None and voice_agent.prompt_profile == "liquisto-assistant":
+        if tools:
+            raise ValueError("Olivia voice profile does not permit tools.")
+        instructions = build_liquisto_assistant_voice_prompt(
+            studio_slug=studio.slug,
+            address_mode=address_mode,
+        )
+    elif voice_agent is None or voice_agent.prompt_profile == "mein-kuechenexperte-project-intake":
+        instructions = build_lisa_voice_prompt(
             studio,
             lead_summary,
             address_mode,
             agent_display_name=agent_name,
             domain_guidance=domain_guidance,
             contract_sections=contract_sections,
-        ),
+        )
+    else:
+        raise ValueError("Tenant voice prompt profile is not supported.")
+
+    config: dict[str, Any] = {
+        "type": "realtime",
+        "model": model,
+        "instructions": instructions,
         "audio": {
             "output": {"voice": voice},
             "input": {
@@ -172,7 +186,10 @@ def realtime_session_config(
         },
         "reasoning": {"effort": "low"},
     }
-    if tools:
+    if tools and (
+        voice_agent is None
+        or voice_agent.prompt_profile == "mein-kuechenexperte-project-intake"
+    ):
         config["tools"] = tools
         config["tool_choice"] = "auto"
     return config

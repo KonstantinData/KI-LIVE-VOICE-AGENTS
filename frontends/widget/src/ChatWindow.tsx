@@ -53,7 +53,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
 
   const handleIncomingMessage = useCallback(
     (message: ChatMessage) => {
-      if (!contactSubmitted && hasContactIntent(message.content)) {
+      if (config.contactFormEnabled && !contactSubmitted && hasContactIntent(message.content)) {
         setShowContactForm(true);
       }
       setChatMessages((prev) => [
@@ -65,7 +65,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
         },
       ]);
     },
-    [contactSubmitted],
+    [config.contactFormEnabled, contactSubmitted],
   );
 
   const { send, sendAction, connected, connecting, typing } = useWebSocket({
@@ -83,7 +83,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleSend = () => {
     const text = input.trim();
     if (!text || !connected) return;
-    if (!contactSubmitted && hasContactIntent(text)) {
+    if (config.contactFormEnabled && !contactSubmitted && hasContactIntent(text)) {
       setShowContactForm(true);
     }
     setChatMessages((prev) => [...prev, { role: 'user', content: text }]);
@@ -94,7 +94,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
   const handleChoice = (choice: Choice) => {
     if (!connected) return;
     setChatMessages((prev) => [...prev, { role: 'user', content: choice.label }]);
-    if (!contactSubmitted && isContactChoice(choice)) {
+    if (config.contactFormEnabled && !contactSubmitted && isContactChoice(choice)) {
       setShowContactForm(true);
       return;
     }
@@ -361,7 +361,7 @@ export function ChatWindow({ config, visitorId }: ChatWindowProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          {contactSubmitted ? renderCompletionPanel() : showContactForm && renderContactPanel()}
+          {config.contactFormEnabled && (contactSubmitted ? renderCompletionPanel() : showContactForm && renderContactPanel())}
 
           {!contactSubmitted && renderUploadPanel()}
 

@@ -33,26 +33,28 @@ def test_mein_kuechenexperte_profile_selects_kea_widget_identity():
     )
 
 
-def test_liquisto_profile_is_registered_in_setup_mode():
-    """Liquisto is present but not runtime-enabled until its handoff is tenant-aware."""
+def test_liquisto_profile_registers_olivia_without_public_voice_or_handoff():
+    """Olivia is active for text while internal voice awaits employee auth."""
     profile = get_tenant_profile_for_studio("liquisto")
 
     assert profile is not None
     assert profile.tenant_id == "liquisto"
     assert profile.display_name == "Liquisto"
-    assert profile.status == "setup"
-    assert profile.public_widget.agent_name == "Liquisto"
+    assert profile.status == "active"
+    assert profile.public_widget.agent_name == "Olivia"
     assert profile.public_widget.voice_enabled is False
     assert profile.public_widget.upload_enabled is False
-    assert profile.live_voice_agent("liquisto-intake").enabled is False
-    assert profile.live_voice_agent("liquisto-intake").tools == ()
-    assert (
-        profile.live_voice_agent("liquisto-intake").contact_handoff.crm_target
-        == "liquisto"
-    )
-    assert profile.live_voice_agent(
-        "liquisto-intake"
-    ).contact_handoff.contact_endpoint == "https://liquisto.cloud/agent-lead-webhook"
+    assert profile.public_widget.contact_form_enabled is False
+    voice = profile.live_voice_agent("liquisto-assistant")
+    assert voice.display_name == "Olivia"
+    assert voice.enabled is True
+    assert voice.audience == "internal-authenticated"
+    assert voice.tools == ()
+    assert voice.contact_handoff is None
+    assert not any("write" in scope for scope in voice.data_scopes)
+    assistant = profile.assistant_agent("liquisto-assistant")
+    assert assistant.allowed_modes == ("inform-and-prepare",)
+    assert assistant.tools == ()
 
 
 def test_widget_config_registry_overrides_legacy_db_agent_name():
@@ -104,8 +106,8 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
     assert agent_display_name("mein-kuechenexperte") == "KEA"
 
 
-def test_liquisto_realtime_prompt_does_not_receive_kea_contract():
-    """Tenant-neutral voice prompts do not inherit KEA-specific contracts."""
+def test_liquisto_realtime_prompt_uses_olivia_without_end_customer_intake():
+    """The prepared voice config uses Olivia's dedicated internal prompt."""
     studio = Studio(
         id=uuid.uuid4(),
         name="Liquisto",
@@ -128,13 +130,42 @@ def test_liquisto_realtime_prompt_does_not_receive_kea_contract():
         tools=[],
         lead_summary=None,
         address_mode="sie",
-        agent_id="liquisto-intake",
+        agent_id="liquisto-assistant",
     )
 
     assert config["model"] == "gpt-realtime-2.1"
-    assert "Du bist Liquisto" in config["instructions"]
+    assert "Du bist Olivia" in config["instructions"]
+    assert "Transforming Excess Inventory" in config["instructions"]
+    assert "persoenliche Assistenz" in config["instructions"]
     assert "KEA KOMMUNIKATIONSVERTRAG" not in config["instructions"]
     assert "ANGEBOTSORIENTIERUNG MEIN KÜCHENEXPERTE" not in config["instructions"]
     assert "kein Kuechenfachberater" not in config["instructions"]
-    assert voice_enabled(studio, "liquisto-intake") is False
+    assert "Kontaktformular" not in config["instructions"]
+    assert "Aus Datenschutzgruenden" not in config["instructions"]
+    assert "tools" not in config
+    assert voice_enabled(studio, "liquisto-assistant") is False
     assert voice_enabled(studio, "kea-project-intake") is False
+
+
+def test_public_voice_rejects_internal_agent_even_if_widget_flag_is_misconfigured(
+    monkeypatch,
+):
+    """An internal Olivia profile can never become a public widget agent."""
+    profile = get_tenant_profile_for_studio("liquisto")
+    assert profile is not None
+    public_widget = profile.public_widget.model_copy(update={"voice_enabled": True})
+    misconfigured = profile.model_copy(update={"public_widget": public_widget})
+    monkeypatch.setattr(
+        "src.api.services.voice_sessions.get_tenant_profile_for_studio",
+        lambda _studio_slug: misconfigured,
+    )
+    studio = Studio(
+        id=uuid.uuid4(),
+        name="Liquisto",
+        slug="liquisto",
+        api_key="test",
+        is_active=True,
+        config={},
+    )
+
+    assert voice_enabled(studio, "liquisto-assistant") is False

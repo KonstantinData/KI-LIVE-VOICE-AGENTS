@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     liquisto_assistant_llm_model: str = ""
     liquisto_assistant_llm_timeout_seconds: float = 20.0
     liquisto_assistant_llm_max_output_tokens: int = 1200
+    liquisto_assistant_voice_enabled: bool = False
 
     # Runtime safety
     max_chat_message_chars: int = 4000
@@ -101,6 +102,11 @@ class Settings(BaseSettings):
         if self.enable_voice_sessions and not self.openai_api_key:
             raise ValueError(
                 "OPENAI_API_KEY is required when ENABLE_VOICE_SESSIONS=true"
+            )
+        if self.liquisto_assistant_voice_enabled and not self.openai_api_key:
+            raise ValueError(
+                "OPENAI_API_KEY is required when "
+                "LIQUISTO_ASSISTANT_VOICE_ENABLED=true"
             )
         return self
 

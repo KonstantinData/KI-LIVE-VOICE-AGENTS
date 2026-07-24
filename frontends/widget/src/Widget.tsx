@@ -72,7 +72,7 @@ export function Widget({ config, visitorId }: WidgetProps) {
             {open ? `${config.agentName} schließen` : config.agentName}
           </span>
           <span className="launcher-subtitle">
-            {config.voiceEnabled ? 'Küchen Expert Assistent' : 'Küchenprojekt klären'}
+            {config.agentSubtitle}
           </span>
         </span>
       </button>

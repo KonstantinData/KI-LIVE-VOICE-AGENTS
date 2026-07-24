@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StrictModel(BaseModel):
@@ -40,6 +40,7 @@ class PublicWidgetProfile(StrictModel):
     retention_days: int = Field(gt=0)
     voice_enabled: bool
     upload_enabled: bool
+    contact_form_enabled: bool = True
 
 
 class ContactHandoffPolicy(StrictModel):
@@ -68,7 +69,17 @@ class LiveVoiceAgentProfile(StrictModel):
     data_scopes: tuple[str, ...]
     policies: tuple[str, ...]
     validators: tuple[str, ...]
-    contact_handoff: ContactHandoffPolicy
+    audience: Literal["public", "internal-authenticated"] = "public"
+    contact_handoff: ContactHandoffPolicy | None = None
+
+    @model_validator(mode="after")
+    def validate_audience_capabilities(self) -> "LiveVoiceAgentProfile":
+        """Keeps public handoff and internal no-handoff profiles fail closed."""
+        if self.audience == "public" and self.contact_handoff is None:
+            raise ValueError("public voice agents require contact_handoff")
+        if self.audience == "internal-authenticated" and self.contact_handoff is not None:
+            raise ValueError("internal voice agents must not configure contact_handoff")
+        return self
 
 
 class AssistantAgentProfile(StrictModel):
@@ -82,7 +93,7 @@ class AssistantAgentProfile(StrictModel):
     provider: Literal["openai-compatible-local"]
     model_env: Literal["LIQUISTO_ASSISTANT_LLM_MODEL"]
     allowed_surfaces: tuple[Literal["cockpit", "crm", "trade", "control"], ...]
-    allowed_modes: tuple[Literal["analysis-only"], ...]
+    allowed_modes: tuple[Literal["inform-and-prepare"], ...]
     tools: tuple[str, ...]
     knowledge_scopes: tuple[str, ...]
     policies: tuple[str, ...]
@@ -114,6 +125,9 @@ class DataSource(StrictModel):
     access_modes: tuple[str, ...]
     status: str
     sensitivity: str
+    system: str
+    required_permission: str
+    allowed_classifications: tuple[Literal["public", "internal"], ...]
 
 
 class TenantProfile(StrictModel):

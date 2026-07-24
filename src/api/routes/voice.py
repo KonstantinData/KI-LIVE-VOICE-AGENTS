@@ -237,6 +237,8 @@ def _tenant_handoff_kwargs(studio: Studio, agent_id: str | None = None) -> dict[
     if not profile.public_widget.voice_enabled or not voice_agent.enabled:
         raise HTTPException(status_code=403, detail="tenant_voice_agent_disabled")
     handoff = voice_agent.contact_handoff
+    if handoff is None:
+        raise HTTPException(status_code=403, detail="contact_handoff_not_enabled")
     if handoff.crm_target != profile.tenant_id:
         raise HTTPException(status_code=503, detail="tenant_handoff_mismatch")
     return {
@@ -442,14 +444,14 @@ async def handle_voice_tool_call(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
-    """Rejects legacy voice tool calls; contact data uses the secure form."""
+    """Rejects all legacy voice tool calls."""
     if not origin_allowed(request):
         raise HTTPException(status_code=403, detail="Origin not allowed")
     if not payload.consent_granted:
         raise HTTPException(status_code=401, detail="Voice consent required")
     raise HTTPException(
         status_code=410,
-        detail="voice_tools_disabled_use_secure_contact_form",
+        detail="voice_tools_disabled",
     )
 
 
@@ -757,7 +759,11 @@ async def end_voice_session(
     conversation = await load_voice_conversation(
         session, studio, payload.visitor_id, payload.conversation_id
     )
-    await LisaAgent(session=session).finalize_conversation(conversation, studio)
+    profile = get_tenant_profile_for_studio(studio.slug)
+    if profile is None or profile.tenant_id == "mein-kuechenexperte":
+        await LisaAgent(session=session).finalize_conversation(conversation, studio)
+    else:
+        conversation.status = "closed"
     session.add(
         Event(
             studio_id=studio.id,

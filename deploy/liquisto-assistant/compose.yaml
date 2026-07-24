@@ -10,8 +10,11 @@ services:
       LIQUISTO_ASSISTANT_LLM_MODEL: ${LIQUISTO_ASSISTANT_LLM_MODEL:?required}
       LIQUISTO_ASSISTANT_LLM_TIMEOUT_SECONDS: "60"
       LIQUISTO_ASSISTANT_LLM_MAX_OUTPUT_TOKENS: "1200"
+      LIQUISTO_ASSISTANT_VOICE_ENABLED: ${LIQUISTO_ASSISTANT_VOICE_ENABLED:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
       - liquisto-assistant
+      - liquisto-voice-egress
     read_only: true
     tmpfs:
       - /tmp:size=16m,noexec,nosuid
@@ -35,3 +38,6 @@ networks:
   liquisto-assistant:
     external: true
     name: liquisto-assistant
+  liquisto-voice-egress:
+    driver: bridge
+    internal: false
