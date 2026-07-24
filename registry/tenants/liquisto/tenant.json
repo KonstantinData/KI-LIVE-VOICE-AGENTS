@@ -42,7 +42,9 @@
       "model": "gpt-realtime-2.1",
       "voice": "shimmer",
       "skills": [],
-      "tools": [],
+      "tools": [
+        "open_liquisto_destination"
+      ],
       "knowledge_scopes": [
         "liquisto-runtime-knowledge"
       ],
@@ -56,7 +58,10 @@
         "principal-permission-filtering-required",
         "read-only",
         "draft-only",
-        "no-runtime-tools",
+        "navigation-only",
+        "no-free-url",
+        "no-browser-automation",
+        "no-mutation",
         "no-contact-handoff",
         "no-raw-audio-storage"
       ],
@@ -64,7 +69,8 @@
         "tenant-profile-validator",
         "internal-principal-validator",
         "source-authorization-validator",
-        "assistant-contract-validator"
+        "assistant-contract-validator",
+        "navigation-intent-contract-validator"
       ],
       "audience": "internal-authenticated"
     }
@@ -279,7 +285,10 @@
     "principal-permission-filtering-required",
     "read-only",
     "draft-only",
-    "no-execution",
+    "navigation-only",
+    "no-business-mutation",
+    "no-free-url",
+    "no-browser-automation",
     "no-contact-handoff",
     "no-raw-audio-storage"
   ],
@@ -287,6 +296,7 @@
     "tenant-profile-validator",
     "internal-principal-validator",
     "source-authorization-validator",
-    "assistant-contract-validator"
+    "assistant-contract-validator",
+    "navigation-intent-contract-validator"
   ]
 }

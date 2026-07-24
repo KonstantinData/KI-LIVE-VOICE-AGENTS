@@ -93,10 +93,12 @@ Du darfst informieren, erklaeren, suchen, strukturieren und zusammenfassen. Du
 darfst naechste Schritte, E-Mail-Entwuerfe, Aufgaben, Termine,
 Entscheidungsgrundlagen und Aenderungsvorschlaege vorbereiten.
 
-Du darfst keinerlei Aktion ausfuehren. Du darfst insbesondere keine E-Mail
-versenden, keinen Termin oder Task anlegen, keine CRM-Daten veraendern, keine
-Bestaende, Angebote oder Handelsvorgaenge veraendern und keine externe
-Kommunikation ausloesen. Du hast keine Tools und keine Schreibberechtigung.
+Du darfst keinerlei Geschaeftsaktion ausfuehren. Du darfst insbesondere keine
+E-Mail versenden, keinen Termin oder Task anlegen, keine CRM-Daten veraendern,
+keine Listen exportieren, keine Bestaende, Angebote oder Handelsvorgaenge
+veraendern und keine externe Kommunikation ausloesen. Du hast keine
+Schreibberechtigung. Nur wenn der Voice-Vertrag es ausdruecklich bereitstellt,
+darfst du das einzelne, dort beschriebene Navigationstool verwenden.
 
 Jede vorbereitete Aktion bleibt ein Vorschlag mit sichtbarer Vorschau,
 Zielsystem, erwarteter Wirkung, Risiken und fehlenden Angaben. Stelle niemals
@@ -182,6 +184,8 @@ def build_liquisto_assistant_voice_prompt(
     address_mode: str,
     surface: str | None = None,
     context: list[dict[str, Any]] | None = None,
+    request_id: str | None = None,
+    navigation_enabled: bool = False,
 ) -> str:
     """Builds Olivia's voice prompt without public intake or handoff language."""
     if studio_slug != "liquisto":
@@ -208,7 +212,30 @@ Assistenz der angemeldeten Mitarbeitenden. Erhebe keine personenbezogenen Daten
 fuer externe Anfragen und initiiere keine externe Uebergabe. Technische
 Sicherheits-, Zugriffs- und Auditgrenzen bleiben davon unberuehrt.
 
-Voice besitzt keine Tools und darf keine vorbereitete Aktion ausfuehren."""
+Voice darf keine vorbereitete Aktion ausfuehren."""
+    navigation_rules = ""
+    if navigation_enabled:
+        if request_id is None:
+            raise ValueError("Navigation-enabled Voice requires a request_id")
+        navigation_rules = f"""
+
+## EINZIGE VOICE-FUNKTION: LIQUISTO-NAVIGATION
+
+Du darfst ausschliesslich bei einer klaren Bitte, einen Bereich zu oeffnen oder
+dorthin zu wechseln, das Tool `open_liquisto_destination` verwenden. Erlaubt
+sind genau `workbench.cockpit`, `crm.overview` und `crm.tasks`. Das Tool fordert
+nur Navigation an; die authentifizierte SCAS-Workbench prueft Tenant,
+Mitarbeiter, Session, Berechtigung und Ziel erneut und entscheidet fail-closed.
+
+Die Modellargumente folgen exakt Contract `1.1`: request_id `{request_id}`,
+tenant_id `liquisto`, agent_id `liquisto-assistant`, source `voice`, intent
+`navigate`, eine erlaubte destination_id und parameters als leeres Objekt. Gib
+keine zusaetzlichen Felder und insbesondere keine call_id aus. SCAS bindet die
+call_id ausschliesslich aus dem providerseitigen done-Event. Verwende niemals URL, href,
+Pfad, Browserbefehl, Shellbefehl oder freie Parameter. Nutze kein anderes Tool.
+Erzeuge, aendere, exportiere oder uebergebe niemals Daten. Behaupte Navigation
+erst dann als erfolgt, wenn SCAS im function_call_output status `allow` meldet.
+Bei `deny` erklaere die gelieferte deutsche Meldung knapp und fuehre nichts aus."""
     knowledge = format_tenant_knowledge_for_prompt(source)
     request_context = ""
     if context is not None:
@@ -224,7 +251,7 @@ Voice besitzt keine Tools und darf keine vorbereitete Aktion ausfuehren."""
             f"{context_json}"
         )
     return (
-        f"{CORE_SYSTEM_PROMPT}\n\n{voice_rules}"
+        f"{CORE_SYSTEM_PROMPT}\n\n{voice_rules}{navigation_rules}"
         f"\n\n## FREIGEGEBENES LIQUISTO-WISSEN\n{knowledge}"
         f"{request_context}"
     )

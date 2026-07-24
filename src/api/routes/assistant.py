@@ -20,6 +20,12 @@ from pydantic import (
 )
 import structlog
 
+from src.agents.liquisto_assistant.navigation import (
+    NAVIGATION_DESTINATIONS,
+    NAVIGATION_CONTRACT_VERSION,
+    NAVIGATION_TOOL_NAME,
+    liquisto_navigation_tool_definition,
+)
 from src.agents.liquisto_assistant.prompt import (
     build_liquisto_assistant_messages,
     build_liquisto_assistant_voice_prompt,
@@ -233,6 +239,12 @@ class AssistantVoiceReadyResponse(StrictContractModel):
     agent_id: Literal["liquisto-assistant"] = "liquisto-assistant"
     channel: Literal["voice"] = "voice"
     voice_enabled: Literal[True] = True
+    navigation_contract_version: Literal["1.1"] = "1.1"
+    navigation_destinations: tuple[
+        Literal["workbench.cockpit"],
+        Literal["crm.overview"],
+        Literal["crm.tasks"],
+    ] = NAVIGATION_DESTINATIONS
 
 
 def _runtime_config(settings: Settings) -> LiquistoAssistantRuntimeConfig:
@@ -293,7 +305,7 @@ def _configured_assistant():
 
 
 def _configured_voice_agent():
-    """Loads Olivia's internal-only, tool-free Live Voice profile."""
+    """Loads Olivia's internal-only, navigation-only Live Voice profile."""
     try:
         profile = get_tenant_profile("liquisto")
         agent = profile.live_voice_agent("liquisto-assistant")
@@ -308,7 +320,7 @@ def _configured_voice_agent():
         or agent.prompt_profile != "liquisto-assistant"
         or not agent.enabled
         or agent.audience != "internal-authenticated"
-        or agent.tools
+        or agent.tools != (NAVIGATION_TOOL_NAME,)
         or agent.contact_handoff is not None
     ):
         raise HTTPException(
@@ -415,7 +427,7 @@ async def create_internal_voice_call(
     settings: Settings = Depends(get_settings),
     _config: LiquistoAssistantRuntimeConfig = Depends(require_service_auth),
 ) -> AssistantVoiceCallResponse:
-    """Brokers one employee-authenticated, tool-free Olivia WebRTC call."""
+    """Brokers one employee-authenticated, navigation-only Olivia WebRTC call."""
     if not settings.liquisto_assistant_voice_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -438,6 +450,8 @@ async def create_internal_voice_call(
         address_mode=payload.address_mode,
         surface=payload.surface,
         context=[item.model_dump(mode="json") for item in payload.context],
+        request_id=payload.request_id,
+        navigation_enabled=True,
     )
     session_config = {
         "type": "realtime",
@@ -457,8 +471,8 @@ async def create_internal_voice_call(
             },
         },
         "reasoning": {"effort": "low"},
-        "tools": [],
-        "tool_choice": "none",
+        "tools": [liquisto_navigation_tool_definition()],
+        "tool_choice": "auto",
     }
     safety_identifier = hashlib.sha256(
         f"liquisto:{payload.principal_id}:{payload.request_id}".encode("utf-8")
@@ -492,6 +506,11 @@ async def create_internal_voice_call(
         surface=payload.surface,
         source_count=len(payload.context),
         call_id=call.provider_call_id,
+        tenant_id=profile.tenant_id,
+        agent_id=agent.id,
+        navigation_contract_version=NAVIGATION_CONTRACT_VERSION,
+        navigation_tool=NAVIGATION_TOOL_NAME,
+        raw_audio_stored=False,
     )
     return AssistantVoiceCallResponse(
         request_id=payload.request_id,

@@ -211,7 +211,7 @@ Das Widget nutzt im Produktionsbuild Preact Compat als gebündelte Runtime, dami
 | Chat-Widget | Fertig mit DSGVO-Consent-Gate und kleinem IIFE-Bundle |
 | CRM-Dashboard | Liegt im separaten Repository `mein-kuechenexperte` |
 | Tenant `mein-kuechenexperte` | Aktiv mit Widget-Name KEA und CRM-Handoff |
-| Tenant `liquisto` | Olivia: interne, toolfreie Assistenz für Information und nicht ausführbare Entwürfe; Voice bis zum Mitarbeiter-Auth-Gate fail-closed ([Vertrag](docs/liquisto-assistant-runtime.md)) |
+| Tenant `liquisto` | Olivia: interne Assistenz für Information und nicht ausführbare Entwürfe; authentifizierte Voice-Runtime mit genau einer allowgelisteten, semantischen Workbench-Navigation und ohne URL-, Browser- oder Schreibzugriff ([Vertrag](docs/liquisto-assistant-runtime.md)) |
 | Weitere Tenants | Über Registry-Struktur vorbereitet |
 | CRM-Handoff | Kontakt- und Usage-Webhooks zum Repository `mein-kuechenexperte` |
 

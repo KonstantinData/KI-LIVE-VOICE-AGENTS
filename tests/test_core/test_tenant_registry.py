@@ -49,12 +49,19 @@ def test_liquisto_profile_registers_olivia_without_public_voice_or_handoff():
     assert voice.display_name == "Olivia"
     assert voice.enabled is True
     assert voice.audience == "internal-authenticated"
-    assert voice.tools == ()
+    assert voice.tools == ("open_liquisto_destination",)
     assert voice.contact_handoff is None
     assert not any("write" in scope for scope in voice.data_scopes)
+    assert "navigation-only" in voice.policies
+    assert "no-free-url" in voice.policies
+    assert "no-browser-automation" in voice.policies
+    assert "no-mutation" in voice.policies
     assistant = profile.assistant_agent("liquisto-assistant")
     assert assistant.allowed_modes == ("inform-and-prepare",)
     assert assistant.tools == ()
+    kea_profile = get_tenant_profile_for_studio("mein-kuechenexperte")
+    assert kea_profile is not None
+    assert "open_liquisto_destination" not in kea_profile.live_voice_agent().tools
 
 
 def test_widget_config_registry_overrides_legacy_db_agent_name():

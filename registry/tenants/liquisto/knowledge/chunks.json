@@ -26,8 +26,8 @@
     {
       "id": "olivia-action-boundary",
       "category": "assistant-authority",
-      "title": "Olivia prepares but never executes",
-      "content": "Olivia may inform, summarize and prepare visible drafts for email, calendar, tasks, change proposals, briefings and notes. Every draft is non-executable. Olivia has no tools and may not write to CRM, Trade, inventory, offers, calendars, tasks, documents or external communication channels.",
+      "title": "Olivia prepares and only navigates through an allowlist",
+      "content": "Olivia may inform, summarize and prepare visible drafts for email, calendar, tasks, change proposals, briefings and notes. Every draft is non-executable. Internal Voice may request only the three allowlisted semantic Liquisto Workbench destinations through open_liquisto_destination; SCAS revalidates the authenticated employee and performs local route resolution. Olivia may not accept URLs, control a browser generally, export lists, or write to CRM, Trade, inventory, offers, calendars, tasks, documents or external communication channels.",
       "metadata": {
         "source_ref": "registry/tenants/liquisto/tenant.json",
         "reviewed_at": "2026-07-24"

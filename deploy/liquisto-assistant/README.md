@@ -4,6 +4,11 @@ This deployment target runs only the authenticated Liquisto assistant API for
 text responses and internal WebRTC call brokering. It does not expose public
 widget, WebSocket, upload, CRM-write, or tool routes.
 
+The internal WebRTC session advertises exactly one provider function,
+`open_liquisto_destination`. It carries only the semantic Navigation Contract
+v1.1 documented in `docs/liquisto-assistant-runtime.md`; it is not an HTTP tool
+route and cannot resolve URLs or mutate data.
+
 ## Boundary
 
 - Entrypoint: `src.api.liquisto_assistant_main:app`
@@ -77,6 +82,12 @@ Expected exact body:
 
 This repository change intentionally does not perform a live deployment.
 
+Do not deploy the navigation slice until the SCAS counterpart is verified with
+the same byte-exact v1.1 schema, DataChannel handling, authenticated principal
+binding, CRM read-capability gate, local route allowlist, durable audit sink,
+and joint allow/deny smoke tests. Keep the existing production version running
+when any gate is missing or any contract field differs.
+
 The SCAS runtime endpoint is exactly:
 
 `http://liquisto-local-assistant:8080/assistant/respond`
@@ -98,5 +109,8 @@ curl --fail \
 Expected exact body:
 
 ```json
-{"contract_version":"2.0","status":"ready","tenant_id":"liquisto","agent_id":"liquisto-assistant","channel":"voice","voice_enabled":true}
+{"contract_version":"2.0","status":"ready","tenant_id":"liquisto","agent_id":"liquisto-assistant","channel":"voice","voice_enabled":true,"navigation_contract_version":"1.1","navigation_destinations":["workbench.cockpit","crm.overview","crm.tasks"]}
 ```
+
+This authenticated response is an exact release attestation. SCAS keeps Voice
+navigation hidden when any key, value, or destination order differs.

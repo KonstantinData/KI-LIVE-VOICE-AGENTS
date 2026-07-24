@@ -10,7 +10,17 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from pydantic import ValidationError
 
+from src.agents.liquisto_assistant.navigation import (
+    LiquistoNavigationCompletionRequest,
+    LiquistoNavigationDecision,
+    LiquistoNavigationToolArguments,
+    LiquistoNavigationTransportEnvelope,
+    NAVIGATION_DESTINATIONS,
+    NAVIGATION_TOOL_NAME,
+    liquisto_navigation_tool_definition,
+)
 from src.api.liquisto_assistant_main import app as liquisto_assistant_app
 from src.api.config import get_settings
 from src.api.services import liquisto_assistant
@@ -197,6 +207,12 @@ async def test_internal_voice_readiness_contract_is_exact(
         "agent_id": "liquisto-assistant",
         "channel": "voice",
         "voice_enabled": True,
+        "navigation_contract_version": "1.1",
+        "navigation_destinations": [
+            "workbench.cockpit",
+            "crm.overview",
+            "crm.tasks",
+        ],
     }
 
 
@@ -238,6 +254,30 @@ async def test_internal_voice_readiness_requires_valid_registry(
 
 
 @pytest.mark.asyncio
+async def test_internal_voice_readiness_rejects_incompatible_tool_attestation(
+    assistant_client, monkeypatch
+):
+    monkeypatch.setattr(get_settings(), "liquisto_assistant_voice_enabled", True)
+    profile = get_tenant_profile("liquisto")
+    voice = profile.live_voice_agent("liquisto-assistant")
+    incompatible_voice = voice.model_copy(update={"tools": ()})
+    incompatible_profile = profile.model_copy(
+        update={"live_voice_agents": (incompatible_voice,)}
+    )
+    monkeypatch.setattr(
+        "src.api.routes.assistant.get_tenant_profile",
+        lambda _tenant_id: incompatible_profile,
+    )
+
+    response = await assistant_client.get(
+        "/assistant/voice/readyz", headers=auth_headers()
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "assistant_voice_contract_not_configured"}
+
+
+@pytest.mark.asyncio
 async def test_internal_voice_call_requires_service_auth(assistant_client, monkeypatch):
     monkeypatch.setattr(get_settings(), "liquisto_assistant_voice_enabled", True)
 
@@ -250,7 +290,7 @@ async def test_internal_voice_call_requires_service_auth(assistant_client, monke
 
 
 @pytest.mark.asyncio
-async def test_internal_voice_call_uses_fixed_tool_free_olivia_session(
+async def test_internal_voice_call_uses_byte_exact_navigation_only_session(
     assistant_client, monkeypatch
 ):
     settings = get_settings()
@@ -297,15 +337,248 @@ async def test_internal_voice_call_uses_fixed_tool_free_olivia_session(
     assert call["client_sdp"] == "v=0\r\n"
     assert len(call["safety_identifier"]) == 64
     session = call["session_config"]
-    assert session["tools"] == []
-    assert session["tool_choice"] == "none"
+    assert session["tools"] == [liquisto_navigation_tool_definition()]
+    assert session["tool_choice"] == "auto"
+    tool = session["tools"][0]
+    assert set(tool) == {"type", "name", "description", "parameters"}
+    assert tool["type"] == "function"
+    assert tool["name"] == "open_liquisto_destination"
+    schema = tool["parameters"]
+    assert schema["additionalProperties"] is False
+    assert schema["required"] == [
+        "contract_version",
+        "request_id",
+        "tenant_id",
+        "agent_id",
+        "source",
+        "intent",
+        "destination_id",
+        "parameters",
+    ]
+    assert set(schema["properties"]) == set(schema["required"])
+    assert schema["properties"]["destination_id"]["enum"] == [
+        "workbench.cockpit",
+        "crm.overview",
+        "crm.tasks",
+    ]
+    assert schema["properties"]["parameters"] == {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {},
+        "required": [],
+    }
+    serialized_tool = json.dumps(tool).lower()
+    for forbidden in (
+        '"principal_id"',
+        '"call_id"',
+        '"url"',
+        '"href"',
+        '"path"',
+        '"shell"',
+        '"command"',
+        '"export"',
+        '"create"',
+    ):
+        assert forbidden not in serialized_tool
+    assert schema["properties"]["contract_version"] == {
+        "type": "string",
+        "const": "1.1",
+    }
     instructions = session["instructions"].lower()
     assert "du bist olivia" in instructions
     assert "transforming excess inventory" in instructions
     assert "lieferstatus weicht" in instructions
+    assert "open_liquisto_destination" in instructions
+    assert "workbench.cockpit" in instructions
+    assert "crm.overview" in instructions
+    assert "crm.tasks" in instructions
+    assert "keine zusaetzlichen felder" in instructions
     for forbidden in ("kea", "lisa", "kuechen", "küchen", "kontakt", "dsgvo", "datenschutz"):
         assert forbidden not in instructions
     assert "sk-test-server-only" not in str(response.json())
+
+
+def navigation_intent_payload() -> dict:
+    """Returns the canonical SCAS Navigation Contract v1.1 tool arguments."""
+    return {
+        "contract_version": "1.1",
+        "request_id": "req-voice-123",
+        "tenant_id": "liquisto",
+        "agent_id": "liquisto-assistant",
+        "source": "voice",
+        "intent": "navigate",
+        "destination_id": "crm.tasks",
+        "parameters": {},
+    }
+
+
+def navigation_decision_payload() -> dict:
+    """Returns the canonical SCAS function_call_output contract."""
+    return {
+        "contract_version": "1.1",
+        "request_id": "req-voice-123",
+        "call_id": "call-123",
+        "decision_id": "decision-123",
+        "tenant_id": "liquisto",
+        "agent_id": "liquisto-assistant",
+        "source": "voice",
+        "intent": "navigate",
+        "status": "allow",
+        "destination_id": "crm.tasks",
+        "parameters": {},
+        "reason_code": "allowed",
+        "decision_time": "2026-07-24T09:00:00Z",
+        "message": "Ich öffne die aktuellen Aufgaben.",
+    }
+
+
+@pytest.mark.parametrize("destination_id", NAVIGATION_DESTINATIONS)
+def test_navigation_intent_accepts_only_canonical_allowlisted_destinations(
+    destination_id,
+):
+    payload = navigation_intent_payload()
+    payload["destination_id"] = destination_id
+
+    intent = LiquistoNavigationToolArguments.model_validate(payload)
+
+    assert intent.model_dump(mode="json") == payload
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("contract_version", "2.0"),
+        ("tenant_id", "mein-kuechenexperte"),
+        ("agent_id", "kea-project-intake"),
+        ("source", "widget"),
+        ("intent", "create-task"),
+        ("destination_id", "https://evil.example"),
+        ("destination_id", "crm.contacts"),
+    ],
+)
+def test_navigation_intent_rejects_contract_or_tenant_boundary_mismatch(
+    field, value
+):
+    payload = navigation_intent_payload()
+    payload[field] = value
+
+    with pytest.raises(ValidationError):
+        LiquistoNavigationToolArguments.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    "extra_field", ["call_id", "principal_id", "url", "command", "export"]
+)
+def test_navigation_intent_rejects_every_additional_root_field(extra_field):
+    payload = navigation_intent_payload()
+    payload[extra_field] = "forbidden"
+
+    with pytest.raises(ValidationError):
+        LiquistoNavigationToolArguments.model_validate(payload)
+
+
+@pytest.mark.parametrize("extra_field", ["url", "href", "path", "view", "create"])
+def test_navigation_intent_rejects_every_parameter(extra_field):
+    payload = navigation_intent_payload()
+    payload["parameters"] = {extra_field: "forbidden"}
+
+    with pytest.raises(ValidationError):
+        LiquistoNavigationToolArguments.model_validate(payload)
+
+
+def test_navigation_transport_envelope_binds_provider_event_call_id_server_side():
+    payload = navigation_intent_payload()
+    payload["call_id"] = "call-provider-123"
+
+    envelope = LiquistoNavigationTransportEnvelope.model_validate(payload)
+
+    assert envelope.call_id == "call-provider-123"
+    assert envelope.model_dump(mode="json") == payload
+
+
+def test_navigation_completion_request_contract_is_exact():
+    payload = {
+        "contract_version": "1.1",
+        "request_id": "req-voice-123",
+        "call_id": "call-provider-123",
+        "decision_id": "decision-123",
+        "destination_id": "crm.tasks",
+        "parameters": {},
+    }
+
+    completion = LiquistoNavigationCompletionRequest.model_validate(payload)
+
+    assert completion.model_dump(mode="json") == payload
+    with pytest.raises(ValidationError):
+        LiquistoNavigationCompletionRequest.model_validate({**payload, "url": "/crm/tasks"})
+
+
+@pytest.mark.parametrize(
+    "reason_code",
+    [
+        "allowed",
+        "request-invalid",
+        "tenant-denied",
+        "agent-denied",
+        "destination-denied",
+        "session-denied",
+        "capability-denied",
+        "authority-unavailable",
+    ],
+)
+def test_navigation_decision_contract_is_exact_and_utc(reason_code):
+    payload = navigation_decision_payload()
+    payload["reason_code"] = reason_code
+    payload["status"] = "allow" if reason_code == "allowed" else "deny"
+
+    decision = LiquistoNavigationDecision.model_validate(payload)
+
+    assert decision.model_dump(mode="json") == payload
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("decision_time", "2026-07-24T11:00:00+02:00"),
+        ("status", "opened"),
+        ("reason_code", "unknown"),
+        ("tenant_id", "mein-kuechenexperte"),
+        ("message", "x" * 321),
+        ("destination_id", "x" * 101),
+    ],
+)
+def test_navigation_decision_rejects_noncanonical_evidence(field, value):
+    payload = navigation_decision_payload()
+    payload[field] = value
+
+    with pytest.raises(ValidationError):
+        LiquistoNavigationDecision.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("status_value", "reason_code"),
+    [("allow", "capability-denied"), ("deny", "allowed")],
+)
+def test_navigation_decision_rejects_inconsistent_status_reason_pair(
+    status_value, reason_code
+):
+    payload = navigation_decision_payload()
+    payload["status"] = status_value
+    payload["reason_code"] = reason_code
+
+    with pytest.raises(ValidationError):
+        LiquistoNavigationDecision.model_validate(payload)
+
+
+@pytest.mark.asyncio
+async def test_runtime_exposes_no_navigation_execution_endpoint(assistant_client):
+    response = await assistant_client.post(
+        "/assistant/navigation",
+        headers=auth_headers(),
+        json=navigation_intent_payload(),
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -675,6 +948,9 @@ async def test_shared_runtime_does_not_expose_liquisto_internal_routes(client):
     ).status_code == 404
     assert (await client.get("/healthz")).status_code == 404
     assert (await client.get("/readyz", headers=auth_headers())).status_code == 404
+    assert (
+        await client.get("/assistant/voice/readyz", headers=auth_headers())
+    ).status_code == 404
 
 
 def test_local_provider_url_is_strictly_validated():
@@ -697,7 +973,7 @@ def test_local_provider_url_is_strictly_validated():
         validate_local_llm_base_url("http://other-service:11434/v1", app_env="development")
 
 
-def test_liquisto_assistant_registry_contract_has_no_tools():
+def test_liquisto_assistant_registry_contract_is_text_tool_free_voice_navigation_only():
     profile = get_tenant_profile("liquisto")
     agent = profile.assistant_agent("liquisto-assistant")
     voice = profile.live_voice_agent("liquisto-assistant")
@@ -708,8 +984,12 @@ def test_liquisto_assistant_registry_contract_has_no_tools():
     assert agent.allowed_modes == ("inform-and-prepare",)
     assert voice.enabled is True
     assert voice.audience == "internal-authenticated"
-    assert voice.tools == ()
+    assert voice.tools == (NAVIGATION_TOOL_NAME,)
     assert voice.contact_handoff is None
+    assert "navigation-only" in voice.policies
+    assert "no-free-url" in voice.policies
+    assert "no-browser-automation" in voice.policies
+    assert "no-mutation" in voice.policies
     assert profile.public_widget.voice_enabled is False
     active_sources = {
         source.id: source for source in profile.data_sources if source.status == "active"

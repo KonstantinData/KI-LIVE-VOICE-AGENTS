@@ -3,9 +3,10 @@
 ## Purpose and authority
 
 Olivia (`liquisto-assistant`) is Liquisto's internal assistant and secretary.
-She informs employees and prepares visible drafts, but has no execution or
-business-write authority. The runtime has no tools, no external web fallback,
-no contact/lead handoff, and no cross-tenant fallback.
+She informs employees and prepares visible drafts. Internal Voice has exactly
+one navigation function; neither channel has business-write authority. The
+runtime has no external web fallback, contact/lead handoff, generic browser
+control, or cross-tenant fallback.
 
 SCAS owns employee authentication and permission-filtered retrieval from
 Liquisto systems. It passes only bounded, request-local source items. This
@@ -68,9 +69,115 @@ API key remains server-side.
 
 `LIQUISTO_ASSISTANT_VOICE_ENABLED` is an independent kill switch and defaults
 to `false`. When enabled, readiness of the internal profile still requires an
-`internal-authenticated` audience, no tools, no handoff, and
-`public_widget.voice_enabled=false`. The provider session fixes `tools: []` and
-`tool_choice: none`. SCAS must never expose the service token to the browser.
+`internal-authenticated` audience, the exact singleton navigation tool, no
+handoff, and `public_widget.voice_enabled=false`. The provider session uses
+`tool_choice: auto` so Olivia can either answer normally or emit the single
+allowlisted navigation function. SCAS must never expose the service token to
+the browser.
+
+### Navigation wire contract v1.1
+
+The only Realtime function is `open_liquisto_destination`. The provider emits
+it through `response.function_call_arguments.done`. Its arguments are one exact
+JSON object with no additional root or parameter properties:
+
+```json
+{
+  "contract_version": "1.1",
+  "request_id": "req-voice-123",
+  "tenant_id": "liquisto",
+  "agent_id": "liquisto-assistant",
+  "source": "voice",
+  "intent": "navigate",
+  "destination_id": "crm.tasks",
+  "parameters": {}
+}
+```
+
+`destination_id` is exactly one of `workbench.cockpit`, `crm.overview`, or
+`crm.tasks`. No principal, URL, href, path, browser command, shell command,
+mutation, export, or create argument exists. Unknown or additional fields fail
+closed. The authenticated SCAS Workbench server derives `principal_id` from its
+employee session; model output is never identity authority.
+
+The eight model-controlled argument keys deliberately omit `call_id`. SCAS
+accepts only the provider event `response.function_call_arguments.done`,
+validates its event-level `call_id`, parses the exact tool arguments, and then
+constructs the same-origin transport envelope by adding that provider value:
+
+```json
+{
+  "contract_version": "1.1",
+  "request_id": "req-voice-123",
+  "call_id": "call-provider-123",
+  "tenant_id": "liquisto",
+  "agent_id": "liquisto-assistant",
+  "source": "voice",
+  "intent": "navigate",
+  "destination_id": "crm.tasks",
+  "parameters": {}
+}
+```
+
+Olivia cannot select, echo, or overwrite `call_id`.
+
+After an allowed destination resolves through the browser's local route map,
+the internal completion request has exactly six keys:
+
+```json
+{
+  "contract_version": "1.1",
+  "request_id": "req-voice-123",
+  "call_id": "call-provider-123",
+  "decision_id": "decision-123",
+  "destination_id": "crm.tasks",
+  "parameters": {}
+}
+```
+
+It contains no URL, principal, or model-controlled receipt value.
+
+The Workbench DataChannel handler forwards the semantic intent same-origin to
+SCAS `POST /api/assistant/navigation`. SCAS revalidates contract, Tenant, Agent,
+session, Origin, employee capability, and its explicit three-entry route
+allowlist. The browser never consumes a URL from Olivia and navigates only when
+an allowed `destination_id` resolves in its local map.
+
+SCAS returns the following exact object as `function_call_output`:
+
+```json
+{
+  "contract_version": "1.1",
+  "request_id": "req-voice-123",
+  "call_id": "call-provider-123",
+  "decision_id": "decision-123",
+  "tenant_id": "liquisto",
+  "agent_id": "liquisto-assistant",
+  "source": "voice",
+  "intent": "navigate",
+  "status": "allow",
+  "destination_id": "crm.tasks",
+  "parameters": {},
+  "reason_code": "allowed",
+  "decision_time": "2026-07-24T09:00:00Z",
+  "message": "Ich öffne die aktuellen Aufgaben."
+}
+```
+
+`status` is `allow` or `deny`. `reason_code` is one of `allowed`,
+`request-invalid`, `tenant-denied`, `agent-denied`, `destination-denied`,
+`session-denied`, `capability-denied`, or `authority-unavailable`. The Runtime
+defines and tests this type for contract alignment, but does not pretend to
+receive DataChannel events: SCAS is the decision, execution, and durable audit
+authority. Structurally unreadable JSON may return `problem+json` because
+request/call correlation is then unavailable.
+
+For every parseable navigation decision SCAS evidence must contain Tenant,
+server-bound principal, source, intent, destination ID, decision status and
+UTC decision time, plus request/call/decision correlation and reason code. Raw
+audio, transcripts, SDP, prompts, context content, secrets, and free URLs must
+not be persisted. The Runtime call log records only safe session metadata and
+`raw_audio_stored=false`; it does not claim that browser navigation occurred.
 
 SCAS checks Voice readiness through authenticated
 `GET /assistant/voice/readyz`. The endpoint fails closed when the service token
@@ -85,9 +192,20 @@ successful response is exactly:
   "tenant_id": "liquisto",
   "agent_id": "liquisto-assistant",
   "channel": "voice",
-  "voice_enabled": true
+  "voice_enabled": true,
+  "navigation_contract_version": "1.1",
+  "navigation_destinations": [
+    "workbench.cockpit",
+    "crm.overview",
+    "crm.tasks"
+  ]
 }
 ```
+
+The authenticated response has exactly these keys and the destination order is
+canonical. SCAS must hide Voice navigation when the attestation is absent or
+different. The endpoint remains service-token protected and is not a public
+readiness surface.
 
 ## Knowledge and systems
 
@@ -121,5 +239,14 @@ cannot expose her through the public Voice routes.
 
 Production accepts only `http://liquisto-assistant-llm:11434/v1`. Development
 and tests accept loopback `/v1` URLs. Cloud/provider fallback is rejected.
-Authenticated `GET /readyz` validates the Olivia registry contract, empty tool
-set, local configuration, and model availability before returning contract v2.
+Authenticated `GET /readyz` validates the Olivia registry contract, the exact
+singleton navigation tool, local configuration, and model availability before
+returning contract v2.
+
+## Navigation release gate
+
+Do not deploy this slice until the compatible SCAS DataChannel handler,
+same-origin navigation endpoint, server-bound employee principal, CRM read
+capability check, local three-entry route map, exact decision/audit contract,
+durable evidence retention, and joint runbook smoke tests are verified. A
+provider session alone is not a navigation implementation.
