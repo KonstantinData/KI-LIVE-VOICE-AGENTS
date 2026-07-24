@@ -1,0 +1,37 @@
+{
+  "contract_version": "1.0.0",
+  "tenant_id": "liquisto",
+  "scope_id": "liquisto-runtime-knowledge",
+  "chunks": [
+    {
+      "id": "liquisto-mission",
+      "category": "business-purpose",
+      "title": "Liquisto mission",
+      "content": "Liquisto transforms excess inventory through a one-stop platform for excess and shortage inventory optimization.",
+      "metadata": {
+        "source_ref": "user-approved-product-positioning",
+        "reviewed_at": "2026-07-24"
+      }
+    },
+    {
+      "id": "olivia-knowledge-boundary",
+      "category": "source-governance",
+      "title": "Olivia knowledge boundary",
+      "content": "Architecture, platform content, internal processes and system data are authoritative only when supplied from approved Liquisto sources with employee permission filtering, source labels and observation timestamps. Missing, stale, conflicting or unauthorized context must fail closed and must not be invented.",
+      "metadata": {
+        "source_ref": "registry/tenants/liquisto/tenant.json",
+        "reviewed_at": "2026-07-24"
+      }
+    },
+    {
+      "id": "olivia-action-boundary",
+      "category": "assistant-authority",
+      "title": "Olivia prepares but never executes",
+      "content": "Olivia may inform, summarize and prepare visible drafts for email, calendar, tasks, change proposals, briefings and notes. Every draft is non-executable. Olivia has no tools and may not write to CRM, Trade, inventory, offers, calendars, tasks, documents or external communication channels.",
+      "metadata": {
+        "source_ref": "registry/tenants/liquisto/tenant.json",
+        "reviewed_at": "2026-07-24"
+      }
+    }
+  ]
+}

@@ -89,6 +89,9 @@ def widget_config_from_profile(
             "retention_days": int(db_config.get("retention_days", 90)),
             "voice_enabled": bool(db_config.get("voice_enabled", False)),
             "upload_enabled": bool(db_config.get("upload_enabled", False)),
+            "contact_form_enabled": bool(
+                db_config.get("contact_form_enabled", True)
+            ),
         }
 
     widget = profile.public_widget
@@ -103,4 +106,5 @@ def widget_config_from_profile(
         "retention_days": widget.retention_days,
         "voice_enabled": widget.voice_enabled,
         "upload_enabled": widget.upload_enabled,
+        "contact_form_enabled": widget.contact_form_enabled,
     }

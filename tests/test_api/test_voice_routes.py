@@ -131,7 +131,7 @@ async def test_voice_session_rejects_disabled_tenant_agent(db_client, db_session
         "/voice/sessions/webrtc",
         json={
             "studio": "liquisto",
-            "agent_id": "liquisto-intake",
+            "agent_id": "liquisto-assistant",
             "visitor_id": "visitor-1",
             "client_sdp": "v=0",
             "consent_granted": True,
@@ -287,7 +287,7 @@ async def test_voice_tool_call_endpoint_is_disabled(db_client, db_session):
     )
 
     assert response.status_code == 410
-    assert response.json()["detail"] == "voice_tools_disabled_use_secure_contact_form"
+    assert response.json()["detail"] == "voice_tools_disabled"
 
 
 @pytest.mark.asyncio

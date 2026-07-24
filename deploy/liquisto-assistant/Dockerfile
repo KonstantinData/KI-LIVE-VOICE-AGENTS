@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements-liquisto-assistant.txt \
     && adduser --system --uid 10001 --ingroup runtime runtime
 
 COPY registry/tenants/liquisto/tenant.json ./registry/tenants/liquisto/tenant.json
+COPY registry/tenants/liquisto/knowledge ./registry/tenants/liquisto/knowledge
 COPY src ./src
 
 USER 10001:10001

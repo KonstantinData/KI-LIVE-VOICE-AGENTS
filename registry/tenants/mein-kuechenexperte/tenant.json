@@ -29,7 +29,8 @@
     "privacy_url": "/datenschutz",
     "retention_days": 90,
     "voice_enabled": true,
-    "upload_enabled": true
+    "upload_enabled": true,
+    "contact_form_enabled": true
   },
   "live_voice_agents": [
     {
@@ -101,7 +102,10 @@
         "read"
       ],
       "status": "active",
-      "sensitivity": "public"
+      "sensitivity": "public",
+      "system": "mein-kuechenexperte-website",
+      "required_permission": "website:read",
+      "allowed_classifications": ["public"]
     },
     {
       "id": "mein-kuechenexperte-private-uploads",
@@ -113,7 +117,10 @@
         "write"
       ],
       "status": "active",
-      "sensitivity": "restricted"
+      "sensitivity": "restricted",
+      "system": "mein-kuechenexperte-upload-storage",
+      "required_permission": "uploads:read",
+      "allowed_classifications": ["internal"]
     }
   ],
   "policy_bundle": [

@@ -16,18 +16,22 @@ export interface WidgetConfig {
   primaryColor: string;
   accentColor: string;
   agentName: string;
+  agentSubtitle: string;
   welcomeMessage: string;
   voiceEnabled: boolean;
   uploadEnabled: boolean;
+  contactFormEnabled: boolean;
   voiceConsentVersion: string;
 }
 
 interface RuntimeWidgetConfig {
   agent_name?: string;
+  agent_subtitle?: string;
   welcome_message?: string;
   primary_color?: string;
   voice_enabled?: boolean;
   upload_enabled?: boolean;
+  contact_form_enabled?: boolean;
 }
 
 function getScriptTag(): HTMLOrSVGScriptElement | null {
@@ -68,6 +72,7 @@ function loadConfigFromScript(script: HTMLOrSVGScriptElement | null): WidgetConf
   const apiUrl = script?.getAttribute('data-api') ?? getDefaultApiUrl();
   const voiceEnabled = explicitBooleanAttribute(script, 'data-voice-enabled', 'data-voice') ?? false;
   const uploadEnabled = explicitBooleanAttribute(script, 'data-upload-enabled', 'data-upload') ?? true;
+  const contactFormEnabled = explicitBooleanAttribute(script, 'data-contact-form-enabled') ?? true;
 
   return {
     studio: script?.getAttribute('data-studio') ?? 'default',
@@ -76,11 +81,13 @@ function loadConfigFromScript(script: HTMLOrSVGScriptElement | null): WidgetConf
     primaryColor: script?.getAttribute('data-color') ?? '#101921',
     accentColor: script?.getAttribute('data-accent-color') ?? '#FF9900',
     agentName: script?.getAttribute('data-agent') ?? 'KEA',
+    agentSubtitle: script?.getAttribute('data-agent-subtitle') ?? 'KI-Assistent',
     welcomeMessage:
       script?.getAttribute('data-welcome') ??
       'Hallo, ich bin KEA, der Küchen Expert Assistent von Mein Küchenexperte. Möchten Sie Ihr Küchenprojekt kurz einordnen?',
     voiceEnabled,
     uploadEnabled,
+    contactFormEnabled,
     voiceConsentVersion: script?.getAttribute('data-voice-consent-version') ?? 'voice-v1',
   };
 }
@@ -105,6 +112,7 @@ function mergeRuntimeConfig(
 ): WidgetConfig {
   const explicitVoice = explicitBooleanAttribute(script, 'data-voice-enabled', 'data-voice');
   const explicitUpload = explicitBooleanAttribute(script, 'data-upload-enabled', 'data-upload');
+  const explicitContactForm = explicitBooleanAttribute(script, 'data-contact-form-enabled');
   const useRuntimeTheme = script?.getAttribute('data-runtime-theme') === 'true';
 
   return {
@@ -117,6 +125,10 @@ function mergeRuntimeConfig(
       explicitAttribute(script, 'data-agent') ??
       runtime.agent_name ??
       base.agentName,
+    agentSubtitle:
+      explicitAttribute(script, 'data-agent-subtitle') ??
+      runtime.agent_subtitle ??
+      base.agentSubtitle,
     welcomeMessage:
       explicitAttribute(script, 'data-welcome') ??
       runtime.welcome_message ??
@@ -129,6 +141,10 @@ function mergeRuntimeConfig(
       explicitUpload ??
       runtime.upload_enabled ??
       base.uploadEnabled,
+    contactFormEnabled:
+      explicitContactForm ??
+      runtime.contact_form_enabled ??
+      base.contactFormEnabled,
   };
 }
 

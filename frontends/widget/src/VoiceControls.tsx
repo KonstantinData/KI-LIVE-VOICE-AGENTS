@@ -110,7 +110,7 @@ export function VoiceControls({
     {
       id: 'initial-greeting',
       role: 'assistant',
-      content: `Hallo, ich bin ${config.agentName}, der Küchen Expert Assistent von Mein Küchenexperte. Wie darf ich Sie hier im Chat ansprechen: per Du oder per Sie?`,
+      content: `Hallo, ich bin ${config.agentName}. Wie darf ich Sie hier im Chat ansprechen: per Du oder per Sie?`,
     },
   ]);
   const projectSummary = buildProjectSummary(voiceMessages);
@@ -167,7 +167,7 @@ export function VoiceControls({
   ) => {
     const normalized = content.trim();
     if (!normalized) return;
-    if (options.detectContactIntent !== false && !contactSubmitted && hasContactIntent(normalized)) {
+    if (config.contactFormEnabled && options.detectContactIntent !== false && !contactSubmitted && hasContactIntent(normalized)) {
       setShowContactForm(true);
     }
     setVoiceMessages((prev) => [
@@ -626,7 +626,7 @@ export function VoiceControls({
         <div ref={messagesEndRef} />
       </div>
 
-      {showContactForm && (
+      {config.contactFormEnabled && showContactForm && (
         <form className="voice-contact-form" onSubmit={submitContactForm}>
           <div className="voice-form-grid">
             <label>

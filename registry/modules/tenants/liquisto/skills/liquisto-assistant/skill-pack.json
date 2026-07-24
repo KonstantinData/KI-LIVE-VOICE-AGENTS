@@ -1,0 +1,63 @@
+{
+  "contract_version": "0.2.0",
+  "id": "liquisto-assistant",
+  "tenant_id": "liquisto",
+  "display_name": "Olivia",
+  "status": "active",
+  "task_types": [
+    "inform",
+    "summarize",
+    "prepare-draft"
+  ],
+  "required_capabilities": [
+    "tenant-bound-read",
+    "permission-filtered-context",
+    "voice-conversation",
+    "non-executable-drafts"
+  ],
+  "ui_binding": {
+    "surface_ids": [
+      "cockpit",
+      "crm",
+      "trade",
+      "control"
+    ],
+    "entrypoint_label": "Olivia fragen",
+    "confirmation_required": false,
+    "grants_runtime_authority": false
+  },
+  "composition": {
+    "selection_path": "tenant-registry-policy-profile",
+    "candidate_modules": [],
+    "policies": [
+      "strict-tenant-isolation",
+      "internal-authentication-required",
+      "principal-permission-filtering-required",
+      "read-only",
+      "draft-only",
+      "no-execution",
+      "no-runtime-tools",
+      "no-contact-handoff"
+    ],
+    "validators": [
+      "tenant-profile-validator",
+      "internal-principal-validator",
+      "source-authorization-validator",
+      "assistant-contract-validator"
+    ],
+    "requires_immutable_runtime_profile": true
+  },
+  "audit_evidence": {
+    "required_fields": [
+      "tenant_id",
+      "principal_id",
+      "agent_profile_id",
+      "request_id",
+      "source_ids",
+      "source_observed_at",
+      "permission_ids",
+      "prepared_action_count"
+    ],
+    "retention_plane": "hetzner-runtime-plane"
+  }
+}

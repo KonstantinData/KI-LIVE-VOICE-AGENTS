@@ -1,111 +1,125 @@
-# Liquisto Lotse Internal Runtime
+# Olivia internal runtime
 
-## Purpose
+## Purpose and authority
 
-`Liquisto Lotse` is an internal, tenant-scoped text assistant for the Liquisto
-Cockpit, CRM, Trade, and Control surfaces. It is not a browser widget and it is
-not a Live Voice Agent. The only integration path is an authenticated
-service-to-service HTTP request.
+Olivia (`liquisto-assistant`) is Liquisto's internal assistant and secretary.
+She informs employees and prepares visible drafts, but has no execution or
+business-write authority. The runtime has no tools, no external web fallback,
+no contact/lead handoff, and no cross-tenant fallback.
 
-The runtime is analysis-only:
+SCAS owns employee authentication and permission-filtered retrieval from
+Liquisto systems. It passes only bounded, request-local source items. This
+runtime validates the exact v2 contract, treats context as data, calls only the
+configured local provider, and never persists raw request context.
 
-- no runtime tools;
-- no CRM, Trade, Control, or other writes;
-- no external web access;
-- no fallback to the generic OpenAI settings or cloud endpoint;
-- no storage of prompts or raw request-context snapshots;
-- no cross-tenant registry, prompt, knowledge, identity, or consent fallback.
-
-## Request contract
+## Request contract v2
 
 `POST /assistant/respond` requires
-`Authorization: Bearer <LIQUISTO_ASSISTANT_SERVICE_TOKEN>` and this exact body:
+`Authorization: Bearer <LIQUISTO_ASSISTANT_SERVICE_TOKEN>`:
 
 ```json
 {
-  "contract_version": "1.0",
+  "contract_version": "2.0",
   "tenant_id": "liquisto",
   "area_id": "liquisto",
-  "agent_id": "liquisto-lotse",
+  "agent_id": "liquisto-assistant",
   "request_id": "req-123",
   "principal_id": "user-123",
   "conversation_id": null,
-  "prompt": "Welche Abweichung soll ich zuerst prüfen?",
+  "prompt": "Bereite eine kurze Aufgabenliste vor.",
   "surface": "cockpit",
-  "mode": "analysis-only",
-  "context": [
-    {
-      "source_id": "source-a",
-      "label": "Betriebslage",
-      "content": "Lieferstatus weicht vom bestätigten Termin ab."
-    }
-  ]
+  "mode": "inform-and-prepare",
+  "context": [{
+    "source_id": "crm-open-tasks",
+    "label": "Liquisto CRM: offene Aufgaben",
+    "system": "liquisto-crm",
+    "permission": "crm:read",
+    "observed_at": "2026-07-24T08:00:00+02:00",
+    "classification": "internal",
+    "content": "Lieferstatus weicht vom bestätigten Termin ab."
+  }]
 }
 ```
 
-`surface` is one of `cockpit`, `crm`, `trade`, or `control`. Context is bounded
-to 12 entries, 4,000 characters per entry, and 20,000 aggregate content characters. Identifiers are
-limited to 200 characters and source identifiers must be unique. Unknown fields and contract,
-tenant, area, agent, mode, or surface mismatches fail closed.
+Surfaces are `cockpit`, `crm`, `trade`, or `control`. Context is limited to 12
+items, 4,000 characters per item, and 20,000 aggregate content characters.
+Source identifiers must be unique, timestamps timezone-aware, and unknown fields
+fail closed.
 
-The normalized prompt must contain 2 to 1,200 characters.
+## Response and prepared actions
 
-## Response contract
+The response uses mode `inform-and-prepare` and answer mode `analysis-only`.
+`prepared_actions` contains zero to eight ephemeral drafts. Each draft is
+strictly `authority_mode: draft-only` and `execution_status: not-executable`,
+must reference only source IDs supplied in the request, and includes its full
+preview, target system, expected effect, risks, and missing information.
+
+There is deliberately no apply, approve, command, or execution endpoint.
+
+## Internal Voice broker
+
+Olivia has a dedicated Live Voice prompt with no foreign tenant persona,
+end-customer intake, handoff, or public-site legal script. The public widget
+remains disabled. SCAS uses the service-token-authenticated
+`POST /assistant/voice/calls` v2 broker and passes the authenticated employee's
+`principal_id`, surface, address mode, bounded authorized context, and browser
+SDP. The runtime returns only the SDP answer and safe call metadata; the OpenAI
+API key remains server-side.
+
+`LIQUISTO_ASSISTANT_VOICE_ENABLED` is an independent kill switch and defaults
+to `false`. When enabled, readiness of the internal profile still requires an
+`internal-authenticated` audience, no tools, no handoff, and
+`public_widget.voice_enabled=false`. The provider session fixes `tools: []` and
+`tool_choice: none`. SCAS must never expose the service token to the browser.
+
+SCAS checks Voice readiness through authenticated
+`GET /assistant/voice/readyz`. The endpoint fails closed when the service token
+is missing or invalid, the Voice kill switch is off, the server-side OpenAI key
+is missing, or the immutable internal Voice registry profile is invalid. A
+successful response is exactly:
 
 ```json
 {
-  "contract_version": "1.0",
-  "request_id": "req-123",
-  "response_id": "resp_...",
-  "conversation_id": "conv_...",
-  "mode": "analysis-only",
-  "answer": "...",
-  "sources": [
-    {"source_id": "source-a", "label": "Betriebslage"}
-  ]
+  "contract_version": "2.0",
+  "status": "ready",
+  "tenant_id": "liquisto",
+  "agent_id": "liquisto-assistant",
+  "channel": "voice",
+  "voice_enabled": true
 }
 ```
 
-If `conversation_id` is supplied, it is echoed. Otherwise the stateless runtime
-creates an identifier for response correlation. It does not persist a
-conversation or raw request context.
+## Knowledge and systems
 
-Answers are limited to 6,000 characters. Oversized provider output fails closed
-and is never silently truncated.
+The registry contains a small, reviewed baseline used by both Olivia text and
+Voice prompts. Complete architecture,
+platform content, processes, and internal-system data stay in their authoritative
+systems. SCAS must retrieve them read-only, apply the signed-in employee's
+permissions and purpose, and attach system, permission, classification, source,
+and observation metadata. Missing or unknown authorization fails closed.
 
-## Local provider policy
+The runtime additionally validates every text and Voice context item against
+the tenant registry. A source is usable only when its `source_id` is active and
+its `system`, `required_permission`, classification, tenant, and read-only
+access mode match exactly. The active v2 allowlist is:
 
-The runtime uses a minimal OpenAI-compatible `/chat/completions` adapter. It
-does not instantiate the repository's cloud `LLMClient`.
+- `liquisto-business-purpose`: `liquisto-tenant-registry`, `tenant:read`, public;
+- `crm-companies`: `liquisto-crm`, `crm:read`, internal;
+- `crm-deals`: `liquisto-crm`, `crm:read`, internal;
+- `crm-open-tasks`: `liquisto-crm`, `crm:read`, internal.
 
-Required environment variables:
+Architecture, platform content, processes, website, Trade, Control, Documents,
+and Integrations sources are registered as `planned`. They fail closed until a
+separate review activates their exact source contract. A prompt or SCAS payload
+cannot activate a planned or unknown source.
 
-- `LIQUISTO_ASSISTANT_SERVICE_TOKEN`
-- `LIQUISTO_ASSISTANT_LLM_BASE_URL`
-- `LIQUISTO_ASSISTANT_LLM_MODEL`
+The public widget Voice path additionally requires an agent audience of
+`public`. Olivia is `internal-authenticated`, so changing a widget feature flag
+cannot expose her through the public Voice routes.
 
-Production accepts only
-`http://liquisto-assistant-llm:11434/v1`. Development and tests accept only
-`http://localhost:<port>/v1`, `http://127.0.0.1:<port>/v1`, or the IPv6 loopback
-equivalent. Credentials, query strings, fragments, HTTPS cloud hosts, other
-service names, and paths other than `/v1` are rejected.
+## Local provider and readiness
 
-The service token must be non-empty and must not contain whitespace. It is
-compared exactly and is never trimmed.
-
-Only request identifiers, response identifiers, surface, and source count are
-logged. Prompt text and context contents are not logged or persisted.
-
-## Health contracts
-
-- Unauthenticated `GET /healthz`: exact body `{"status":"ok"}`.
-- Bearer-authenticated `GET /readyz`: validates configuration and local model
-  availability, then returns the exact contract documented in the deployment
-  runbook.
-
-The production container uses `src.api.liquisto_assistant_main:app`, which
-registers only these health endpoints and `/assistant/respond`.
-
-SCAS reaches the runtime only over the isolated external Docker network
-`liquisto-assistant`, using the exact endpoint
-`http://liquisto-local-assistant:8080/assistant/respond`.
+Production accepts only `http://liquisto-assistant-llm:11434/v1`. Development
+and tests accept loopback `/v1` URLs. Cloud/provider fallback is rejected.
+Authenticated `GET /readyz` validates the Olivia registry contract, empty tool
+set, local configuration, and model availability before returning contract v2.

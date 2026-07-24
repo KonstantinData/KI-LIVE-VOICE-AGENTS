@@ -80,7 +80,8 @@
         "privacy_url",
         "retention_days",
         "voice_enabled",
-        "upload_enabled"
+        "upload_enabled",
+        "contact_form_enabled"
       ],
       "properties": {
         "agent_name": { "type": "string", "minLength": 1 },
@@ -89,7 +90,8 @@
         "privacy_url": { "type": "string", "minLength": 1 },
         "retention_days": { "type": "integer", "minimum": 1 },
         "voice_enabled": { "type": "boolean" },
-        "upload_enabled": { "type": "boolean" }
+        "upload_enabled": { "type": "boolean" },
+        "contact_form_enabled": { "type": "boolean" }
       }
     },
     "liveVoiceAgent": {
@@ -108,8 +110,7 @@
         "knowledge_scopes",
         "data_scopes",
         "policies",
-        "validators",
-        "contact_handoff"
+        "validators"
       ],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
@@ -125,6 +126,11 @@
         "data_scopes": { "$ref": "#/$defs/idArray" },
         "policies": { "$ref": "#/$defs/idArray" },
         "validators": { "$ref": "#/$defs/idArray" },
+        "audience": {
+          "type": "string",
+          "enum": ["public", "internal-authenticated"],
+          "default": "public"
+        },
         "contact_handoff": {
           "type": "object",
           "additionalProperties": false,
@@ -179,7 +185,7 @@
         },
         "allowed_modes": {
           "type": "array",
-          "items": { "type": "string", "const": "analysis-only" },
+          "items": { "type": "string", "const": "inform-and-prepare" },
           "minItems": 1,
           "uniqueItems": true
         },
@@ -216,7 +222,7 @@
     "dataSource": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "tenant_id", "type", "display_name", "access_modes", "status", "sensitivity"],
+      "required": ["id", "tenant_id", "type", "display_name", "access_modes", "status", "sensitivity", "system", "required_permission", "allowed_classifications"],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "tenant_id": { "$ref": "#/$defs/id" },
@@ -229,7 +235,15 @@
           "uniqueItems": true
         },
         "status": { "type": "string", "enum": ["planned", "active", "disabled", "archived"] },
-        "sensitivity": { "type": "string", "enum": ["public", "internal", "confidential", "restricted"] }
+        "sensitivity": { "type": "string", "enum": ["public", "internal", "confidential", "restricted"] },
+        "system": { "$ref": "#/$defs/id" },
+        "required_permission": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:read$" },
+        "allowed_classifications": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["public", "internal"] },
+          "minItems": 1,
+          "uniqueItems": true
+        }
       }
     }
   }

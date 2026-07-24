@@ -7,7 +7,7 @@ from src.api.routes import assistant
 
 app = FastAPI(
     title="Liquisto Assistant Runtime",
-    version="1.0.0",
+    version="2.0.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
