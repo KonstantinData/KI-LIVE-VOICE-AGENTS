@@ -6,12 +6,13 @@
     {
       "id": "studio-positioning",
       "category": "studio",
-      "title": "Studio-Profil",
-      "content": "Mein Kuechenexperte ist der Tenant hinter dem KEA Widget. KEA hilft Website-Besuchern dabei, ihr Kuechenprojekt einzuordnen, erste Anforderungen zu sammeln und den naechsten sinnvollen Schritt vorzubereiten. Nicht belegte Stammdaten wie genaue Adresse, Telefonnummer, konkrete Oeffnungszeiten oder aktuelle Aktionen duerfen nicht erfunden werden.",
+      "title": "Unabhängige Planung mit Konstantin Milonas",
+      "content": "Mein Küchenexperte bietet unabhängige Küchenplanung und ergänzende Möbellösungen für angrenzende Wohnbereiche. Konstantin Milonas ist der persönliche Ansprechpartner; die Beratung ist unabhängig vom Möbelverkauf und bindet Sie nicht an ein bestimmtes Küchenstudio. Laut Website bringt er mehr als 25 Jahre Berufserfahrung und Erfahrung aus über 1.200 realisierten Küchenprojekten mit. Herstellerbilder dienen als Inspiration und sind keine eigenen Kundenreferenzen. Nicht belegte Telefonnummern, Öffnungszeiten oder aktuelle Aktionen werden nicht zugesagt.",
       "metadata": {
         "locale": "de-DE",
         "sensitivity": "public",
-        "source": "tenant-registry"
+        "source": "https://mein-kuechenexperte.de/ueber-uns",
+        "verified_at": "2026-09-27"
       }
     },
     {
@@ -40,11 +41,99 @@
       "id": "kitchen-offer-guidance",
       "category": "sortiment",
       "title": "Angebotsorientierung",
-      "content": "KEA darf bei Angebotsfragen erklaeren, welche Faktoren Preis und Planung beeinflussen: Raumgroesse, Hersteller, Fronten, Arbeitsplatte, Geraete, Montage, Anschluesse, Lieferzeit und Sonderwuensche. Konkrete Preise, Rabatte oder Liefertermine duerfen nur genannt werden, wenn sie ausdruecklich im Knowledge-Bereich gepflegt sind.",
+      "content": "Eine bestehende Planung, ein Angebot oder eine einzelne Kaufentscheidung kann unabhängig geprüft werden. Verglichen werden die vereinbarten Aspekte von Möbeln, Geräten, Materialien und enthaltenen Leistungen nach Funktion, Bedienung, Pflege und Alltagstauglichkeit. Fehlende Angaben und offene Fragen an das Küchenstudio werden sichtbar. Eine Zweitmeinung erfordert keine vollständige Neuplanung; eine Umplanung gehört nur bei ausdrücklicher Vereinbarung dazu. Es gibt keine Rechtsberatung, Marktpreis- oder Einspargarantie und keine technische Freigabe.",
       "metadata": {
         "locale": "de-DE",
         "sensitivity": "public",
-        "source": "tenant-registry"
+        "source": "https://mein-kuechenexperte.de/angebot_und_planung_pruefen",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "service-pricing",
+      "category": "faq",
+      "title": "Honorar und kostenloses Vorgespräch",
+      "content": "Das Vorgespräch ist kostenlos und dient dem Kennenlernen sowie der Klärung Ihres Planungsstands und Beratungsbedarfs. Es enthält keine individuelle Planung, fachliche Prüfung oder einen eigenen Küchen-Check. Anschließend erhalten Sie ein individuelles Angebot mit klarer Aufgabe, vereinbarten Ergebnissen und transparentem Gesamtpreis. Einen pauschalen Einstiegspreis gibt es derzeit nicht. Aufgabe, Varianten, Unterlagen und Abstimmungsbedarf bestimmen das Honorar. Zusätzliche Leistungen beginnen erst nach Ihrer Zustimmung zu Umfang und Preis. Die auf der Website genannten etwa 20.000 Euro beziehen sich auf ein beispielhaftes Küchenprojekt, nicht auf ein Mindestbudget oder das Beratungshonorar.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/preise",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "planning-services",
+      "category": "sortiment",
+      "title": "Küche und angrenzende Räume",
+      "content": "Konstantin Milonas plant Küchen und auf Wunsch passende Möbellösungen für Esszimmer, Wohnbereiche, Hauswirtschaftsräume, Vorratsräume und Backkitchens. Auch Ankleiden, Sideboards und Wohnwände aus geeigneten Küchenmöbelprogrammen sind möglich. Dabei werden Stauraum, Arbeitsflächen, Laufwege, Materialien und Proportionen auf Ihre Nutzung abgestimmt. Eine Backkitchen kann ein Nebenraum oder eine kompakte zusätzliche Arbeitszone für Vorbereitung, Geräte oder Vorräte sein. Sie können eine einzelne Frage oder mehrere Räume bearbeiten lassen. Umfang, Zeichnungen, Ansichten und Varianten werden vorab vereinbart.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/fachplanung",
+        "sources": "https://mein-kuechenexperte.de/wohnen; https://mein-kuechenexperte.de/esszimmer; https://mein-kuechenexperte.de/hauswirtschaftsraum; https://mein-kuechenexperte.de/vorratsraum; https://mein-kuechenexperte.de/backkitchen",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "service-boundaries",
+      "category": "faq",
+      "title": "Zuständigkeiten und Leistungsgrenzen",
+      "content": "Die Leistung umfasst unabhängige Planung und Entscheidungsberatung. Bestellung, Lieferung, Montage und Abnahme vereinbaren Sie mit den beauftragten Unternehmen; eine dauerhafte Projektbegleitung wird nicht angeboten. Planungsunterlagen dienen der Entscheidungsvorbereitung und sind nicht zur direkten Ausführung bestimmt. Endgültige Maße, Anschlussausführung, Belüftung und technische Freigaben prüfen die verantwortlichen Anbieter und Fachleute. Architektur, Statik sowie Elektro- und Sanitärfachplanung gehören nicht zur Leistung.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/faq",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "public-contact",
+      "category": "studio",
+      "title": "Kontakt und nächster Schritt",
+      "content": "Sie erreichen Konstantin Milonas über kontakt@mein-kuechenexperte.de oder das Kontaktformular unter https://mein-kuechenexperte.de/kontakt. Dort können Sie auch ein kostenloses Vorgespräch anfragen; im Formular ist es mit 15 Minuten bezeichnet. Beschreiben Sie kurz die gewünschten Räume, Ihre Wünsche und Ihren bisherigen Planungsstand. Konstantin meldet sich persönlich, um den nächsten Schritt zu klären. Ob ein Termin online oder vor Ort stattfindet, klären Sie bitte direkt mit ihm; dazu kann ich keine feste Zusage machen.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/kontakt",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "project-documents",
+      "category": "faq",
+      "title": "Unterlagen für Ihr Vorhaben",
+      "content": "Für das Vorgespräch brauchen Sie noch keine fertige Planung. Erste Ideen, Fotos oder eine kurze Beschreibung Ihrer Situation reichen zum Kennenlernen. Für Neubau und Renovierung helfen vorhandene Grundrisse, Raummaße, Fotos, Wünsche und ein Budgetrahmen. Für eine Angebotsüberprüfung können Planungszeichnungen, Angebote, Gerätebezeichnungen und Gesprächsnotizen nützlich sein. Welche Unterlagen für die bezahlte Aufgabe benötigt werden, wird vorher geklärt. Kundenseitige Maße ersetzen kein endgültiges Aufmaß. Unterlagen laden Sie erst nach Freigabe über den vorgesehenen Upload-Prozess hoch.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/faq",
+        "sources": "https://mein-kuechenexperte.de/neubau; https://mein-kuechenexperte.de/renovierung; https://mein-kuechenexperte.de/orientierung; https://mein-kuechenexperte.de/angebot_und_planung_pruefen",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "consultation-process",
+      "category": "faq",
+      "title": "So beginnt die Zusammenarbeit",
+      "content": "Zuerst lernen Sie Konstantin Milonas im kostenlosen Vorgespräch kennen und klären gemeinsam Ihren Beratungsbedarf. Danach erhalten Sie ein individuelles Angebot mit Aufgabe, Ergebnis und Gesamtpreis. Erst nach Ihrer Beauftragung beginnt die fachliche Arbeit. Das Ergebnis kann beispielsweise ein Küchenentwurf, eine begründete Zweitmeinung oder ein nachvollziehbarer Varianten- und Materialvergleich sein. Weitere Varianten, Visualisierungen oder Termine werden nur bei Bedarf und nach Ihrer Zustimmung ergänzt. Sie bleiben bei der Wahl Ihres Küchenstudios frei.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/faq",
+        "verified_at": "2026-09-27"
+      }
+    },
+    {
+      "id": "project-types",
+      "category": "sortiment",
+      "title": "Neubau, Renovierung, Orientierung und Angebotsprüfung",
+      "content": "Im Neubau werden Küche, Essplatz und Nebenräume früh im Grundriss betrachtet; offene Anforderungen werden für die Abstimmung mit Architektur und Fachplanung festgehalten. Bei Renovierung und Sanierung stehen Bestand, gewünschte Veränderungen und zu erhaltende Elemente im Mittelpunkt. Erste Orientierung hilft, Wünsche und Prioritäten zu ordnen und den nächsten Planungsschritt vorzubereiten. Die Angebotsüberprüfung liefert eine unabhängige zweite Meinung zu vorhandenen Entwürfen, Angeboten oder einzelnen Entscheidungen. Bauliche Eingriffe und technische Freigaben bleiben Aufgabe der zuständigen Fachleute.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "source": "https://mein-kuechenexperte.de/",
+        "sources": "https://mein-kuechenexperte.de/neubau; https://mein-kuechenexperte.de/renovierung; https://mein-kuechenexperte.de/orientierung; https://mein-kuechenexperte.de/angebot_und_planung_pruefen",
+        "verified_at": "2026-09-27"
       }
     },
     {

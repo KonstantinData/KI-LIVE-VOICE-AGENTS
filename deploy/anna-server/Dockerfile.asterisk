@@ -1,0 +1,22 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends software-properties-common ca-certificates \
+    && add-apt-repository -y universe \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends asterisk gettext-base \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY deploy/anna-server/asterisk/pjsip.conf.template /etc/asterisk/pjsip.conf.template
+COPY deploy/anna-server/asterisk/extensions.conf /etc/asterisk/extensions.conf
+COPY deploy/anna-server/asterisk/rtp.conf /etc/asterisk/rtp.conf
+COPY deploy/anna-server/asterisk/entrypoint.sh /entrypoint.sh
+RUN rm -f /etc/asterisk/pjsip.conf \
+    && install -o asterisk -g asterisk -m 0600 /dev/null /etc/asterisk/pjsip.conf \
+    && chmod 0755 /entrypoint.sh
+
+USER asterisk:asterisk
+
+ENTRYPOINT ["/entrypoint.sh"]

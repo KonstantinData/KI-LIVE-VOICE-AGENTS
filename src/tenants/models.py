@@ -82,6 +82,49 @@ class LiveVoiceAgentProfile(StrictModel):
         return self
 
 
+class PhoneAgentProfile(StrictModel):
+    """Explicit opt-in for an inbound telephone agent, separate from browser voice."""
+
+    id: str = Field(pattern=r"^[a-z][a-z0-9-]*$")
+    agent_type: Literal["phone-assistant"] = "phone-assistant"
+    display_name: str = Field(min_length=1)
+    prompt_profile: str = Field(pattern=r"^[a-z][a-z0-9-]*$")
+    enabled: bool = False
+    adapter: Literal["fritzbox-sip"]
+    model: str = Field(min_length=1)
+    voice: str = Field(min_length=1)
+    greeting: str = Field(min_length=1)
+    max_call_seconds: int = Field(default=600, ge=30, le=1800)
+    knowledge_scopes: tuple[str, ...] = ()
+    tools: tuple[Literal["submit_phone_contact_handoff"], ...] = ()
+    data_scopes: tuple[str, ...] = ()
+    policies: tuple[str, ...] = ()
+    validators: tuple[str, ...] = ()
+    contact_handoff: ContactHandoffPolicy | None = None
+    store_audio: Literal[False] = False
+    store_transcript: Literal[False] = False
+
+    @model_validator(mode="after")
+    def validate_contact_handoff(self) -> "PhoneAgentProfile":
+        """Keep telephone PII collection behind one explicit, consent-gated grant."""
+        enabled = "submit_phone_contact_handoff" in self.tools
+        if enabled != (self.contact_handoff is not None):
+            raise ValueError("Phone contact tool and handoff policy must be configured together")
+        if enabled:
+            assert self.contact_handoff is not None
+            required = {
+                "tenant-crm-handoff-write",
+                "phone-contact-data-write",
+            }
+            if not required.issubset(self.data_scopes):
+                raise ValueError("Phone contact handoff requires explicit data scopes")
+            if self.contact_handoff.secure_form_required:
+                raise ValueError("Telephone handoff cannot require a browser form")
+            if not self.contact_handoff.voice_pii_collection_allowed:
+                raise ValueError("Telephone contact handoff requires voice PII permission")
+        return self
+
+
 class AssistantAgentProfile(StrictModel):
     """Tenant-selected internal text assistant profile."""
 
@@ -143,11 +186,30 @@ class TenantProfile(StrictModel):
     public_widget: PublicWidgetProfile
     live_voice_agents: tuple[LiveVoiceAgentProfile, ...]
     assistant_agents: tuple[AssistantAgentProfile, ...] = ()
+    phone_agents: tuple[PhoneAgentProfile, ...] = ()
     upload_policy: UploadPolicy | None = None
     knowledge: ScopeConfig | None = None
     data_sources: tuple[DataSource, ...] = ()
     policy_bundle: tuple[str, ...]
     validators: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def validate_phone_agent_ids(self) -> "TenantProfile":
+        """Phone identities cannot alias browser agents or each other."""
+        other_ids = {agent.id for agent in (*self.live_voice_agents, *self.assistant_agents)}
+        phone_ids = [agent.id for agent in self.phone_agents]
+        if len(phone_ids) != len(set(phone_ids)) or other_ids.intersection(phone_ids):
+            raise ValueError("Phone agent IDs must be unique and separate from other channels")
+        return self
+
+    def phone_agent(self, agent_id: str) -> PhoneAgentProfile:
+        """Requires an active tenant and an explicitly enabled phone identity."""
+        if not self.is_active:
+            raise ValueError("Tenant is not active")
+        for agent in self.phone_agents:
+            if agent.id == agent_id and agent.enabled:
+                return agent
+        raise ValueError("Unknown or disabled phone agent")
 
     @property
     def is_active(self) -> bool:

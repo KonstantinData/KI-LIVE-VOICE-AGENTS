@@ -1,0 +1,5 @@
+# Keep personal-account tokens and operation history isolated during migration.
+services:
+  anna-calendar:
+    volumes:
+      - /var/lib/anna-calendar-business:/var/lib/anna-calendar

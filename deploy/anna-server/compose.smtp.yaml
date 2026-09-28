@@ -1,0 +1,7 @@
+# Opt-in owner notifications. Never commit the host credential file.
+services:
+  anna:
+    environment:
+      ANNA_DIRECT_SMTP: "true"
+    volumes:
+      - /etc/anna/smtp.env:/run/secrets/anna_smtp:ro

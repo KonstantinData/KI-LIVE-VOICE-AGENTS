@@ -56,7 +56,8 @@ NODES: dict[str, FlowNode] = {
     START_NODE: FlowNode(
         id=START_NODE,
         text=(
-            "Willkommen! Ich bin KEA. Ich helfe Ihnen, Ihre Küchensituation "
+            "Willkommen! Ich bin KEA. Ich helfe Ihnen, Ihr Vorhaben für Küche "
+            "und angrenzende Wohnräume "
             "besser einzuordnen, damit Sie den nächsten Schritt sicherer "
             "entscheiden können. Worum geht es bei Ihnen gerade?"
         ),

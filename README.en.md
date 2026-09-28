@@ -222,3 +222,8 @@ The widget production build aliases React to Preact Compat so the bundled `loade
 This project is being developed by **Konstantin** as part of building [mein-kuechenexperte.de](https://www.mein-kuechenexperte.de).
 
 Questions, feedback, or interested in collaboration? → GitHub Issues or directly via email.
+# Optional telephone assistant: Anna
+
+Anna is the dedicated phone agent for tenant `mein-kuechenexperte`. The optional
+local FRITZ!Box worker connects SIP calls to her Realtime voice session. KEA and
+Olivia retain their existing channels. See [setup and limits](deploy/anna/README.md).

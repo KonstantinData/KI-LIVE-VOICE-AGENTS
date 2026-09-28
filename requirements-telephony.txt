@@ -1,0 +1,7 @@
+# Optional local telephone worker; does not change the API server installation.
+pyVoIP==1.6.8
+websockets>=14,<16
+pydantic>=2.10,<3
+python-dotenv>=1.0,<2
+httpx>=0.28,<1
+audioop-lts>=0.2.1; python_version >= "3.13"

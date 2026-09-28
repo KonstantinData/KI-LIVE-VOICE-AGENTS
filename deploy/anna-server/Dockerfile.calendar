@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements-calendar.txt .
+RUN pip install --no-cache-dir -r requirements-calendar.txt && useradd --uid 10003 --no-create-home calendar
+COPY src/agents/anna/calendar /app/src/agents/anna/calendar
+COPY src/telephony/mail.py /app/src/telephony/mail.py
+COPY deploy/anna-server/calendar-smoke.py /app/calendar-smoke.py
+COPY deploy/anna-server/calendar-cleanup-test-events.py /app/calendar-cleanup-test-events.py
+USER 10003:10003
+CMD ["python", "-m", "uvicorn", "src.agents.anna.calendar.app:app", "--host", "0.0.0.0", "--port", "8735", "--no-access-log"]

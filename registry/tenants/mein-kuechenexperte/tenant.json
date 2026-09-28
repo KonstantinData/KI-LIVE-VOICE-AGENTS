@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.1.0",
+  "contract_version": "0.3.0",
   "tenant_id": "mein-kuechenexperte",
   "studio_slug": "mein-kuechenexperte",
   "display_name": "Mein Küchenexperte",
@@ -75,6 +75,44 @@
         "contact_endpoint": "https://mein-kuechenexperte.de/agent-lead-webhook",
         "usage_endpoint": "https://mein-kuechenexperte.de/agent-usage-webhook"
       }
+    }
+  ],
+  "phone_agents": [
+    {
+      "id": "anna-phone-assistant",
+      "agent_type": "phone-assistant",
+      "display_name": "Anna",
+      "prompt_profile": "mein-kuechenexperte-phone-intake",
+      "enabled": true,
+      "adapter": "fritzbox-sip",
+      "model": "gpt-realtime-1.5",
+      "voice": "marin",
+      "greeting": "Willkommen bei Mein Küchenexperte. Ich bin Anna, Ihre KI-Telefonassistentin. Wie kann ich Ihnen helfen?",
+      "max_call_seconds": 600,
+      "knowledge_scopes": ["mein-kuechenexperte-anna-knowledge"],
+      "tools": ["submit_phone_contact_handoff"],
+      "data_scopes": [
+        "tenant-crm-handoff-write",
+        "phone-contact-data-write"
+      ],
+      "policies": [
+        "explicit-contact-and-transcript-consent",
+        "purpose-limited-phone-handoff",
+        "no-raw-audio-storage"
+      ],
+      "validators": [
+        "phone-contact-handoff-validator",
+        "voice-consent-validator"
+      ],
+      "contact_handoff": {
+        "secure_form_required": false,
+        "voice_pii_collection_allowed": true,
+        "crm_target": "mein-kuechenexperte",
+        "contact_endpoint": "https://mein-kuechenexperte.de/anna-voice-handoff",
+        "usage_endpoint": "https://mein-kuechenexperte.de/agent-usage-webhook"
+      },
+      "store_audio": false,
+      "store_transcript": false
     }
   ],
   "upload_policy": {

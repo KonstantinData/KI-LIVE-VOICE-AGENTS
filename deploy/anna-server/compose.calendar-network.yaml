@@ -1,0 +1,12 @@
+# Production activation overlay for the isolated calendar project.
+# Keep the loopback management port; expose calendar tools only on Anna's network.
+services:
+  anna-calendar:
+    networks:
+      - default
+      - anna-phone
+
+networks:
+  anna-phone:
+    external: true
+    name: anna-server_anna-phone

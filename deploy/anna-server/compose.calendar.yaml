@@ -1,0 +1,20 @@
+# Standalone sidecar: does not recreate ANNA, Asterisk, or KEA.
+services:
+  anna-calendar:
+    build:
+      context: ../..
+      dockerfile: deploy/anna-server/Dockerfile.calendar
+    env_file: /etc/anna/calendar.env
+    environment:
+      ANNA_DIRECT_SMTP: "true"
+      ANNA_CALENDAR_DATA_DIR: /var/lib/anna-calendar
+    ports: ["127.0.0.1:8735:8735"]
+    volumes:
+      - /var/lib/anna-calendar:/var/lib/anna-calendar
+      - /etc/anna/smtp.env:/run/secrets/anna_smtp:ro
+    read_only: true
+    group_add: ["10002"]
+    tmpfs: ["/tmp:size=16m,noexec,nosuid"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped

@@ -19,6 +19,7 @@ from src.api.services.kea_text_flow_nodes import NODES, START_NODE, SUMMARY_NODE
 from src.api.services.kea_text_flow_nodes import FlowChoice, FlowNode, FlowResponse, choice
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
+from src.tenants.knowledge import get_tenant_knowledge_for_studio
 
 
 class KeaTextFlow:
@@ -76,13 +77,33 @@ class KeaTextFlow:
 
     def _global_intent(self, text: str) -> FlowNode | None:
         lower = text.lower()
+        # Answer website questions before generic upload/contact keyword routing.
+        website_topics = (
+            ("service-pricing", ("preis", "kosten", "kostet", "honorar", "paket", "strategie-check", "strategie check", "quick-check", "quick check", "kostenlos", "gratis")),
+            ("service-boundaries", ("montage", "montiert", "lieferung", "liefert", "bestellung", "abnahme", "baubegleitung", "komplettbegleitung", "verkauft", "verkaufen")),
+            ("planning-services", ("leistung", "wohn", "esszimmer", "hauswirtschaft", "vorrat", "backkitchen", "welche räume", "was bietet", "was macht", "was plant")),
+            ("consultation-process", ("vorgespräch", "vorgespraech", "kennenlernen", "zusammenarbeit", "ablauf", "wie läuft")),
+            ("studio-positioning", ("wer ist", "wer steckt", "erfahrung", "unabhängig", "unabhaengig")),
+        )
+        for chunk_id, keywords in website_topics:
+            if any(word in lower for word in keywords):
+                return self._website_knowledge_node(chunk_id)
+        if any(word in lower for word in ("unterlagen", "grundriss", "fotos")) and any(
+            word in lower for word in ("welche", "brauche", "benötig", "benoetig", "vorbereiten")
+        ):
+            return self._website_knowledge_node("project-documents")
+        if any(word in lower for word in ("adresse", "telefonnummer", "e-mail-adresse", "erreichbar", "wo sitzt", "wo finde")):
+            return self._website_knowledge_node("public-contact")
         if any(word in lower for word in ("upload", "hochladen", "unterlagen", "pdf", "foto")):
             return FlowNode(
                 id="global_upload",
                 text=(
                     "Für eine konkrete Einordnung helfen Angebot, Planung, Grundriss "
-                    "oder Fotos. Nutzen Sie dafür bitte den Upload-Bereich im Chatfenster. "
-                    "Die Dateien werden erst hochgeladen, wenn Sie den Upload bestätigen."
+                    "oder Fotos. Der optionale Upload-Bereich im Chatfenster dient der "
+                    "KI-gestützten Projekteinordnung. Die Dateien werden erst hochgeladen, "
+                    "wenn Sie den Upload bestätigen. Der Website-Upload für die fachliche "
+                    "Bearbeitung erfolgt nach Freigabe; ein Upload ist keine Beauftragung "
+                    "oder kostenlose fachliche Prüfung."
                 ),
                 choices=(choice("back_start", "Zurück zur Einordnung", START_NODE),),
             )
@@ -96,38 +117,23 @@ class KeaTextFlow:
                 ),
                 choices=(choice("back_start", "Zurück zur Einordnung", START_NODE),),
             )
-        if "strategie-check" in lower or "strategie check" in lower:
-            return self._strategy_check_node()
-        if any(word in lower for word in ("preis", "kosten", "kostet", "paket", "angebot")):
-            return FlowNode(
-                id="global_price",
-                text=(
-                    "Das hängt davon ab, ob Sie noch Orientierung suchen, schon ein "
-                    "Angebot vorliegen haben oder im Bau-/Sanierungsprozess stecken. "
-                    "Ich ordne Sie kurz ein und nenne dann den passenden nächsten Schritt."
-                ),
-                choices=(
-                    NODES[START_NODE].choices[1],
-                    NODES[START_NODE].choices[2],
-                    NODES[START_NODE].choices[0],
-                ),
-            )
+        if "angebot" in lower or "zweitmeinung" in lower:
+            return self._website_knowledge_node("kitchen-offer-guidance")
         return None
 
-    def _strategy_check_node(self) -> FlowNode:
+    def _website_knowledge_node(self, chunk_id: str) -> FlowNode:
+        """Uses the same curated tenant facts as the voice prompt."""
+        source = get_tenant_knowledge_for_studio("mein-kuechenexperte")
+        chunk = next((item for item in source.chunks if item.id == chunk_id), None) if source else None
         return FlowNode(
-            id="global_strategy_price",
-            text=(
-                "Der Strategie-Check ist sinnvoll, wenn Sie vor dem Küchenkauf "
-                "Struktur, Prioritäten oder einen neutralen Blick auf die nächsten "
-                "Schritte brauchen. Auf der Website ist er mit 42,80 EUR inkl. "
-                "MwSt. ausgewiesen. Für die genaue Passung frage ich zuerst kurz: "
-                "Geht es eher um Budget, Planung oder ein konkretes Angebot?"
+            id=f"website_{chunk_id}",
+            text=chunk.content if chunk else (
+                "Dazu liegen mir gerade keine gesicherten Informationen vor. "
+                "Bitte nutzen Sie das Kontaktformular für Ihre Frage."
             ),
             choices=(
-                choice("buy_budget", "Budget und Prioritäten", "buy_deadline", {"path": "vor_kuechenkauf", "focus": "budget_prioritaeten"}),
-                choice("buy_studio", "Planung vorbereiten", "buy_deadline", {"path": "vor_kuechenkauf", "focus": "studio_vorbereitung"}),
-                choice("offer_price", "Konkretes Angebot", "offer_stage", {"path": "angebot_pruefen", "focus": "preis_vergleichbarkeit"}),
+                choice("next_contact", "Kostenloses Vorgespräch anfragen", "global_contact"),
+                choice("back_start", "Mein Vorhaben einordnen", START_NODE),
             ),
         )
 
@@ -135,7 +141,7 @@ class KeaTextFlow:
         lower = text.lower()
         if any(word in lower for word in ("angebot", "vertrag", "preis", "vergleich", "unterschrift")):
             return "offer_focus"
-        if any(word in lower for word in ("sanierung", "renovierung", "hausbau", "anschluss", "grundriss")):
+        if any(word in lower for word in ("neubau", "sanierung", "renovierung", "hausbau", "anschluss", "grundriss")):
             return "build_stage"
         if any(word in lower for word in ("start", "orientierung", "küchenkauf", "kuechenkauf", "studio")):
             return "buy_focus"

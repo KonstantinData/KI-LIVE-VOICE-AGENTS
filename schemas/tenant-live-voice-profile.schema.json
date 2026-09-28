@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:ki-live-voice-agents:schema:tenant-live-voice-profile:0.1.0",
+  "$id": "urn:ki-live-voice-agents:schema:tenant-live-voice-profile:0.3.0",
   "title": "KI Live Voice Agents Tenant Profile",
   "type": "object",
   "additionalProperties": false,
@@ -41,6 +41,12 @@
       "type": "array",
       "items": { "$ref": "#/$defs/assistantAgent" },
       "uniqueItems": true
+    },
+    "phone_agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/phoneAgent" },
+      "uniqueItems": true,
+      "default": []
     },
     "upload_policy": { "$ref": "#/$defs/uploadPolicy" },
     "knowledge": { "$ref": "#/$defs/scopeConfig" },
@@ -149,6 +155,53 @@
             "usage_endpoint": { "type": "string", "minLength": 1 }
           }
         }
+      }
+    },
+    "phoneAgent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "display_name", "prompt_profile", "adapter", "model", "voice", "greeting"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "agent_type": { "const": "phone-assistant", "default": "phone-assistant" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "prompt_profile": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": false },
+        "adapter": { "const": "fritzbox-sip" },
+        "model": { "type": "string", "minLength": 1 },
+        "voice": { "type": "string", "minLength": 1 },
+        "greeting": { "type": "string", "minLength": 1 },
+        "max_call_seconds": { "type": "integer", "minimum": 30, "maximum": 1800, "default": 600 },
+        "knowledge_scopes": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "tools": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["submit_phone_contact_handoff"] },
+          "uniqueItems": true,
+          "default": []
+        },
+        "data_scopes": { "$ref": "#/$defs/idArray" },
+        "policies": { "$ref": "#/$defs/idArray" },
+        "validators": { "$ref": "#/$defs/idArray" },
+        "contact_handoff": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "secure_form_required",
+            "voice_pii_collection_allowed",
+            "crm_target",
+            "contact_endpoint",
+            "usage_endpoint"
+          ],
+          "properties": {
+            "secure_form_required": { "type": "boolean", "const": false },
+            "voice_pii_collection_allowed": { "type": "boolean", "const": true },
+            "crm_target": { "$ref": "#/$defs/id" },
+            "contact_endpoint": { "type": "string", "minLength": 1 },
+            "usage_endpoint": { "type": "string", "minLength": 1 }
+          }
+        },
+        "store_audio": { "const": false, "default": false },
+        "store_transcript": { "const": false, "default": false }
       }
     },
     "assistantAgent": {

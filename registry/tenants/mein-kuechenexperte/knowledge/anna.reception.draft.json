@@ -1,0 +1,169 @@
+{
+  "contract_version": "0.1.0",
+  "tenant_id": "mein-kuechenexperte",
+  "scope_id": "mein-kuechenexperte-anna-knowledge",
+  "chunks": [
+    {
+      "id": "anna-reception-company",
+      "category": "company",
+      "title": "Mein Küchenexperte",
+      "content": "Mein Küchenexperte ist das Angebot von Konstantin Milonas für unabhängige Küchenplanung und Entscheidungsberatung sowie ergänzende Möbellösungen. Planung und Beratung sind unabhängig vom Möbelverkauf.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/includes/_shared/editorial-home.php",
+        "source_url": "https://mein-kuechenexperte.de/",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-topics",
+      "category": "services",
+      "title": "Themen eingehender Anfragen",
+      "content": "Anfragen können Neubau, Renovierung oder Sanierung, erste Orientierung, eine vorhandene Planung oder ein Angebot sowie Geräte-, Material- oder Variantenvergleiche betreffen. Diese Themen dienen zur Einordnung des Anliegens für die persönliche Bearbeitung.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/leistungen.php;www/angebot_und_planung_pruefen.php",
+        "source_url": "https://mein-kuechenexperte.de/leistungen",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-rooms",
+      "category": "services",
+      "title": "Küche und ergänzende Räume",
+      "content": "Zum Themenbereich gehören Küche, Esszimmer, Wohnen, Hauswirtschaftsraum, Vorratsraum und Backkitchen. Auch Ankleiden, Sideboards und Wohnwände aus geeigneten Küchenmöbelprogrammen können Gegenstand einer Anfrage sein. Welche Räume und Leistungen einbezogen werden, wird individuell vereinbart.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/fachplanung.php;www/faq.php",
+        "source_url": "https://mein-kuechenexperte.de/fachplanung",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-process",
+      "category": "process",
+      "title": "Ablauf einer neuen Anfrage",
+      "content": "Nach einem kostenlosen Vorgespräch werden Aufgabe, Leistungsumfang, Ergebnis und Preis individuell vereinbart. Erst nach Annahme des Angebots beginnt die bezahlte fachliche Arbeit. Zusätzliche Leistungen werden mit Umfang und Preis vorher vereinbart.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/preise.php;www/includes/_shared/editorial-home.php",
+        "source_url": "https://mein-kuechenexperte.de/preise",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-intro",
+      "category": "service",
+      "title": "Kostenloses Vorgespräch",
+      "content": "Das kostenlose, unverbindliche Vorgespräch dauert 15 Minuten und dient dem Kennenlernen und der Bedarfsklärung. Es enthält keine individuelle Fachberatung, vertiefte Unterlagenprüfung, Layout- oder Budgetempfehlung oder Küchenplanung. Umfangreiche Unterlagen sollen dafür nicht vorab geschickt werden.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/quick_check_termin.php",
+        "source_url": "https://mein-kuechenexperte.de/quick_check_termin",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-pricing",
+      "category": "pricing",
+      "title": "Individuelles Honorar",
+      "content": "Das Honorar richtet sich nach der konkreten Aufgabe und dem vereinbarten Umfang. Nach dem Vorgespräch gibt es ein individuelles Angebot mit transparentem Gesamtpreis. Es gibt derzeit keinen pauschalen Einstiegspreis.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/preise.php",
+        "source_url": "https://mein-kuechenexperte.de/preise",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-boundaries",
+      "category": "scope",
+      "title": "Zuständigkeit der Fachleute",
+      "content": "Das Angebot konzentriert sich auf unabhängige Planung und Entscheidungsberatung. Bestellung, Lieferung, Montage und Abnahme liegen bei den beauftragten Unternehmen. Eine dauerhafte Projektbegleitung wird nicht angeboten. Endgültige Maße, Ausführung und technische Freigaben liegen bei den verantwortlichen Anbietern und Fachleuten.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/faq.php;www/fachplanung.php",
+        "source_url": "https://mein-kuechenexperte.de/faq",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-existing-agreements",
+      "category": "process",
+      "title": "Bestehende Vereinbarungen",
+      "content": "Für bereits geschlossene Verträge bleiben die bei der Buchung vereinbarten Leistungen, Preise, Anrechnungen und Bedingungen maßgeblich. Die aktuelle Website ändert bestehende Vereinbarungen nicht rückwirkend. Fragen zu einer konkreten Vereinbarung benötigen persönliche Bearbeitung.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/agb.php",
+        "source_url": "https://mein-kuechenexperte.de/agb",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    },
+    {
+      "id": "anna-reception-contact",
+      "category": "contact",
+      "title": "Kontaktadresse",
+      "content": "Die öffentliche E-Mail-Adresse lautet kontakt@mein-kuechenexperte.de. Die Kontaktseite nennt Konstantin Milonas als Ansprechpartner. Die Website bestätigt keine allgemeine Rückruffrist oder aktuelle persönliche Verfügbarkeit.",
+      "metadata": {
+        "locale": "de-DE",
+        "sensitivity": "public",
+        "status": "approved",
+        "publication_status": "draft-not-active-not-deployed",
+        "reviewed_on": "2026-09-25",
+        "valid_until": "2026-10-09",
+        "source_repo": "www/kontakt.php",
+        "source_url": "https://mein-kuechenexperte.de/kontakt",
+        "source_verification": "repository-and-fresh-public-http-reviewed-2026-09-25",
+        "review_record": "docs/anna-reception-knowledge-review.md"
+      }
+    }
+  ]
+}

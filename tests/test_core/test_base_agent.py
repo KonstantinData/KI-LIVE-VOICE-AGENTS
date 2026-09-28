@@ -6,6 +6,7 @@ import uuid
 from src.agents.lisa.agent import LisaAgent
 from src.agents.lisa.system_prompt import build_lisa_system_prompt
 from src.agents._template.agent import TemplateAgent
+from src.api.services.voice_sessions import realtime_session_config
 from src.core.tool_registry import ToolRegistry
 from src.db.models.conversation import Conversation
 from src.db.models.studio import Studio
@@ -65,15 +66,45 @@ def test_kea_system_prompt_contains_controlled_intake_contract():
 
     prompt = build_lisa_system_prompt(
         studio=studio,
-        knowledge_snippets=["Quick-Check hilft bei der ersten Einordnung."],
+        knowledge_snippets=[],
         lead_summary=None,
     )
 
     assert "kontrollierte Projekt-Einordnung" in prompt
     assert "Fragen zu Angeboten" in prompt
     assert "never promise" in prompt
-    assert "KI-KUECHENBERATER" in prompt
+    assert "KI-KUECHENBERATER" not in prompt
+    assert "angrenzende Wohnräume" in prompt
+    assert "Kennenlernen und der" in prompt
+    assert "Bedarfsklärung" in prompt
+    assert "individuell vor der Beauftragung" in prompt
+    assert "15.000 und 30.000 EUR" not in prompt
+    assert "Kostenloser Quick-Check" not in prompt
     assert "keine verbindliche Küchenberatung" in prompt
+
+
+def test_kea_voice_config_uses_current_service_positioning():
+    """The actual voice config must not reintroduce retired offer guidance."""
+    studio = Studio(
+        id=uuid.uuid4(), name="Mein Küchenexperte", slug="mein-kuechenexperte",
+        api_key="test", is_active=True, config={},
+    )
+    conversation = Conversation(
+        id=uuid.uuid4(), studio_id=studio.id, visitor_id="visitor",
+        channel="voice", status="active",
+    )
+
+    instructions = realtime_session_config(studio, conversation, [], None)["instructions"]
+
+    assert "angrenzende Wohnraeume" in instructions
+    assert "Weitergehende Leistungen sind kostenpflichtig" in instructions
+    assert "individuell vor der Beauftragung" in instructions
+    assert "keine kostenlose fachliche Prüfung" in instructions
+    assert "erfolgt nach Freigabe" in instructions
+    assert "optionale Upload im Widget" in instructions
+    assert "keine kostenlose fachliche Sichtung" in instructions
+    assert "KI-KUECHENBERATER" not in instructions
+    assert "Kostenloser Quick-Check" not in instructions
 
 
 def test_kea_text_agent_disables_appointment_tool_for_mein_kuechenexperte():
