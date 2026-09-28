@@ -390,6 +390,26 @@ class PhoneCalendarTools:
             self._prepared[str(result["confirmation_token"])] = len(caller_turns)
         if name in WRITE_ACTIONS and result.get("calendar_changed") is True:
             self.state.appointment_confirmed = True
+        if name == "create_appointment" and result.get("calendar_changed") is True:
+            booking_email = self.state.booking_email
+            if booking_email:
+                from .mail import send_appointment_confirmation
+                result_details = result.get("details") or {}
+                appt_name = self.state.customer_name or result_details.get("name", "")
+                appt_type = self.state.appointment_type or result_details.get("appointment_type", "Kostenloses Erstgespräch")
+                try:
+                    await send_appointment_confirmation(
+                        name=appt_name,
+                        start=str(result_details.get("start", "")),
+                        end=str(result_details.get("end", "")),
+                        appointment_type=appt_type,
+                        email=booking_email,
+                        session_id=self.session_id,
+                        lang=self.state.lang,
+                    )
+                    result["customer_confirmation_sent"] = True
+                except Exception:
+                    result["customer_confirmation_sent"] = False
         return result
 
     async def close(self) -> None:

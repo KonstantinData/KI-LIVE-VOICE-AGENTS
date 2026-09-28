@@ -53,6 +53,7 @@ class PhoneConversationState:
     request_topic: str = ""
     offered_slots: list[dict[str, str]] = field(default_factory=list)
     appointment_confirmed: bool = False
+    lang: str = "de"
     _revisions: dict[str, int] = field(default_factory=dict, repr=False)
     _confirmed_revisions: dict[str, int] = field(default_factory=dict, repr=False)
     _ingested_turns: list[str] = field(default_factory=list, repr=False)
@@ -120,6 +121,13 @@ class PhoneConversationState:
         if self.is_confirmed("email", value):
             self._confirmed_revisions["booking_email"] = self._revisions.get("email", 0)
 
+    @property
+    def booking_email(self) -> str:
+        """Return the confirmed booking e-mail address, or empty string."""
+        if self._confirmed_revisions.get("booking_email") == self._revisions.get("email", 0):
+            return self.email
+        return ""
+
     def ingest_transcript(self, transcript: str) -> None:
         """Extract durable preferences from caller turns, applying later corrections last."""
         turns = [line for line in transcript.splitlines() if line.startswith("Anrufer:")]
@@ -134,6 +142,8 @@ class PhoneConversationState:
                 self.availability_request = True
             if re.search(r"\bkurz\w*\s+termin\b", lowered):
                 self.short_appointment_requested = True
+            if re.search(r"\b(?:i(?:'d| would| want| need| have)|please|appointment|available|schedule)\b", lowered):
+                self.lang = "en"
             excluded = bool(re.search(
                 r"\bmorgen\s+nachmittag\b.*\b(?:nicht|kein)\b", lowered,
             ))
@@ -323,6 +333,7 @@ class PhoneConversationState:
             "email_confirmed": self.is_confirmed("email"),
             "phone_confirmed": self.is_confirmed("phone"),
             "appointment_confirmed": self.appointment_confirmed,
+            "lang": self.lang,
         }
 
     def clear(self) -> None:
