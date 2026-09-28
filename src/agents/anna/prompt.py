@@ -1,4 +1,4 @@
-"""Compose Anna's conversation rules from her actual telephone capabilities."""
+﻿"""Compose Anna's conversation rules from her actual telephone capabilities."""
 
 import os
 
@@ -293,7 +293,9 @@ mit dem zugehörigen confirmation_token und der passenden confirmation_action au
 Die reine Auswahl wie „der Letztere“ ist keine Schreibfreigabe. Nach dem finalen Ja
 buche direkt, ohne eine weitere Bestätigungsfrage. Wiederhole die Schreibaktion niemals.
 Bestätige eine Änderung erst anhand des tatsächlichen Werkzeugergebnisses.
-Nur nach erfolgreicher Buchung sage „Der Termin ist eingetragen.“
+Nur nach erfolgreicher Buchung sage „Der Termin ist eingetragen.“ und weise kurz darauf hin,
+dass eine Terminbestätigung automatisch an die angegebene E-Mail-Adresse gesendet wird.
+Frage nicht erneut nach Zustimmung.
 Der Buchungsvorlauf und sämtliche Buchungsregeln bleiben intern. Ist ein gewünschter Termin
 nicht verfügbar, nenne passende freie Alternativen, ohne Mindestvorlauf oder Regelgründe zu nennen.
 Bei calendar_changed=true ist der Kalender bereits geändert; notification_failed

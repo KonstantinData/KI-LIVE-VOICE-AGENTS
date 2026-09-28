@@ -162,6 +162,103 @@ async def send_customer_summary(
     return await asyncio.to_thread(_deliver, message, recipient)
 
 
+async def send_appointment_confirmation(
+    *, name: str, start: str, end: str, appointment_type: str,
+    email: str, session_id: str, lang: str = "de",
+) -> bool:
+    """Send a professional appointment confirmation to the customer; no consent gate."""
+    recipient = validate_customer_email(email)
+    safe_name = _text(name, 160)
+    safe_start = _text(start, 80)
+    safe_end = _text(end, 80)
+    safe_type = _text(appointment_type, 160)
+    if not safe_name:
+        raise SMTPDeliveryError("smtp_customer_name_required")
+    if not safe_start:
+        raise SMTPDeliveryError("smtp_appointment_start_required")
+
+    logo_url = "https://mein-kuechenexperte.de/assets/img/logo.jpg"
+
+    if lang == "en":
+        subject = "Your Appointment Confirmation – Mein Küchenexperte"
+        greeting = f"Dear {safe_name},"
+        body_line1 = "Thank you for your call. Your appointment has been successfully booked."
+        label_type = "Appointment"
+        label_start = "Date &amp; Time"
+        label_end = "End"
+        closing = "We look forward to speaking with you.<br>Kind regards<br><strong>Mein K&uuml;chenexperte</strong>"
+        closing_text = "We look forward to speaking with you.\nKind regards\nMein Küchenexperte"
+        reply_hint = "Questions? Simply reply to this e-mail."
+    else:
+        subject = "Ihre Terminbestätigung – Mein Küchenexperte"
+        greeting = f"Guten Tag {safe_name},"
+        body_line1 = "vielen Dank für Ihren Anruf. Ihr Termin wurde erfolgreich eingetragen."
+        label_type = "Terminart"
+        label_start = "Datum &amp; Uhrzeit"
+        label_end = "Ende"
+        closing = "Wir freuen uns auf das Gespr&auml;ch mit Ihnen.<br>Mit freundlichen Gr&uuml;&szlig;en<br><strong>Mein K&uuml;chenexperte</strong>"
+        closing_text = "Wir freuen uns auf das Gespräch mit Ihnen.\nMit freundlichen Grüßen\nMein Küchenexperte"
+        reply_hint = "Fragen? Antworten Sie einfach auf diese E-Mail."
+
+    html = f"""\
+<html>
+<body style="margin:0;padding:0;background:#1f2229;font-family:Arial,sans-serif;color:#dbe3ef;">
+  <div style="max-width:640px;margin:0 auto;background:#23262e;">
+    <div style="background:#4b5568;padding:22px 24px;text-align:center;">
+      <img src="{logo_url}" alt="Mein K&uuml;chenexperte" width="417" height="49"
+           style="max-width:320px;width:100%;height:auto;background:#fff;border-radius:6px;padding:8px;">
+    </div>
+    <div style="padding:28px 32px;line-height:1.65;font-size:18px;">
+      <p style="margin:0 0 18px;">{greeting}</p>
+      <p style="margin:0 0 24px;">{body_line1}</p>
+      <table style="border-collapse:collapse;width:100%;margin:0 0 24px;font-size:17px;">
+        <tr>
+          <td style="padding:10px 14px;background:#2d3240;border-radius:6px 6px 0 0;"
+              width="38%"><strong>{label_type}</strong></td>
+          <td style="padding:10px 14px;background:#2d3240;border-radius:6px 6px 0 0;">{safe_type}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;background:#252830;"><strong>{label_start}</strong></td>
+          <td style="padding:10px 14px;background:#252830;">{safe_start}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 14px;background:#2d3240;border-radius:0 0 6px 6px;"
+              ><strong>{label_end}</strong></td>
+          <td style="padding:10px 14px;background:#2d3240;border-radius:0 0 6px 6px;">{safe_end}</td>
+        </tr>
+      </table>
+      <p style="margin:0 0 24px;font-size:15px;color:#b8c2d1;">{reply_hint}</p>
+      <p style="margin:0;color:#b8c2d1;">{closing}</p>
+    </div>
+    <div style="background:#181c22;padding:14px 32px;text-align:center;font-size:13px;color:#6b7280;">
+      mein-kuechenexperte.de
+    </div>
+  </div>
+</body>
+</html>"""
+
+    text = (
+        f"{greeting}\n\n{body_line1}\n\n"
+        f"{label_type.replace('&amp;', '&')}: {safe_type}\n"
+        f"{label_start.replace('&amp;', '&')}: {safe_start}\n"
+        f"{label_end}: {safe_end}\n\n"
+        f"{reply_hint}\n\n{closing_text}\n"
+        f"\nmein-kuechenexperte.de\n"
+        f"Referenz: {_text(session_id, 160)}\n"
+    )
+
+    message = EmailMessage()
+    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["To"] = recipient
+    message["Reply-To"] = OWNER_MAILBOX
+    message["Subject"] = subject
+    message["Date"] = formatdate(localtime=False)
+    message["Message-ID"] = make_msgid(domain="mein-kuechenexperte.de")
+    message.set_content(text)
+    message.add_alternative(html, subtype="html")
+    return await asyncio.to_thread(_deliver, message, recipient)
+
+
 async def send_calendar_notification(operation: dict) -> bool:
     """Notify MKE operations; the master calendar never receives mail."""
     recipient = OWNER_MAILBOX
