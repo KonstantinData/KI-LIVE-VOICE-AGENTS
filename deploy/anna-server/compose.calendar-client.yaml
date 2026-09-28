@@ -1,0 +1,6 @@
+# Apply to the existing ANNA project only after calendar test acceptance.
+# calendar-client.env must contain only the internal API token, service URL,
+# and ANNA_CALENDAR_TOOLS_ENABLED; never Microsoft OAuth credentials.
+services:
+  anna:
+    env_file: /etc/anna/calendar-client.env

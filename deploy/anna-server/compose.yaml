@@ -1,0 +1,49 @@
+services:
+  asterisk:
+    profiles: ["enabled"]
+    build:
+      context: ../..
+      dockerfile: deploy/anna-server/Dockerfile.asterisk
+    env_file: .env
+    ports:
+      - "5060:5060/udp"
+      - "20000-20020:20000-20020/udp"
+    networks:
+      anna-phone:
+        ipv4_address: 172.30.42.2
+    tmpfs:
+      - /run/asterisk:size=8m,uid=102,gid=102,mode=0770
+      - /var/log/asterisk:size=32m,uid=102,gid=102,mode=0770
+      - /var/spool/asterisk:size=16m,uid=102,gid=102,mode=0770
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  anna:
+    profiles: ["enabled"]
+    build:
+      context: ../..
+      dockerfile: deploy/anna-server/Dockerfile.anna
+    depends_on: [asterisk]
+    environment:
+      FRITZBOX_SIP_USERNAME: ${ANNA_INTERNAL_SIP_USERNAME:?required}
+      FRITZBOX_SIP_PASSWORD: ${ANNA_INTERNAL_SIP_PASSWORD:?required}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?required}
+      ANNA_VOICE_WEBHOOK_SECRET: ${ANNA_VOICE_WEBHOOK_SECRET:?required}
+    volumes:
+      - /var/lib/ki-team/anna:/var/lib/anna
+    networks:
+      anna-phone:
+        ipv4_address: 172.30.42.3
+    read_only: true
+    tmpfs: ["/tmp:size=32m,noexec,nosuid"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+networks:
+  anna-phone:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.42.0/24

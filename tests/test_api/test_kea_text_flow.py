@@ -113,11 +113,12 @@ async def test_kea_text_flow_handles_strategy_check_and_upload_intents(db_sessio
         conversation,
         message_text="Was kostet der Strategie-Check?",
     )
-    assert "42,80 EUR" in price.content
+    assert "42,80" not in price.content
+    assert "Vorgespräch" in price.content
+    assert "Preis" in price.content
     assert [choice.id for choice in price.choices] == [
-        "buy_budget",
-        "buy_studio",
-        "offer_price",
+        "next_contact",
+        "back_start",
     ]
 
     upload = await flow.handle(
@@ -129,3 +130,43 @@ async def test_kea_text_flow_handles_strategy_check_and_upload_intents(db_sessio
 
     messages = await _messages(db_session, conversation)
     assert any(message.tool_calls for message in messages if message.role == "assistant")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Was kostet die Planung mit meinen Fotos?", "service-pricing"),
+        ("Ist ein Quick-Check kostenlos?", "service-pricing"),
+        ("Planen Sie auch Backkitchen und Wohnräume?", "planning-services"),
+        ("Übernehmen Sie Lieferung und Montage?", "service-boundaries"),
+        ("Welche Unterlagen brauche ich?", "project-documents"),
+        ("Wie läuft das Vorgespräch ab?", "consultation-process"),
+        ("Wie lautet Ihre E-Mail-Adresse?", "public-contact"),
+    ],
+)
+async def test_kea_text_flow_answers_website_questions_and_keeps_handoff_working(
+    db_session, question, expected
+):
+    """Public text answers use curated facts and retain the next-step actions."""
+    from src.tenants.knowledge import get_tenant_knowledge_for_studio
+
+    conversation = await _conversation(db_session)
+    flow = KeaTextFlow(db_session)
+    response = await flow.handle(conversation, message_text=question)
+    source = get_tenant_knowledge_for_studio("mein-kuechenexperte")
+    chunk = next(item for item in source.chunks if item.id == expected)
+    assert response.content == chunk.content
+    assert conversation.metadata_["kea_text_flow"]["node"] == f"website_{expected}"
+    handoff = await flow.handle(conversation, message_text="", action_id="next_contact")
+    assert "Kontaktformular" in handoff.content
+
+
+def test_kea_text_flow_does_not_invent_missing_website_facts(monkeypatch):
+    """Missing curated content must not revive obsolete fixed-price promises."""
+    monkeypatch.setattr(
+        "src.api.services.kea_text_flow.get_tenant_knowledge_for_studio", lambda _: None
+    )
+    response = KeaTextFlow(None)._global_intent("Was kostet der Strategie-Check?")
+    assert "keine gesicherten Informationen" in response.text
+    assert "42,80" not in response.text

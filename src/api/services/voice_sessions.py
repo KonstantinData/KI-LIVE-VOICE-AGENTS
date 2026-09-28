@@ -142,10 +142,12 @@ def realtime_session_config(
         and voice_agent.prompt_profile == "mein-kuechenexperte-project-intake"
     ):
         domain_guidance = (
-            "Du bist kein Kuechenfachberater im Sprachchat. Du klaerst Kuechen- "
-            "und Moebelprojekte vor, beantwortest Angebotsfragen vorsichtig und "
-            "verweist fuer vertiefte Fachberatung auf passende Angebote, "
-            "Expertentermine oder die App KI-KUECHENBERATER."
+            "Du bist kein Kuechenfachberater im Sprachchat. Du klaerst Projekte "
+            "fuer Kuechen und angrenzende Wohnraeume vor und erlaeuterst die "
+            "unabhaengige Beratung und Planung. Das kostenlose Vorgespraech "
+            "dient nur dem Kennenlernen und der Bedarfsklaerung. Weitergehende "
+            "Leistungen sind kostenpflichtig; Umfang und Preis werden "
+            "individuell vor der Beauftragung vereinbart."
         )
         contract_sections = kea_voice_contract_sections()
     if voice_agent is not None and voice_agent.prompt_profile == "liquisto-assistant":

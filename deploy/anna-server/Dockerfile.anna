@@ -1,0 +1,16 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY requirements-telephony.txt ./
+RUN pip install --no-cache-dir -r requirements-telephony.txt \
+    && addgroup --system --gid 10002 anna \
+    && adduser --system --uid 10002 --ingroup anna anna
+
+COPY registry/tenants/mein-kuechenexperte ./registry/tenants/mein-kuechenexperte
+COPY src ./src
+
+USER 10002:10002
+CMD ["python", "-m", "src.telephony", "--run", "--non-interactive", "--tenant", "mein-kuechenexperte", "--agent", "anna-phone-assistant", "--server", "asterisk"]
