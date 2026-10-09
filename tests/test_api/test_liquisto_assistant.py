@@ -401,7 +401,7 @@ async def test_internal_voice_call_uses_byte_exact_navigation_only_session(
         "sdp_answer": "v=0-answer",
         "expires_at": "2026-07-24T09:00:00Z",
         "model": "gpt-realtime-2.1",
-        "voice": "shimmer",
+        "voice": "marin",
     }
     assert len(calls) == 1
     assert len(sideband_calls) == 1
@@ -411,6 +411,7 @@ async def test_internal_voice_call_uses_byte_exact_navigation_only_session(
     assert call["client_sdp"] == "v=0\r\n"
     assert len(call["safety_identifier"]) == 64
     session = call["session_config"]
+    assert session["audio"]["output"]["voice"] == "marin"
     assert session["tools"] == [liquisto_navigation_tool_definition()]
     assert session["tool_choice"] == "auto"
     tool = session["tools"][0]

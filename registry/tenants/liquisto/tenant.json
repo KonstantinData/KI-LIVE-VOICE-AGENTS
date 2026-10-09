@@ -40,7 +40,7 @@
       "prompt_profile": "liquisto-assistant",
       "enabled": true,
       "model": "gpt-realtime-2.1",
-      "voice": "shimmer",
+      "voice": "marin",
       "skills": [],
       "tools": [
         "open_liquisto_destination"
