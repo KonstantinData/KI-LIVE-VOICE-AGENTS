@@ -1,6 +1,27 @@
-# Isolated Olivia native mail adapter candidate
+# Isolated Olivia native mail adapter
 
-Status: staged only; no credentials, deployment, inference, inbox reads or mail.
+Status: additive native code deployed on 2026-10-09; automatic mail remains disabled.
+Native source `5c69d91` was overlaid onto the inspected productive baseline. The
+current healthy native image is
+`sha256:df227a228450bfc56d4d179320cf73037c4f010c3d192a2a16d8b91d221a26e4`. <!-- Public digest; pragma: allowlist secret -->
+
+The deployment preserved all environment values, Memory hooks, private networks
+and existing channel restrictions. `OLIVIA_MAIL_ENABLED=false`; the new native
+mail route returns 503 while disabled. Default native acceptance passed read-only
+for signed Memory context, text hooks, Voice initialization, invalid digest and
+foreign-subject rejection. Identity Core remains revision 2, Olivia de Jong.
+No preference capture/forget, incoming mail body, mail inference or SMTP send
+was performed. Real employee text/audio conversations remain a separate category.
+
+The sibling SCAS worker, Control authority and CRM replay migration were installed
+separately with zero active mail enrollments/profiles/policies/credentials. An
+explicit product User-Agent correction was also installed in the disabled worker;
+it changes no business or Memory rights. Employee enrollment, current source
+permissions, exact immutable profile review and enabled end-to-end acceptance
+remain mandatory. See the owning
+[SCAS deployment record](https://github.com/KonstantinData/skill-centric-agent-system/blob/4473d22/docs/runbooks/liquisto-olivia-mail-deployment-2026-10-09.md)
+for exact image pins, native Compose override, live Control checks and rollback.
+
 
 The additive router is `/assistant/mail/respond`. The existing assistant route,
 provider, shared prompt, Voice and native Memory hooks are untouched. The sole

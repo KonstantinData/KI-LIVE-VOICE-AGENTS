@@ -2,7 +2,10 @@
 
 This records the identity deployment. A subsequent Voice-only quality release
 preserves this persona and Memory revision 2; see `olivia-voice-quality-2026-10-09.md`
-for that release's image pin and `marin` voice selection. The current employee delivery and image pin are in `olivia-communication-2026-10-09.md`.
+for that release's image pin and `marin` voice selection. The employee communication release is recorded in
+`olivia-communication-2026-10-09.md`. The later additive native mail
+image, deployed disabled with preserved Memory revision 2, is recorded
+in [the native mail deployment status](olivia-mail-adapter.md).
 
 ## Approved source and unchanged identity
 
