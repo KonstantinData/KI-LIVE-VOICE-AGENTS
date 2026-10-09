@@ -76,7 +76,10 @@ The combined assistant/navigation/provider/employee/mail suite passed 204 tests,
 including 51 mocked transport cases and 7 privileged operator-check cases.
 Dedicated guard tests passed 63 cases; Ruff passed on the changed code surfaces.
 The complete local Memory suite passed 306 tests and 41 subtests, with 17
-PostgreSQL cases skipped locally and assigned to the disposable CI database.
+PostgreSQL cases skipped locally. The
+[disposable PostgreSQL CI run](https://github.com/KonstantinData/Conversational_Identity-Memory/actions/runs/37917690017)
+against code commit `0724dac` passed Ruff and 322 tests plus 41 subtests, with
+one skipped case.
 After deployment, the unchanged native acceptance check passed in read-only
 mode: signed memory context, native chat and Voice initialization, wrong-profile
 and foreign-subject rejection, and unchanged tools. No memory capture or forget
@@ -95,5 +98,12 @@ Independent transport checks from the runtime host verified the OVH server's
 certificate-validated IMAP TLS on 993 and SMTP STARTTLS on 587. These checks
 performed no login, message read or send; mailbox authentication and mail
 workflow activation are separate outstanding gates.
+
+The separately staged, privileged operator login check confirmed that the
+protected Olivia credential file is not available. It stopped before provider
+authentication, message metadata access or transmission. No runtime mail
+profile was composed or activated. The reviewed transport and operator checker
+are staged on the server for later connection verification, outside the live
+conversational image.
 
 Mail transport review and the exact approved addresses are tracked separately in the owning runtime repository's `docs/olivia-mail-integration.md`.
