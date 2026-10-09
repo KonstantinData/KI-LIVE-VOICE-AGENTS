@@ -116,15 +116,15 @@ files require equivalent owner-only ACLs; Linux is the runtime target.
 
 ## Remaining activation inputs
 
-- Protected mailbox credential provisioning/login verification.
 - Authoritative mail profile composition and host verifier wiring.
 - Actual report/source/data-role grants and bounded task binding.
 - Synthetic acceptance to konstantin@liquisto.com and actual receive-path evidence. The user already authorized sending to this exact address; no new send approval is inferred.
 - Inbox processing/user identity/retention definition if incoming messages are
   intended to trigger autonomous work (the transport intentionally does not).
 
-No mail was sent or read during implementation or tests. No productive mailbox,
-DNS, service, grant, account, provider secret, or memory record was changed.
+During implementation and mocked tests, no mail was sent or read and no
+productive mailbox, DNS, service, grant, account, provider secret, or memory
+record was changed. Subsequent protected credential provisioning is recorded below.
 
 ## Local verification
 
@@ -157,3 +157,19 @@ after the protected credentials have been provisioned. A successful login check
 still does not activate sending or establish real inbox delivery.
 
 The secure operator helper is `deploy/liquisto-assistant/provision-olivia-mail-secret.ps1`. It prompts locally without echo and passes credentials only through SSH stdin to the root-owned provisioner. It does not activate the mail workflow.
+
+
+## Protected mailbox login verification, 2026-10-09
+
+The operator provisioned the existing OVH mailbox password through the secure
+local prompt and SSH stdin. The subsequent root-only checker on
+`scas-runtime-prod` confirmed protected credential availability, successful
+certificate-validated IMAP TLS authentication/read-only INBOX metadata and
+SMTP STARTTLS authentication. No credential values, mailbox counts or provider
+responses were exported. No message body was fetched, flag changed or message
+sent. Credential contents remain exclusively in protected server configuration.
+
+This closes the credential and login gate only. Mail profile composition, host
+verifier wiring, source/employee data visibility, bounded inbox work and actual
+send/receive acceptance remain open. No runtime mail service or conversational
+mail tool was activated; ordinary Memory permissions remain unchanged.
