@@ -1,5 +1,7 @@
 # Olivia voice-quality tuning, 2026-10-09
 
+A subsequent employee-facing refinement is deployed; see [its current evidence](olivia-communication-2026-10-09.md).
+
 ## Requested behavior
 
 Konstantin reported that Olivia sounds computer-like in both timbre and wording.

@@ -2,7 +2,7 @@
 
 This records the identity deployment. A subsequent Voice-only quality release
 preserves this persona and Memory revision 2; see `olivia-voice-quality-2026-10-09.md`
-for the current image pin and `marin` voice selection.
+for that release's image pin and `marin` voice selection. The current employee delivery and image pin are in `olivia-communication-2026-10-09.md`.
 
 ## Approved source and unchanged identity
 

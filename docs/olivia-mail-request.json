@@ -1,0 +1,19 @@
+{
+  "tenant_id": "liquisto",
+  "agent_id": "liquisto-assistant",
+  "requested_mailbox": "olivia@liquisto.cloud",
+  "requested_provider": "ovh",
+  "approved_correspondents": [
+    "konstantin@liquisto.com",
+    "konstantin.milonas@condata.io",
+    "aernout@liquisto.com"
+  ],
+  "activation_status": "blocked-pending-protected-credentials-and-governed-mail-profile",
+  "send_mode": "autonomous-to-explicit-approved-correspondents",
+  "business_data_grants": [],
+  "mailbox_credentials_provisioned": false,
+  "mail_runtime_profile_composed": false,
+  "automatic_send_enabled": false,
+  "source": "explicit-user-request-and-recipient-list-2026-10-09",
+  "note": "Planning record only; not executable configuration or a runtime permission grant."
+}
