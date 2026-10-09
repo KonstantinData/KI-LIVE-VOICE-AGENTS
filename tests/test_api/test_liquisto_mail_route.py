@@ -229,6 +229,40 @@ async def test_only_answer_no_tools_and_no_memory(setup):
 
 
 @pytest.mark.asyncio
+async def test_signed_current_question_reaches_answer_first_mail_prompt(setup):
+    body = payload()
+    body["prompt"] = "Was ist Liquisto?"
+    body["source_ids"] = ["liquisto-business-purpose"]
+    body["context"] = [{
+        "source_id": "liquisto-business-purpose", "label": "Liquisto business purpose",
+        "system": "liquisto-tenant-registry", "permission": "tenant:read",
+        "observed_at": "2026-10-10T12:00:00Z", "classification": "public",
+        "content": "Liquisto optimiert ueberschuessige und fehlende Bestaende.",
+    }]
+    setup[3].answer = (
+        '{"answer":"Liquisto optimiert ueberschuessige und fehlende Bestaende '
+        '(Liquisto business purpose).","prepared_actions":[]}'
+    )
+    result = await post(setup, body)
+    assert result.status_code == 200
+    assert "Liquisto optimiert" in result.json()["answer"]
+    assert len(setup[2]) == 1
+    messages = setup[2][0]
+    assert [message["role"] for message in messages] == ["system", "user"]
+    assert json.loads(messages[1]["content"]) == {
+        "prompt": "Was ist Liquisto?", "context": body["context"],
+    }
+    system = messages[0]["content"]
+    assert "Beantworte zuerst die aktuelle Frage im Feld prompt" in system
+    assert "lade nicht erneut zum Antworten ein" in system
+    assert "die Frage zu wiederholen" in system
+    assert "benenne genau die fehlenden Informationen" in system
+    assert "Was ist Liquisto?" not in system
+    assert "Keine Tools, Memory, weiteren Quellen oder Netzwerke" in system
+    assert "prepared_actions: []" in system
+
+
+@pytest.mark.asyncio
 async def test_mail_never_increases_a_lower_configured_output_limit(setup, monkeypatch):
     from dataclasses import replace
 
