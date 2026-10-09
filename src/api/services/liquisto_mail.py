@@ -3,6 +3,7 @@
 The host must verify a sealed SCAS profile before each operation. This module
 does not compose profiles, authenticate employees, or select report data.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +16,7 @@ import sqlite3
 import ssl
 import stat
 from collections.abc import Callable
-from contextlib import closing
+from contextlib import closing, suppress
 from dataclasses import dataclass, field
 from email.message import EmailMessage
 from email.policy import SMTP
@@ -23,11 +24,13 @@ from email.utils import formatdate
 from pathlib import Path
 
 MAILBOX = "olivia@liquisto.cloud"
-APPROVED_RECIPIENTS = frozenset({
-    "konstantin@liquisto.com",
-    "konstantin.milonas@condata.io",
-    "aernout@liquisto.com",
-})
+APPROVED_RECIPIENTS = frozenset(
+    {
+        "konstantin@liquisto.com",
+        "konstantin.milonas@condata.io",
+        "aernout@liquisto.com",
+    }
+)
 POLICY_VERSION = "olivia-mail-v1"
 INSPECT = "olivia.mail.inspect"
 SEND = "olivia.mail.send"
@@ -82,8 +85,7 @@ def _protected_path(path: Path) -> None:
 
 def _protected_stat(info: os.stat_result) -> None:
     if os.name != "nt" and (
-        info.st_uid not in {0, os.geteuid()}
-        or stat.S_IMODE(info.st_mode) & 0o077
+        info.st_uid not in {0, os.geteuid()} or stat.S_IMODE(info.st_mode) & 0o077
     ):
         raise MailUnavailable("Protected file ownership and permissions are required.")
 
@@ -94,13 +96,14 @@ def _load_credentials(path: Path) -> _Credentials:
     try:
         parent = path.parent.stat()
         if os.name != "nt" and (
-            parent.st_uid not in {0, os.geteuid()}
-            or stat.S_IMODE(parent.st_mode) & 0o022
+            parent.st_uid not in {0, os.geteuid()} or stat.S_IMODE(parent.st_mode) & 0o022
         ):
             raise ValueError
         flags = (
-            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-            | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NONBLOCK", 0)
+            os.O_RDONLY
+            | getattr(os, "O_NOFOLLOW", 0)
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NONBLOCK", 0)
         )
         descriptor = os.open(path, flags)
         with os.fdopen(descriptor, "rb") as credential_file:
@@ -143,7 +146,8 @@ class OliviaMailTransport:
         self.outbox_path = outbox_path
         self.verify_profile = verify_profile
 
-    def _authorize(self, profile: ImmutableMailProfile, capability: str) -> None:
+    @staticmethod
+    def _validate_profile(profile: ImmutableMailProfile, capability: str) -> None:
         if (
             not isinstance(profile, ImmutableMailProfile)
             or not isinstance(profile.capabilities, frozenset)
@@ -162,6 +166,9 @@ class OliviaMailTransport:
             or (capability == SEND and not profile.source_grants)
         ):
             raise MailDenied("A matching sealed mail profile is required.")
+
+    def _authorize(self, profile: ImmutableMailProfile, capability: str) -> None:
+        self._validate_profile(profile, capability)
         try:
             accepted = self.verify_profile(profile, capability) is True
         except Exception:
@@ -210,10 +217,8 @@ class OliviaMailTransport:
             raise MailUnavailable("Mail transport authentication failed.") from None
         finally:
             if client is not None:
-                try:
+                with suppress(Exception):
                     client.close()
-                except Exception:
-                    pass
 
     @staticmethod
     def _smtp(credentials: _Credentials) -> smtplib.SMTP:
@@ -237,8 +242,10 @@ class OliviaMailTransport:
                 os.close(fd)
             db = sqlite3.connect(self.outbox_path, timeout=15)
             db.execute("PRAGMA synchronous=FULL")
-            db.execute("CREATE TABLE IF NOT EXISTS outbox "
-                       "(key TEXT PRIMARY KEY, digest TEXT NOT NULL, status TEXT NOT NULL)")
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS outbox "
+                "(key TEXT PRIMARY KEY, digest TEXT NOT NULL, status TEXT NOT NULL)"
+            )
             return db
         except FileExistsError:
             return self._ledger()
@@ -251,7 +258,11 @@ class OliviaMailTransport:
             raise MailDenied("Recipients must be an explicit address tuple.")
         canonical = []
         for value in values:
-            if not isinstance(value, str) or value != value.strip() or any(c in value for c in "\r\n\x00"):
+            if (
+                not isinstance(value, str)
+                or value != value.strip()
+                or any(c in value for c in "\r\n\x00")
+            ):
                 raise MailDenied("Invalid recipient.")
             address = value.lower()
             if address not in APPROVED_RECIPIENTS or address not in profile.recipients:
@@ -269,30 +280,47 @@ class OliviaMailTransport:
         idempotency_key: str,
         cc: tuple[str, ...] = (),
         bcc: tuple[str, ...] = (),
+        thread_capability: str | None = None,
+        thread_invitation: bool = False,
     ) -> MailResult:
         """Send a host-approved plain-text work output to exact approved employees.
 
         No caller-controlled headers, sender, SMTP host, attachments, or raw MIME.
         Uncertain delivery is durable and cannot be retried by this adapter.
         """
-        self._authorize(profile, SEND)
+        self._validate_profile(profile, SEND)
+        if type(thread_invitation) is not bool or (thread_invitation and thread_capability is None):
+            raise MailDenied("A thread invitation requires an explicit host capability.")
+        if thread_capability is not None and (
+            not isinstance(thread_capability, str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]{43}", thread_capability)
+        ):
+            raise MailDenied("Invalid host reply-thread capability.")
         to, cc, bcc = (self._recipients(values, profile) for values in (to, cc, bcc))
         recipients = tuple(sorted(set(to + cc + bcc)))
         if not to or not recipients:
             raise MailDenied("At least one approved To recipient is required.")
         if (
-            not isinstance(subject, str) or not subject.strip() or len(subject) > 200
+            not isinstance(subject, str)
+            or not subject.strip()
+            or len(subject) > 200
             or any(ord(c) < 32 or ord(c) == 127 for c in subject)
-            or not isinstance(body, str) or not body.strip() or "\x00" in body
+            or not isinstance(body, str)
+            or not body.strip()
+            or "\x00" in body
             or len(body.encode("utf-8")) > 64000
             or not isinstance(idempotency_key, str)
             or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", idempotency_key)
         ):
             raise MailDenied("Invalid plain-text work message.")
         key = hashlib.sha256((MAILBOX + ":" + idempotency_key).encode()).hexdigest()
-        digest = hashlib.sha256(json.dumps(
-            [MAILBOX, to, cc, bcc, subject, body], separators=(",", ":")
-        ).encode()).hexdigest()
+        # Preserve existing accepted entries when no new thread was requested.
+        content_binding = [MAILBOX, to, cc, bcc, subject, body]
+        if thread_capability is not None:
+            content_binding.extend((thread_capability, thread_invitation))
+        digest = hashlib.sha256(
+            json.dumps(content_binding, separators=(",", ":")).encode()
+        ).hexdigest()
         with closing(self._ledger()) as db:
             prior = db.execute("SELECT digest,status FROM outbox WHERE key=?", (key,)).fetchone()
             if prior:
@@ -309,15 +337,26 @@ class OliviaMailTransport:
                 message["Cc"] = ", ".join(cc)
             message["Subject"] = subject
             message["Date"] = formatdate(localtime=False)
-            message["Message-ID"] = f"<{key}@liquisto.cloud>"
+            anchor = f"<olivia-thread.{thread_capability}@liquisto.cloud>"
+            message_id = f"olivia-thread.{thread_capability}" if thread_invitation else key
+            message["Message-ID"] = f"<{message_id}@liquisto.cloud>"
+            if thread_capability is not None and not thread_invitation:
+                message["In-Reply-To"] = anchor
+                message["References"] = anchor
             message.set_content(body)
             with closing(self._ledger()) as db, db:
                 db.execute("BEGIN IMMEDIATE")
-                prior = db.execute("SELECT digest,status FROM outbox WHERE key=?", (key,)).fetchone()
+                prior = db.execute(
+                    "SELECT digest,status FROM outbox WHERE key=?", (key,)
+                ).fetchone()
                 if prior:
                     return self._prior(prior, digest)
                 db.execute("INSERT INTO outbox VALUES (?, ?, 'uncertain')", (key, digest))
             reserved = True
+            # Obtain one fresh single-use SEND receipt after TLS/login and
+            # durable reservation, immediately before the SMTP transmission.
+            # Revocation or authority failure leaves the reservation quarantined.
+            self._authorize(profile, SEND)
             refused = client.sendmail(MAILBOX, recipients, message.as_bytes())
             if refused:
                 raise MailUncertain("Delivery requires operator reconciliation.")
@@ -332,10 +371,8 @@ class OliviaMailTransport:
             raise MailUnavailable("Mail transport is unavailable.") from None
         finally:
             if client is not None:
-                try:
+                with suppress(Exception):
                     client.close()
-                except Exception:
-                    pass
 
     @staticmethod
     def _prior(prior: tuple[str, str], digest: str) -> MailResult:

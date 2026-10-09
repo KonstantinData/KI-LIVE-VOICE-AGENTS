@@ -1,7 +1,8 @@
 # Dedicated Olivia employee mail transport
 
-Status: implemented as an isolated review candidate; not wired into production,
-not an autonomous inbox processor, and not a conversational mail tool.
+Status: transport and dedicated native answer endpoint implemented as inactive
+review candidates. The separate SCAS host processor is implemented in its owning
+repository. No automatic processing or conversational mail tool is active.
 
 ## Ownership and authorization
 
@@ -30,7 +31,7 @@ not a runtime grant or proof of employee identity.
 
 ## Transport behavior
 
-- Every metadata check or send first requires a host-verified immutable profile
+- Every metadata check or send requires a host-verified immutable profile
   matching Liquisto, its assistant, the fixed mailbox, versioned mail policy,
   permitted capability, and a subset of the exact three allowed recipients.
 - The host verifier must check an authoritative existing SCAS seal, current
@@ -59,6 +60,10 @@ not a runtime grant or proof of employee identity.
   not claim delivery to the recipient's inbox or that an employee read it.
 - Connection/authentication failures before transmission do not reserve a send.
   Provider error text and secret values are not exposed in public exceptions.
+- Fresh authoritative send verification runs after TLS/login and a durable
+  reservation, immediately before SMTP DATA. Revoked or uncertain sends remain
+  quarantined. Initial thread invitations and ordinary reply Message-IDs are
+  distinct and idempotent; inbound headers never select recipients.
 
 ## Protected server files
 
@@ -107,20 +112,21 @@ files require equivalent owner-only ACLs; Linux is the runtime target.
 6. Run a bounded synthetic receive/send acceptance only to an explicitly
    selected approved address. Report SMTP acceptance separately from real inbox
    delivery. Never use existing user messages as test fixtures.
-7. Build a later inbox processor only after employee identity verification,
-   permitted incoming tasks, source/output types, and retention are specified.
-   Do not trust From/Reply-To or treat email prompt text as policy.
+7. Deploy the separately reviewed SCAS inbox processor only after employee
+   enrollment, current source grants and immutable mail profile verification.
+   It uses a private issued reply-thread proof, future-only UID cursor,
+   readonly BODY.PEEK and persistent replay/outbox state. From/Reply-To alone
+   and email prompt text never establish policy or employee authority.
 8. Advertise mail reachability in Olivia's persona only after the path is live
    and verified. Ordinary chat/Voice remain without mail-send tools. Memory
    writes stay restricted to their existing closed preference operations.
 
 ## Remaining activation inputs
 
-- Authoritative mail profile composition and host verifier wiring.
+- Exact code-owner/release review, live mail profile composition and enrollment.
 - Actual report/source/data-role grants and bounded task binding.
 - Synthetic acceptance to konstantin@liquisto.com and actual receive-path evidence. The user already authorized sending to this exact address; no new send approval is inferred.
-- Inbox processing/user identity/retention definition if incoming messages are
-  intended to trigger autonomous work (the transport intentionally does not).
+- Installation and activation of the separately implemented SCAS processor.
 
 During implementation and mocked tests, no mail was sent or read and no
 productive mailbox, DNS, service, grant, account, provider secret, or memory
@@ -169,7 +175,25 @@ SMTP STARTTLS authentication. No credential values, mailbox counts or provider
 responses were exported. No message body was fetched, flag changed or message
 sent. Credential contents remain exclusively in protected server configuration.
 
-This closes the credential and login gate only. Mail profile composition, host
-verifier wiring, source/employee data visibility, bounded inbox work and actual
-send/receive acceptance remain open. No runtime mail service or conversational
-mail tool was activated; ordinary Memory permissions remain unchanged.
+This closes the credential and login gate only. Live profile composition,
+source/employee grants, reviewed deployment and actual send/receive acceptance
+remain open. No runtime mail service or conversational mail tool was activated;
+ordinary Memory permissions remain unchanged.
+
+## Separate mail processing candidate, 2026-10-09
+
+`/assistant/mail/respond` now validates its dedicated Bearer token and a
+payload-bound, short-lived SCAS HMAC receipt, with durable one-time consumption.
+It uses the approved shared persona and returns a bounded answer without tools,
+prepared actions, CRM writes or Memory writes. See
+[`olivia-mail-adapter.md`](olivia-mail-adapter.md) for exact protected settings
+and the closed contract. The endpoint is disabled by default.
+
+The SCAS candidate includes independent mail authority, four minimized existing
+Workbench projections, a deterministic host processor and disabled service
+deployment. Its ADR-0033 remains Proposed pending exact code-owner/release
+review. Mail source/employee grants and all send/receive evidence are still
+unfulfilled productive gates, rather than inferred from transport login.
+
+Final changed-surface verification: 257 Liquisto API tests and Ruff passed.
+No live message body was fetched, mail sent or memory deleted by these tests.

@@ -81,6 +81,87 @@ def test_fixed_sender_tls_and_hidden_bcc_envelope(setup):
     assert not message.is_multipart()
 
 
+def test_host_thread_capability_message_id_is_bound_to_retry(setup):
+    transport, profile, smtp = setup
+    token = "x" * 43
+    assert send(transport, profile, thread_capability=token, thread_invitation=True).status == "accepted"
+    raw = next(c[2] for c in smtp.calls if isinstance(c, tuple))
+    assert message_from_bytes(raw)["Message-ID"] == f"<olivia-thread.{token}@liquisto.cloud>"
+    assert send(transport, profile, thread_capability=token, thread_invitation=True).replayed is True
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile, thread_capability="y" * 43)
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile)
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile, thread_capability=token, thread_invitation=False)
+
+
+def test_two_replies_have_unique_message_ids_and_same_anchor(setup):
+    transport, profile, smtp = setup
+    token = "x" * 43
+    send(transport, profile, thread_capability=token)
+    send(transport, profile, thread_capability=token, idempotency_key="test-idempotency-0002")
+    messages = [message_from_bytes(c[2]) for c in smtp.calls if isinstance(c, tuple)]
+    assert len(messages) == 2
+    assert messages[0]["Message-ID"] != messages[1]["Message-ID"]
+    anchor = f"<olivia-thread.{token}@liquisto.cloud>"
+    for message in messages:
+        assert message["Message-ID"] != anchor
+        assert message["In-Reply-To"] == message["References"] == anchor
+
+
+@pytest.mark.parametrize("values", [
+    {"thread_invitation": True}, {"thread_invitation": 1},
+    {"thread_invitation": "false", "thread_capability": "x" * 43},
+    {"thread_invitation": None},
+])
+def test_thread_invitation_flag_is_closed_and_requires_token(setup, values):
+    transport, profile, smtp = setup
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile, **values)
+    assert not smtp.calls
+
+
+def test_send_authority_is_fresh_after_tls_login_and_durable_reservation(setup):
+    transport, profile, smtp = setup
+    checked = []
+
+    def verify(current, capability):
+        assert current == profile and capability == mail.SEND
+        assert smtp.calls[-1] == "login"
+        with mail.sqlite3.connect(transport.outbox_path) as db:
+            assert db.execute("SELECT status FROM outbox").fetchone() == ("uncertain",)
+        checked.append("fresh-send-authority")
+        smtp.calls.append("fresh-send-authority")
+        return True
+
+    transport.verify_profile = verify
+    send(transport, profile)
+    assert checked == ["fresh-send-authority"]
+    assert isinstance(smtp.calls[6], tuple)
+
+
+def test_revocation_during_smtp_login_denies_transmission_and_quarantines(setup):
+    transport, profile, smtp = setup
+    transport.verify_profile = lambda _profile, _capability: False
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile)
+    assert smtp.calls == ["connect", "ehlo", "starttls", "ehlo", "login", "close"]
+    with mail.sqlite3.connect(transport.outbox_path) as db:
+        assert db.execute("SELECT status FROM outbox").fetchone() == ("uncertain",)
+    with pytest.raises(mail.MailUncertain):
+        send(transport, profile)
+    assert not any(isinstance(call, tuple) for call in smtp.calls)
+
+
+@pytest.mark.parametrize("token", ["short", "x" * 44, "x" * 42 + "\n", "x" * 42 + ".", 12])
+def test_thread_capability_never_allows_header_injection(setup, token):
+    transport, profile, smtp = setup
+    with pytest.raises(mail.MailDenied):
+        send(transport, profile, thread_capability=token)
+    assert not smtp.calls
+
+
 @pytest.mark.parametrize("field", ["to", "cc", "bcc"])
 @pytest.mark.parametrize("address", ["outsider@liquisto.com", "aernout@liquisto.com\r\nBcc:evil@example.com",
                                      "Aernout <aernout@liquisto.com>", "aernout@liquisto.com "])
@@ -258,7 +339,9 @@ def test_host_verifier_failure_fails_closed(setup):
     transport.verify_profile = unavailable
     with pytest.raises(mail.MailDenied):
         send(transport, profile)
-    assert smtp.calls == []
+    assert smtp.calls == ["connect", "ehlo", "starttls", "ehlo", "login", "close"]
+    with mail.sqlite3.connect(transport.outbox_path) as db:
+        assert db.execute("SELECT status FROM outbox").fetchone() == ("uncertain",)
 
 
 def test_send_ledger_race_cannot_emit_duplicate(setup, monkeypatch):
