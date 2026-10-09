@@ -148,7 +148,9 @@ class LocalOpenAICompatibleClient:
     def __init__(self, config: LiquistoAssistantRuntimeConfig) -> None:
         self._config = config
 
-    async def respond(self, messages: list[dict[str, str]]) -> str:
+    async def respond(
+        self, messages: list[dict[str, str]], *, allow_prepared_actions: bool = True
+    ) -> str:
         """Returns one local model answer without tools or provider fallback."""
         # Resolve only when called, after the route's authoritative contract is
         # initialized. Generation and validation use the same closed schema.
@@ -158,7 +160,19 @@ class LocalOpenAICompatibleClient:
         # This suffix is appended by the server's message builder, after the
         # user's prompt. With no request sources, no action can pass the route's
         # source-subset check. Constrain generation to that existing boundary.
-        if _has_empty_request_context(messages):
+        if not allow_prepared_actions:
+            # Mail cannot prepare actions even with authorized context. Avoid
+            # compiling unused action definitions into the provider grammar.
+            generation_schema = {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["answer", "prepared_actions"],
+                "properties": {
+                    "answer": generation_schema["properties"]["answer"],
+                    "prepared_actions": {"type": "array", "items": {}, "maxItems": 0},
+                },
+            }
+        elif _has_empty_request_context(messages):
             generation_schema["properties"]["prepared_actions"]["maxItems"] = 0
 
         payload = {
