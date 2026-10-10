@@ -209,7 +209,7 @@ async def test_injection_remains_user_data_with_truthful_capabilities(setup):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("prompt,answer", [
-    ("Wie ist der Stand meiner Aufträge?", "Dazu liegen mir keine Angaben in den bereitgestellten Quellen vor."),
+    ("Wie ist der Stand meiner Aufträge?", "Zu deinen Aufträgen liegen mir keine Statusdaten vor. Welchen Auftrag meinst du?"),
     ("Hallo", "Welche Aufgabe soll ich bearbeiten? Bitte beschreibe kurz das Ziel."),
     ("Please help", "Which task would you like me to prepare? Please describe the goal."),
     ("Recherchiere im Web", "In diesem E-Mail-Kanal kann ich keine Internetrecherche durchführen."),

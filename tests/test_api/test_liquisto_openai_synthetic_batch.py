@@ -97,10 +97,12 @@ async def test_one_call_maximum_including_access_failure_no_retry(monkeypatch, t
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("input_usage", [0, True, "1024", 22799])
+@pytest.mark.parametrize("input_usage", [0, True, "1024", "above_bound"])
 async def test_offline_usage_bound_rejects_drift_without_a_second_call(monkeypatch, tmp_path, input_usage):
     original = httpx.AsyncClient
     calls = []
+    if input_usage == "above_bound":
+        input_usage = batch.offline_input_token_bound(batch_request_bytes()) + 1
 
     def handle(request):
         calls.append(str(request.url))
@@ -113,6 +115,19 @@ async def test_offline_usage_bound_rejects_drift_without_a_second_call(monkeypat
     with pytest.raises(provider.MailOpenAIError, match="no_retry"):
         await run_batch(SecretStr("fixture-only-key"), budget)
     assert calls == [provider.ENDPOINT] and budget.attempts() == 1
+
+
+@pytest.mark.asyncio
+async def test_consumed_batch_stays_blocked_after_prompt_revision(monkeypatch, tmp_path):
+    budget = OpenAIHttpBudget(tmp_path / "budget.sqlite")
+    # Represent the consumed historical payload, not a fresh paid execution.
+    budget.claim_batch(batch.BATCH_ID, "a" * 64)
+    budget.reserve("generate")
+    monkeypatch.setattr(batch, "_generate_once", lambda *_: pytest.fail("provider called"))
+    with pytest.raises(OpenAIBudgetError, match="already_claimed"):
+        await run_batch(SecretStr("fixture-only-key"), OpenAIHttpBudget(budget.path))
+    assert batch.BATCH_ID == "olivia-synthetic-five-case-v1"
+    assert OpenAIHttpBudget(budget.path).attempts() == 1
 
 
 @pytest.mark.asyncio

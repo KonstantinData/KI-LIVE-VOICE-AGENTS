@@ -5,6 +5,27 @@ Local candidate based on KI PR 18 head
 transport, service secrets and deployment configuration are unchanged.
 The Liquisto meeting-briefing work remains a separate paused task.
 
+## Paused checkpoint — 2026-10-10
+
+Konstantin requested a saved local checkpoint while changing work location.
+The missing-order-status example and its mocked language fixture are updated;
+prompt regression checks now require the concrete question. A new offline
+regression verifies that an already consumed batch remains blocked after a
+prompt revision; the usage-bound case derives its threshold from the payload.
+The companion SCAS runbook contains the unapproved seven-day / USD 1 direct-mail
+technical draft. No productive integration is implemented or activated.
+
+**These new changes are not yet tested.** No test process is running and no
+focused pytest run has started for this checkpoint. Whitespace checks passed.
+Previous passing checks belong to KI `18e005a`, not this revised prompt.
+Next step after explicit resumption: run the three focused test files
+`test_liquisto_mail_route.py`, `test_liquisto_mail_openai.py` and
+`test_liquisto_openai_synthetic_batch.py` once offline with mocked HTTP, then
+Ruff for the changed Python files and record results against the final commit.
+Keep the consumed paid batch blocked. No further API calls, real-mail reads,
+key binding, deployment or activation are authorized. The actual-mail proposal
+remains pending approval. Pause all further work until resumption.
+
 ## Authorized acceptance scope
 
 Konstantin explicitly approved the narrow protected-key boolean check and an
@@ -16,7 +37,18 @@ made no real API call and has not read the protected key.
 
 The parent reports that `/etc/liquisto-assistant/olivia-openai.env` contains
 exactly one nonempty `OLIVIA_OPENAI_API_KEY`, root:root mode 0600, no symlink.
-Model access remains unverified. There is no fallback to `OPENAI_API_KEY`.
+There is no fallback to `OPENAI_API_KEY`.
+
+**Completed; do not run again.** The Runtime thread reports one successful
+generation at KI commit `18e005af1e8503daf8e71ed220e91d1b5eb4675e`:
+1,329 input / 165 output tokens, conservative cost USD .000432. Four cases
+were useful; the missing-order-status case copied the generic missing-source
+example. The local correction now asks: "Zu deinen Aufträgen liegen mir keine
+Statusdaten vor. Welchen Auftrag meinst du?" This prompt change is tested only
+offline; it has not been evaluated with a further model call. The original
+`olivia-synthetic-five-case-v1` batch ID and persistent ledger stay consumed,
+including after this payload change. No additional probe or acceptance run is
+authorized. The instructions below record the completed historical procedure.
 
 Run five fixed cases **in one batch**: invented Condata reference, unavailable
 order status, minimal greeting, English request, and a web/tool injection.
@@ -42,7 +74,7 @@ schema, then add **16,384 tokens** for the fixed two-role provider framing and
 schema transformation. This generous allowance is an engineering bound, not an
 official promise of exact framing size or a matching local-model tokenizer.
 
-The current complete payload is 6,414 bytes, giving an offline bound of 22,798
+The executed complete payload was 6,414 bytes, giving an offline bound of 22,798
 input tokens. A hard local byte cap of 8,192 gives a worst-case planning ceiling
 of **24,576 input tokens**. Batch output is capped at **1,280 tokens total** and
 each answer at 60 words. Unexpected reported input usage above the offline
@@ -56,7 +88,7 @@ the 10% regional premium: USD 0.25/M input and 0.60/M output. No Fast tier is
 selected; the input cap stays below the long-context premium threshold.
 
 ```text
-fixed current payload: ceil(22798 * .25/M + 1280 * .60/M) = USD .006468
+executed historical payload: ceil(22798 * .25/M + 1280 * .60/M) = USD .006468
 local cap: ceil(24576 * .25/M + 1280 * .60/M) = USD .006912
 five such attempts: 5 * USD .006912 = USD .034560 < USD .10
 ```
@@ -74,7 +106,7 @@ account-wide billing limit. The one-time batch permits only one generation;
 the shared five-attempt ledger remains an additional ceiling for all approved
 processes. Do not perform separate model-access probes or additional requests.
 
-## Isolated Runtime-thread procedure
+## Historical Runtime-thread procedure — consumed, no rerun
 
 Use a separate checkout of the exact reviewed KI commit and existing locked
 Python dependencies. Do not start or modify the productive service. Establish
@@ -157,6 +189,24 @@ handoff evidence; offline success is not a productive deployment claim.
 The existing tenant-registry tests likewise now expect the already approved
 Olivia de Jong identity and internal digital-assistant role. Only Liquisto
 assertions changed; no other tenant configuration was used or modified.
+
+## Proposed direct-mail draft — pending approval, no implementation activated
+
+The coordinating parent proposed seven days from activation, USD 1 total,
+`gpt-6-luna`, `store:false`, and draft answers only for new direct mail from
+`konstantin@liquisto.com` or `konstantin.milonas@condata.io` to
+`olivia@liquisto.cloud`. Only the current subject and new text may enter the
+provider request; attachments, quoted history, CRM, ERP and Memory are excluded.
+Secrets and particularly sensitive personal data are excluded. This is a
+proposal, not real-data, key-binding or activation authorization.
+
+The companion SCAS runbook
+`docs/runbooks/liquisto-olivia-openai-synthetic-pilot.md`, section "Proposed
+seven-day direct-mail draft", records the concrete minimal integration and
+durable admission contract. No production route, mailworker, ledger limits,
+provider transport, credentials or sender were changed here. The existing
+signed route remains synthetic-only and cannot carry productive mail. The
+completed synthetic ledger is never reused/reset as a productive grant.
 
 KI PR 18 and SCAS PR 610 remain stacked dependencies. Obtain exact-commit CI,
 required code-owner review, separate real-data/provider/retention approval and

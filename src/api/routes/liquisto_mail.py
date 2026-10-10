@@ -70,7 +70,7 @@ MAIL_CHANNEL_RULES = (
     "keine ausgelassenen Datensaetze erfinden.\n\n"
     "Formulierungsbeispiele (keine Fakten zur aktuellen Anfrage):\n"
     'Fehlende Aufgabe: {"answer":"Welche Aufgabe soll ich bearbeiten? Bitte beschreibe kurz das Ziel.","prepared_actions":[]}\n'
-    'Fehlende Quelle: {"answer":"Dazu liegen mir keine Angaben in den bereitgestellten Quellen vor.","prepared_actions":[]}\n'
+    'Fehlender Auftragsstatus: {"answer":"Zu deinen Aufträgen liegen mir keine Statusdaten vor. Welchen Auftrag meinst du?","prepared_actions":[]}\n'
     'Webrecherche: {"answer":"In diesem E-Mail-Kanal kann ich keine Internetrecherche durchführen. Ich kann die bereitgestellten Liquisto-Informationen auswerten.","prepared_actions":[]}\n'
     'English request: {"answer":"Which task would you like me to prepare? Please describe the goal.","prepared_actions":[]}\n'
     "Schreibe einfache, kurze Saetze. Pruefe Artikel, Kasus und Verbformen vor der Antwort. "
