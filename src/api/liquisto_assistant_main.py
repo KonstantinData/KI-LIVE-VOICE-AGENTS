@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from src.api.routes import assistant, liquisto_mail
+from src.api.routes import assistant, liquisto_mail, liquisto_mail_openai
 from src.api.services.liquisto_navigation_sideband import navigation_sideband_manager
 
 
@@ -27,3 +27,4 @@ app = FastAPI(
 app.include_router(assistant.health_router)
 app.include_router(assistant.router)
 app.include_router(liquisto_mail.router)
+app.include_router(liquisto_mail_openai.router)

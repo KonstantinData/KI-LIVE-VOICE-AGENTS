@@ -109,6 +109,8 @@ def test_mail_prompt_reuses_persona_without_action_or_knowledge_contracts(monkey
     assert "hoechstens 60 Woerter" in system
     assert "prepared_actions: []" in system
     assert "keine Erinnerungen erfinden" in system
+    assert "Zu deinen Aufträgen liegen mir keine Statusdaten vor. Welchen Auftrag meinst du?" in system
+    assert "Dazu liegen mir keine Angaben in den bereitgestellten Quellen vor." not in system
     assert "Keine Tools, Memory, weiteren Quellen oder Netzwerke" in system
     assert "keine Aktionen oder Entwuerfe" in system
     assert "Zustellung" in system

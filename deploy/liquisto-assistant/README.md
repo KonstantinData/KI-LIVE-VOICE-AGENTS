@@ -67,6 +67,14 @@ requests on the approved CPU-only host, where prompt evaluation can exceed 20
 seconds even while the local model is already resident. Provider failures still
 fail closed and never activate a remote or cross-tenant fallback.
 
+## Separate OpenAI mail candidate
+
+The disabled synthetic mail pilot is documented in
+[`docs/olivia-openai-mail-candidate.md`](../../docs/olivia-openai-mail-candidate.md).
+It uses a separate key and signed purpose; this Compose file does not bind or
+activate it. Existing local text, Voice, and Memory deployments are not changed
+by preparing that candidate.
+
 ## Verification
 
 Liveness is intentionally unauthenticated and contains no configuration:

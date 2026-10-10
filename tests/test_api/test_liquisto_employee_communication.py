@@ -33,7 +33,9 @@ def test_employee_rules_are_trusted_channel_instructions(channel):
     )
     assert "Behaupte niemals,\nein Mensch zu sein" in instructions
     assert "erfinde keine Erinnerungen" in instructions
-    assert "Biete keine E-Mail-Erreichbarkeit an" in instructions
+    assert "darfst sie auf Nachfrage nennen" in instructions
+    assert "Behaupte keine Mailzustellung" in instructions
+    assert "freigegebene Werkzeuge und Ergebnisse noetig" in instructions
     assert "kein Entwickler- oder Administrationszugang" in instructions
 
 
