@@ -8,9 +8,19 @@ import pytest
 
 from src.api.services import liquisto_mail_provider as provider
 from tests.test_api import test_liquisto_mail_route as route_fixtures
-from tests.test_api.test_liquisto_mail_route import payload, post, signed
+from tests.test_api.test_liquisto_mail_route import post, signed
 
 setup = route_fixtures.setup
+
+
+def payload():
+    body = route_fixtures.payload()
+    body["context"][0]["content"] = json.dumps([{
+        "record_id": "synthetic-task", "version": 1, "updated_at": None,
+        "summary": "Review inventory", "occurred_at": "2026-10-10T12:00:00Z",
+        "status": "open", "priority": None, "due_at": None, "related_records": [],
+    }])
+    return body
 
 
 def completion(answer="Zu deinen Aufträgen liegen mir keine Statusdaten vor. Welchen Auftrag meinst du?"):
@@ -71,8 +81,10 @@ async def test_existing_authenticated_reply_one_openai_call_regular_contract(reg
     assert "tools" not in outgoing and "previous_response_id" not in outgoing
     projected = json.loads(outgoing["input"][1]["content"])
     assert projected["prompt"] == body["prompt"]
-    assert projected["context"] == [{key: body["context"][0][key]
-                                      for key in ("source_id", "label", "observed_at", "content")}]
+    assert projected["context"][0]["content"] == json.loads(body["context"][0]["content"])
+    assert projected["context"][0]["model_projection"] == {
+        "provided_records": 1, "shown_records": 1, "truncated": False,
+    }
     for secret in (recipient, "actual-principal", "reviewed-profile", "n" * 43):
         assert secret not in requests[0].content.decode()
     assert rows(setup)[0][1:] == (provider.RESERVATION_MICRO_USD, 0)
@@ -114,12 +126,12 @@ async def test_bad_auth_before_key_or_http(regular, monkeypatch, failure):
 async def test_failures_consumed_without_retry_fallback_or_detail_leak(regular, status, body, expected):
     setup, requests, outcomes = regular
     outcomes[:] = [(status, body)]
-    result = await post(setup)
+    result = await post(setup, payload())
     assert result.status_code == expected
     assert "sensitive-provider-details" not in result.text
     assert setup[2] == [] and len(requests) == 1
     assert rows(setup)[0][1:] == (provider.RESERVATION_MICRO_USD, 0)
-    assert (await post(setup)).status_code == 409
+    assert (await post(setup, payload())).status_code == 409
     assert len(requests) == 1
 
 
@@ -127,7 +139,7 @@ async def test_failures_consumed_without_retry_fallback_or_detail_leak(regular, 
 async def test_spend_limit_429_stops_new_messages_before_key_http(regular, monkeypatch):
     setup, requests, outcomes = regular
     outcomes[:] = [(429, {"error": {"code": "project_spend_limit_exceeded"}})]
-    assert (await post(setup)).status_code == 429
+    assert (await post(setup, payload())).status_code == 429
     assert rows(setup)[0][1:] == (provider.RESERVATION_MICRO_USD, 1)
     monkeypatch.setattr(provider, "protected_openai_key", lambda _: pytest.fail("Stopped key read"))
     body = payload()
@@ -187,3 +199,16 @@ def test_missing_receipt_store_never_creates_budget(tmp_path):
     with pytest.raises(provider.RegularMailProviderError):
         provider.mail_budget(path)
     assert not path.exists()
+
+
+@pytest.mark.asyncio
+async def test_sensitive_projection_never_reads_key_or_calls_provider(regular, monkeypatch):
+    setup, requests, _ = regular
+    monkeypatch.setattr(provider, "protected_openai_key", lambda _: pytest.fail("Key read"))
+    body = payload()
+    body["prompt"] = "password=do-not-export"
+    result = await post(setup, body)
+    assert result.status_code == 502
+    assert "do-not-export" not in result.text and requests == []
+    with sqlite3.connect(setup[1].replay_path) as db:
+        assert db.execute("SELECT name FROM sqlite_master WHERE name='mail_openai_months'").fetchone() is None

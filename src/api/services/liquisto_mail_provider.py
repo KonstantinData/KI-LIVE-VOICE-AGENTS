@@ -14,6 +14,7 @@ import httpx
 from pydantic import SecretStr
 
 from src.api.services.liquisto_mail import _protected_path, _protected_stat
+from src.api.services.liquisto_mail_data import check_external_projection
 from src.api.services.liquisto_mail_openai import (
     ENDPOINT, MAX_RESPONSE_BYTES, parse_json, request_bytes, response_text,
 )
@@ -116,6 +117,10 @@ async def regular_openai_answer(messages: list[dict[str, str]], *, key_file: Pat
                                 replay_file: Path) -> str:
     """Called only after the regular route's unchanged signed receipt validation."""
     try:
+        try:
+            check_external_projection(messages)
+        except Exception:
+            raise RegularMailProviderError("mail_openai_data_denied") from None
         encoded = request_bytes(messages)
         charged_month = mail_budget(replay_file)
         key = protected_openai_key(key_file)

@@ -1,6 +1,36 @@
 # Olivia OpenAI regular mail and historical checkpoints — 2026-10-10
 
-## Current regular-mail provider — local change, inactive
+## Approved regular scope — release checks pending
+
+The coordinator records Konstantin's explicit bundled approval at 16:41 UTC:
+the existing dedicated Olivia key, fixed gpt-6-luna, USD25/month, newest current
+text plus existing role-approved four CRM projections, exactly the three named
+individual recipients, publication/deployment/permanent key binding and scoped
+restarts. No new business/data rights, Owner copy, attachments, full history or
+credentials as model input. The separate Aernout briefing application is incomplete.
+
+The provider now checks exact outgoing CRM record fields and known sensitive/
+secret markers before key access, budget reservation or HTTP. Denials stop the
+message. This conservative guard is not full PII classification or anonymization;
+approved free text can still contain business names or other unmarked details.
+
+SCAS must enable protected `sender_authentication=dkim-v1` before activation,
+using independent exact From-domain RSA/SHA256 signatures and replay rejection.
+It must independently enroll Aernout under verified existing rights. New unthreaded
+employee mail requires that origin proof; the private reply-proof lane remains.
+Raw MIME stays solely in Runtime RAM, not OpenAI. Provider dashboard hard-limit
+verification is separately outstanding and does not block the service USD25 cap.
+
+Verify actual KI container UID and original protected key metadata. Mount a
+protected service-readable copy of the same key read-only at
+`/run/secrets/olivia-openai.env`; set `OLIVIA_MAIL_PROVIDER=openai` and
+`OLIVIA_MAIL_OPENAI_KEY_FILE` to that target. Do not mount a root-only 0600 file
+blindly into UID10001, expose key values or change unrelated services. Compose
+recreate applies new env/mounts; a plain restart does not. Preserve receipt/budget/
+cursor/outbox state during restart or rollback. Exact-head gates, CI/review,
+verified live image and actual acceptance remain prerequisites, not completed facts.
+
+## Earlier local checkpoint — before bundled approval
 
 The existing `/assistant/mail/respond` route accepts a server-selected provider:
 `OLIVIA_MAIL_PROVIDER=local` by default, or `openai` after concrete activation
