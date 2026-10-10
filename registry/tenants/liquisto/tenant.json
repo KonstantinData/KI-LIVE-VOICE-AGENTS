@@ -23,9 +23,9 @@
     }
   ],
   "public_widget": {
-    "agent_name": "Olivia",
+    "agent_name": "Olivia de Jong",
     "agent_subtitle": "Interne KI-Assistentin",
-    "welcome_message": "Hallo, ich bin Olivia, die interne KI-Assistentin von Liquisto. Wobei kann ich unterstuetzen?",
+    "welcome_message": "Hallo, ich bin Olivia de Jong, die interne digitale KI-Assistentin von Liquisto.com. Wobei kann ich unterstuetzen?",
     "privacy_url": "/datenschutz",
     "retention_days": 90,
     "voice_enabled": false,
@@ -36,11 +36,11 @@
     {
       "id": "liquisto-assistant",
       "agent_type": "live-voice",
-      "display_name": "Olivia",
+      "display_name": "Olivia de Jong",
       "prompt_profile": "liquisto-assistant",
       "enabled": true,
       "model": "gpt-realtime-2.1",
-      "voice": "shimmer",
+      "voice": "marin",
       "skills": [],
       "tools": [
         "open_liquisto_destination"
@@ -84,7 +84,7 @@
     {
       "id": "liquisto-assistant",
       "agent_type": "text-assistant",
-      "display_name": "Olivia",
+      "display_name": "Olivia de Jong",
       "prompt_profile": "liquisto-assistant",
       "enabled": true,
       "provider": "openai-compatible-local",
