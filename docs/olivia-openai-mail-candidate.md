@@ -1,4 +1,82 @@
-# Olivia synthetic OpenAI pilot — 2026-10-10
+# Olivia OpenAI regular mail and historical checkpoints — 2026-10-10
+
+## Current regular-mail provider — local change, inactive
+
+The existing `/assistant/mail/respond` route accepts a server-selected provider:
+`OLIVIA_MAIL_PROVIDER=local` by default, or `openai` after concrete activation
+approval. OpenAI uses `OLIVIA_MAIL_OPENAI_KEY_FILE` pointing to the separately
+mounted, protected dedicated Olivia file. No shared OPENAI_API_KEY fallback.
+Neither this branch nor its tests change deployment configuration or read keys.
+
+The approved communication circle is exactly `konstantin@liquisto.com`,
+`konstantin.milonas@condata.io`, `aernout@liquisto.com`, mailbox
+`olivia@liquisto.cloud`; no domain-wide grant. This concerns communication, not
+new task/source permissions. Dedicated bearer/HMAC/tenant/profile/context/replay
+validation precedes either provider. SCAS receive -> context -> respond -> SMTP
+continues using the same native response contract. Current text and the existing
+four bounded authorized sources reach OpenAI; addresses, receipt identifiers,
+private thread references and quoted history do not. Source labels/timestamps and
+projection counts remain. No attachments, tool calls, retrieval or business
+mutation are added. Provider transfer of real mail/internal CRM content still
+requires explicit approval of that exact data flow.
+
+One HTTPS Responses call uses fixed `gpt-6-luna`, none reasoning, default tier,
+`store=false`, 24,000 request bytes/512 output tokens and strict no-action output.
+USD25 per UTC month is enforced conservatively through a small counter table in
+the EXISTING protected receipt SQLite: USD .02 debited atomically per attempt,
+including failures; at most 1,250 attempts/month, no refunds. Restart preserves
+state; clock rollback fails closed. Project/organization spend-limit 429 latches
+the charged month. Generic 429, timeouts, denial and malformed outputs quarantine
+the message without retry, key switching or local fallback. No new budget
+service, migration or timer; historical pilot ledgers are neither read nor reset.
+The conservative debit uses reviewed [model pricing](https://developers.openai.com/api/docs/models/gpt-6-luna).
+Verify the dedicated enforced project limit separately; [hard-limit enforcement](https://developers.openai.com/api/docs/guides/spend-limits)
+is not instantaneous. `store=false` does not establish zero retention.
+
+Runtime reports the active worker currently has only the two Konstantin aliases
+with Owner delegation, while the KI transport allowlist contains all three.
+Aernout needs individual enrollment/profile review; communication approval does
+not copy Owner rights. Active worker activation file is
+`/etc/liquisto-assistant/mail-service/activation.json`, timer `olivia-mail.timer`,
+compose `/opt/liquisto-olivia-mail/compose.yaml`. Sender-origin verification is
+unresolved: allowlisted From and Owner processing delegation are not proofs.
+No arbitrary OVH/header trust rule is introduced. The existing delivered private
+reply-capability lane can be used only under verified current Control authority
+and approved worker configuration.
+
+Release requires exact-commit offline/CI/review, verified deployed image/key mount,
+project limit, approved data flow and resolved sender-origin/enrollment settings.
+Then Runtime can bind the key and select `openai` through the normal runbook.
+Rollback explicitly selects `local`/previous verified image, preserving receipt,
+budget, cursor and SMTP outbox records; never resend uncertain mail automatically.
+No live API/mail access, activation, key binding, push, merge or deployment here.
+The Aernout meeting-briefing application remains separate and incomplete.
+
+## Superseded scope — draft pilot rejected
+
+Konstantin rejected the seven-day/USD1 draft-only proposal on 2026-10-10.
+Do not activate or extend that path. Its isolated default-off code remains an
+archived checkpoint. Current direction: regular received-mail/task/automatic
+answers with a minimal provider switch in the existing `liquisto_mail.respond`
+route and USD 25 per calendar month. Keep existing SCAS identity/source/replay,
+inbox and SMTP behavior; do not transplant synthetic/draft pilot gates.
+Reuse bounded one-call transport/schema/error checks. Prefer the provider's
+separately verified project hard limit and treat spend-limit 429 as a controlled
+failure without retries, key rotation, fallback or increasing its cap. The
+actual account/project setting is not verified here.
+
+The three individual communication addresses are now human-confirmed; there is
+no domain grant. External data transfer and dedicated key binding remain pending,
+with no real-mail processing or API call authorized here. Existing code still
+limits context to four sources/one shown array record per source, instructs
+60-word answers and caps the local model at 192 output tokens. ERP/web retrieval
+and executing business actions are absent; a provider switch does not add them.
+
+KI checkpoint `e59c1f4`: all 845 tests and Ruff passed offline. SCAS `af09c8c`:
+57 focused + 5 joined integration tests, 201 Worker tests/typecheck/dry-run and
+Ruff passed; its full repeat was interrupted at the user's scope-change request.
+Full SCAS predecessor `e0674c3` passed 2339 tests with 42 skips. The paid synthetic
+batch remains consumed and cannot be rerun. The rest of this document is history.
 
 Local candidate based on KI PR 18 head
 `3b56514196534e7ac0e0784803fcd8e9c7ac27bf`. Productive mail, Voice, Memory,

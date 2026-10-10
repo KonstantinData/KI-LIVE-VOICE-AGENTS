@@ -118,6 +118,8 @@ class MailSettings(BaseSettings):
     runtime_token: str = Field(default="", repr=False)
     receipt_key_path: str = ""
     replay_path: str = ""
+    provider: Literal["local", "openai"] = "local"
+    openai_key_file: str = ""
 
 
 @lru_cache
@@ -277,7 +279,7 @@ async def respond(
     authorization: Annotated[str | None, Header()] = None,
     x_olivia_mail_receipt: Annotated[str | None, Header()] = None,
 ) -> dict[str, str]:
-    """Exact signed host request to local inference; never execution or Memory access."""
+    """Signed regular mail response; fixed server provider, no tools or Memory."""
     settings = get_mail_settings()
     if not settings.enabled:
         raise HTTPException(503, "mail_disabled")
@@ -314,13 +316,31 @@ async def respond(
         context=[item.model_dump(mode="json") for item in payload.context],
     )
     try:
-        config = LiquistoAssistantRuntimeConfig.from_settings(get_settings())
-        config = replace(
-            config, model=MAIL_LOCAL_MODEL, max_output_tokens=min(config.max_output_tokens, 192)
-        )
-        answer = await LocalOpenAICompatibleClient(config).respond(
-            messages, allow_prepared_actions=False
-        )
+        if settings.provider == "openai":
+            from src.api.services.liquisto_mail_provider import (
+                RegularMailBudgetStop, RegularMailProviderError, regular_openai_answer,
+            )
+
+            if not settings.openai_key_file:
+                raise HTTPException(503, "mail_openai_key_binding_unavailable")
+            try:
+                answer = await regular_openai_answer(
+                    messages, key_file=Path(settings.openai_key_file),
+                    replay_file=Path(settings.replay_path),
+                )
+            except RegularMailBudgetStop:
+                raise HTTPException(429, "mail_openai_budget_stopped") from None
+            except RegularMailProviderError as error:
+                status = 429 if str(error) == "mail_openai_rate_limited" else 502
+                raise HTTPException(status, "mail_openai_generation_unavailable") from None
+        else:
+            config = LiquistoAssistantRuntimeConfig.from_settings(get_settings())
+            config = replace(
+                config, model=MAIL_LOCAL_MODEL, max_output_tokens=min(config.max_output_tokens, 192)
+            )
+            answer = await LocalOpenAICompatibleClient(config).respond(
+                messages, allow_prepared_actions=False
+            )
         draft = ProviderDraft.model_validate(_json(answer))
         if (draft.prepared_actions or not draft.answer.strip()
                 or len(draft.answer) > 6000 or "\x00" in draft.answer):
