@@ -5,7 +5,7 @@ Local candidate based on KI PR 18 head
 transport, service secrets and deployment configuration are unchanged.
 The Liquisto meeting-briefing work remains a separate paused task.
 
-## Paused checkpoint — 2026-10-10
+## Historical paused checkpoint — 2026-10-10
 
 Konstantin requested a saved local checkpoint while changing work location.
 The missing-order-status example and its mocked language fixture are updated;
@@ -190,7 +190,7 @@ The existing tenant-registry tests likewise now expect the already approved
 Olivia de Jong identity and internal digital-assistant role. Only Liquisto
 assertions changed; no other tenant configuration was used or modified.
 
-## Proposed direct-mail draft — pending approval, no implementation activated
+## Implemented local direct-mail adapter — pending live approval
 
 The coordinating parent proposed seven days from activation, USD 1 total,
 `gpt-6-luna`, `store:false`, and draft answers only for new direct mail from
@@ -200,13 +200,31 @@ provider request; attachments, quoted history, CRM, ERP and Memory are excluded.
 Secrets and particularly sensitive personal data are excluded. This is a
 proposal, not real-data, key-binding or activation authorization.
 
-The companion SCAS runbook
-`docs/runbooks/liquisto-olivia-openai-synthetic-pilot.md`, section "Proposed
-seven-day direct-mail draft", records the concrete minimal integration and
-durable admission contract. No production route, mailworker, ledger limits,
-provider transport, credentials or sender were changed here. The existing
+`src/api/services/liquisto_direct_draft.py` now implements the separate default-off
+`DirectDraftProvider` host adapter. It accepts only closed `{subject, new_text}`
+bytes, reuses the fixed Olivia persona with empty context, caps the entire
+request at 8192 bytes/output at 512 tokens, fixes `gpt-6-luna`/`store:false`,
+and has no tools/counter/probe/retry/fallback. A mandatory host callback verifies
+authority/content and debits the private seven-day/USD1 ledger **before** the
+key supplier or HTTP client is touched. Errors/output drift are sanitized.
+It is not imported by application startup, exposed as a route or bound to keys.
+
+The SCAS companion `apps/liquisto-mail/olivia_mail_worker/direct_drafts.py`
+implements private admission/state, current-text projection, trusted sender and
+content gates, sealed Gateway orchestration and saved draft retrieval.
+Its runbook `docs/runbooks/liquisto-olivia-openai-synthetic-pilot.md`, section
+"Implemented local direct-mail draft", gives activation/return steps and the
+required cross-checkout offline integration test. The ordinary mailworker,
+synthetic ledger limits/transports, credentials and sender were not changed. The existing
 signed route remains synthetic-only and cannot carry productive mail. The
 completed synthetic ledger is never reused/reset as a productive grant.
+
+The new provider tests use only HTTP MockTransport and an invented key. The
+joined SCAS test invokes this actual adapter after real Gateway/SQLite admission
+and reopens the unsent draft. No genuine mail or provider call is used.
+A trusted Authority/MTA verifier, actual existing enrollment, private draft-access
+binding, independently locked combined host dependencies, and specific live-data,
+key-binding and activation approvals remain prerequisites.
 
 KI PR 18 and SCAS PR 610 remain stacked dependencies. Obtain exact-commit CI,
 required code-owner review, separate real-data/provider/retention approval and
