@@ -1,8 +1,44 @@
 # Dedicated Olivia employee mail transport
 
-Status: transport and dedicated native answer endpoint implemented as inactive
-review candidates. The separate SCAS host processor is implemented in its owning
-repository. No automatic processing or conversational mail tool is active.
+Status: the dedicated native mail endpoint was activated under the owner's
+explicit task-scoped authorization on 2026-10-09. The SCAS repository owns the
+separate host processor and its live processing/receive/send evidence. Ordinary
+Chat and Voice retain their existing tools; this is no conversational mail tool.
+
+## Mail-only generation correction, 2026-10-09
+
+The first signed live mail-generation checks timed out at 60 seconds. Mail now
+explicitly selects an answer-only closed generation schema with an empty
+`prepared_actions` array and no unused action definitions. Its frozen runtime
+configuration is copied with at most 192 output tokens, preserving any smaller
+configured budget and the existing timeout. The dedicated mail instruction asks
+for at most 60 words; this is guidance, not a separately validated word limit.
+
+The mail route selects the fixed local `qwen2.5:0.5b-instruct` model at the
+existing internal Ollama origin. Missing weights fail closed without fallback.
+Ordinary Chat/Voice retain their existing model and configuration. The mail
+prompt reuses the shared identity paragraph, full personality and security
+rules, and language/style excerpts, with a short closed mail contract.
+
+Only the model view limits larger source arrays to one record, marked as an
+incomplete sample with supplied/shown counts. Labels, source binding and the
+original signed context remain unchanged. Supplied counts cannot establish
+total CRM counts or a complete report. This first version supports short
+bounded summaries, not a complete CRM reporting workflow.
+
+Shared persona sources, Memory hooks, and source contracts are unchanged.
+The native route still independently rejects actions, malformed
+output and oversized answers. Failed inference remains quarantined; it is not
+automatically regenerated. An exact two-file image overlay preserves the
+installed native baseline, configuration, mounts and private networks.
+
+Validation: 277 focused Liquisto assistant, employee communication, Voice
+sideband, transport, operator, mail-route and provider-format tests passed.
+Changed-surface Ruff passed. The final installed endpoint also passed actual
+signed four-source context and verified-profile generation. A genuine employee
+reply was processed and its automatic answer accepted by SMTP. The SCAS operator
+records timer activation, restart deduplication and recipient inbox confirmation
+separately; local tests or SMTP acceptance alone do not establish inbox delivery.
 
 ## Ownership and authorization
 
@@ -121,7 +157,7 @@ files require equivalent owner-only ACLs; Linux is the runtime target.
    and verified. Ordinary chat/Voice remain without mail-send tools. Memory
    writes stay restricted to their existing closed preference operations.
 
-## Remaining activation inputs
+## Historical activation inputs (before the current activation)
 
 - Exact code-owner/release review, live mail profile composition and enrollment.
 - Actual report/source/data-role grants and bounded task binding.
@@ -180,7 +216,7 @@ source/employee grants, reviewed deployment and actual send/receive acceptance
 remain open. No runtime mail service or conversational mail tool was activated;
 ordinary Memory permissions remain unchanged.
 
-## Separate mail processing candidate, 2026-10-09
+## Separate mail processing candidate, 2026-10-09 (pre-activation record)
 
 `/assistant/mail/respond` now validates its dedicated Bearer token and a
 payload-bound, short-lived SCAS HMAC receipt, with durable one-time consumption.
