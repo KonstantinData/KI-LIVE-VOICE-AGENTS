@@ -41,12 +41,12 @@ def test_liquisto_profile_registers_olivia_without_public_voice_or_handoff():
     assert profile.tenant_id == "liquisto"
     assert profile.display_name == "Liquisto"
     assert profile.status == "active"
-    assert profile.public_widget.agent_name == "Olivia"
+    assert profile.public_widget.agent_name == "Olivia de Jong"
     assert profile.public_widget.voice_enabled is False
     assert profile.public_widget.upload_enabled is False
     assert profile.public_widget.contact_form_enabled is False
     voice = profile.live_voice_agent("liquisto-assistant")
-    assert voice.display_name == "Olivia"
+    assert voice.display_name == "Olivia de Jong"
     assert voice.enabled is True
     assert voice.audience == "internal-authenticated"
     assert voice.tools == ("open_liquisto_destination",)
@@ -143,7 +143,7 @@ def test_liquisto_realtime_prompt_uses_olivia_without_end_customer_intake():
     assert config["model"] == "gpt-realtime-2.1"
     assert "Du bist Olivia" in config["instructions"]
     assert "Transforming Excess Inventory" in config["instructions"]
-    assert "persoenliche Assistenz" in config["instructions"]
+    assert "interne digitale KI-Assistentin" in config["instructions"]
     assert "KEA KOMMUNIKATIONSVERTRAG" not in config["instructions"]
     assert "ANGEBOTSORIENTIERUNG MEIN KÜCHENEXPERTE" not in config["instructions"]
     assert "kein Kuechenfachberater" not in config["instructions"]

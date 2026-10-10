@@ -144,6 +144,9 @@ now reflect the approved `olivia@liquisto.cloud` persona: naming its
 address does not claim delivery, read or sending authority. The shared persona
 was not changed. Final commit hashes and observed gate results belong in the
 handoff evidence; offline success is not a productive deployment claim.
+The existing tenant-registry tests likewise now expect the already approved
+Olivia de Jong identity and internal digital-assistant role. Only Liquisto
+assertions changed; no other tenant configuration was used or modified.
 
 KI PR 18 and SCAS PR 610 remain stacked dependencies. Obtain exact-commit CI,
 required code-owner review, separate real-data/provider/retention approval and
