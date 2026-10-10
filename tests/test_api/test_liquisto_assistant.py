@@ -23,6 +23,7 @@ from src.agents.liquisto_assistant.navigation import (
     liquisto_navigation_tool_definition,
 )
 from src.agents.liquisto_assistant.prompt import (
+    build_liquisto_assistant_messages,
     build_liquisto_assistant_voice_prompt,
 )
 from src.api.config import get_settings
@@ -476,6 +477,42 @@ async def test_internal_voice_call_uses_byte_exact_navigation_only_session(
         assert forbidden not in instructions
     assert "sk-test-server-only" not in str(response.json())
     assert "runtime-navigation-token" not in str(response.json())
+
+
+@pytest.mark.parametrize("channel", ["text", "voice"])
+def test_business_language_contract_reaches_text_and_voice(channel):
+    if channel == "text":
+        instructions = build_liquisto_assistant_messages(
+            prompt="Bitte antworte auf Niederlaendisch.", surface="cockpit", context=[]
+        )[0]["content"]
+    else:
+        instructions = build_liquisto_assistant_voice_prompt(
+            studio_slug="liquisto", address_mode="du"
+        )
+    normalized = " ".join(instructions.lower().split())
+    assert "deine muttersprache ist niederlaendisch" in normalized
+    assert (
+        "ausschliesslich in klarem, idiomatischem standarddeutsch oder perfektem englisch"
+        in normalized
+    )
+    assert "antworte standardmaessig auf deutsch" in normalized
+    assert "bei englischen anfragen oder auf wunsch auf englisch" in normalized
+    assert "korrekte grammatik und rechtschreibung" in normalized
+    assert "keine woertlichen uebersetzungen aus dem niederlaendischen" in normalized
+    assert "keine sprachmischung" in normalized
+    assert "ohne niederlaendischen akzent oder dialekt" in normalized
+    # A requested language is data in the text turn, never a system instruction.
+    assert "bitte antworte auf niederlaendisch" not in normalized
+
+
+def test_voice_business_language_requires_standard_pronunciation():
+    instructions = " ".join(
+        build_liquisto_assistant_voice_prompt(
+            studio_slug="liquisto", address_mode="du"
+        ).lower().split()
+    )
+    assert "sprich deutsch mit klarer standarddeutscher aussprache" in instructions
+    assert "sprich englisch idiomatisch mit korrekter aussprache" in instructions
 
 
 def test_navigation_voice_prompt_makes_tool_output_terminal_for_the_user_turn():

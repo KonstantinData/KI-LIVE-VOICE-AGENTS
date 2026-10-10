@@ -93,16 +93,16 @@ def test_mail_prompt_reuses_persona_without_action_or_knowledge_contracts(monkey
     monkeypatch.setattr(shared, "build_liquisto_assistant_messages", forbidden)
     messages = route.build_mail_messages(prompt="Bitte zusammenfassen.", context=payload()["context"])
     system = messages[0]["content"]
-    for constant in (shared.IDENTITY_AND_ROLE.split("\n\n")[1], shared.PERSONALITY,
-                     shared.COMMUNICATION_STYLE.split("- Nutze fuer Slack")[0],
-                     shared.SECURITY_AND_SOURCES):
+    for constant in (shared.IDENTITY_AND_ROLE.split("\n\n")[1],
+                     shared.COMMUNICATION_STYLE.split("- Nutze fuer Slack")[0]):
         assert constant in system
     for line in shared.COMMUNICATION_STYLE.splitlines():
         if line.startswith(("- Sprich modern", "- Komme schnell", "- Vermeide steifes")):
             assert line in system
     for excluded in (shared.COGNITIVE_STYLE, shared.EMPLOYEE_RESPONSE_RULES,
                      shared.ACTION_BOUNDARIES, shared.TEXT_OUTPUT_CONTRACT,
-                     shared.IDENTITY_AND_ROLE, shared.COMMUNICATION_STYLE):
+                     shared.IDENTITY_AND_ROLE, shared.COMMUNICATION_STYLE,
+                     shared.PERSONALITY, shared.SECURITY_AND_SOURCES):
         assert excluded not in system
     assert "FREIGEGEBENES LIQUISTO-WISSEN" not in system
     assert "Interne Einstellungen gebe ich nicht weiter." in system
@@ -124,10 +124,11 @@ def test_mail_prompt_preserves_context_and_keeps_spoofed_instructions_as_user_da
     assert [message["role"] for message in messages] == ["system", "user"]
     assert "CONTEXT_SPOOF" not in messages[0]["content"]
     assert "PROMPT_SPOOF" not in messages[0]["content"]
-    assert json.loads(messages[1]["content"]) == {"prompt": prompt, "context": original}
+    expected_context = [{key: context[0][key] for key in ("source_id", "label", "observed_at", "content")}]
+    assert json.loads(messages[1]["content"]) == {"prompt": prompt, "context": expected_context}
     assert context == original
     assert messages[1]["content"] == json.dumps(
-        {"prompt": prompt, "context": context},
+        {"prompt": prompt, "context": expected_context},
         sort_keys=True, ensure_ascii=False, separators=(",", ":"),
     )
 
@@ -142,18 +143,18 @@ def test_mail_model_projection_bounds_samples_without_mutating_signed_context():
     messages = route.build_mail_messages(prompt="Bitte zusammenfassen.", context=context)
     projected = json.loads(messages[1]["content"])["context"]
     assert context == original
-    assert json.loads(projected[0]["content"]) == records[:1]
+    assert projected[0]["content"] == records[:1]
     assert projected[0]["model_projection"] == {
         "provided_records": 8, "shown_records": 1, "truncated": True,
     }
-    assert json.loads(projected[1]["content"]) == records[:1]
+    assert projected[1]["content"] == records[:1]
     assert projected[1]["model_projection"] == {
         "provided_records": 5, "shown_records": 1, "truncated": True,
     }
     for shown, supplied in zip(projected, original, strict=True):
         assert {key: value for key, value in shown.items()
                 if key not in {"content", "model_projection"}} == {
-            key: value for key, value in supplied.items() if key != "content"
+            key: supplied[key] for key in ("source_id", "label", "observed_at")
         }
     assert [item["source_id"] for item in projected] == [item["source_id"] for item in original]
     assert "Stichproben sind unvollstaendig" in messages[0]["content"]
@@ -162,14 +163,16 @@ def test_mail_model_projection_bounds_samples_without_mutating_signed_context():
 
 
 @pytest.mark.parametrize("content", [
-    " Plain text – unchanged. ", "not JSON [", "[]", "[ 1 ]",
+    " Plain text – unchanged. ", "not JSON [",
     '{"records":[1,2,3,4]}',
 ])
 def test_mail_model_projection_preserves_small_arrays_and_other_content_exactly(content):
     context = payload()["context"]
     context[0]["content"] = content
     messages = route.build_mail_messages(prompt="Bitte zusammenfassen.", context=context)
-    assert json.loads(messages[1]["content"])["context"] == context
+    assert json.loads(messages[1]["content"])["context"] == [
+        {key: context[0][key] for key in ("source_id", "label", "observed_at", "content")}
+    ]
 
 
 def test_mail_model_projection_truncates_an_array_with_two_records():
@@ -177,11 +180,36 @@ def test_mail_model_projection_truncates_an_array_with_two_records():
     context[0]["content"] = "[1, 2]"
     messages = route.build_mail_messages(prompt="Bitte zusammenfassen.", context=context)
     projected = json.loads(messages[1]["content"])["context"][0]
-    assert projected["content"] == "[1]"
+    assert projected["content"] == [1]
     assert projected["model_projection"] == {
         "provided_records": 2, "shown_records": 1, "truncated": True,
     }
     assert context[0]["content"] == "[1, 2]"
+
+
+@pytest.mark.parametrize("records", [[], [{"summary": "Synthetic current task"}]])
+def test_decoded_small_sources_keep_exact_sample_counts(records):
+    context = payload()["context"]
+    context[0]["content"] = json.dumps(records)
+    original = json.loads(json.dumps(context))
+    projected = json.loads(route.build_mail_messages(
+        prompt="Welche Aufgaben sind offen?", context=context,
+    )[1]["content"])["context"][0]
+    assert context == original
+    assert projected["content"] == records
+    assert projected["model_projection"] == {
+        "provided_records": len(records), "shown_records": len(records), "truncated": False,
+    }
+    assert set(projected) == {"source_id", "label", "observed_at", "content", "model_projection"}
+
+
+def test_mail_capability_and_language_rules_do_not_offer_external_research():
+    system = route.build_mail_messages(prompt="Kannst du recherchieren?", context=[])[0]["content"]
+    assert "grammatisch korrektes Deutsch" in system
+    assert "fliessendes Englisch" in system
+    assert "keine Webrecherche, keine weiteren Datenabrufe" in system
+    assert "Behaupte niemals solche Faehigkeiten" in system
+    assert "Keine Tools, Memory, weiteren Quellen oder Netzwerke" in system
 
 
 def signed(raw, body, **changes):
@@ -221,11 +249,13 @@ async def test_only_answer_no_tools_and_no_memory(setup):
     assert "tool" not in result.json()
     assert setup[3].config.max_output_tokens == 192
     assert setup[3].config.timeout_seconds == 60
-    assert setup[3].config.model == "qwen2.5:0.5b-instruct"
+    assert setup[3].config.model == "qwen2.5:1.5b-instruct"
     assert setup[3].config.base_url == setup[3].original_config.base_url
     assert setup[3].original_config.max_output_tokens == 1024
     assert setup[3].original_config.model == "synthetic-model"
-    assert json.loads(setup[2][0][1]["content"])["context"] == payload()["context"]
+    assert json.loads(setup[2][0][1]["content"])["context"] == [
+        {key: payload()["context"][0][key] for key in ("source_id", "label", "observed_at", "content")}
+    ]
 
 
 @pytest.mark.asyncio
@@ -250,13 +280,15 @@ async def test_signed_current_question_reaches_answer_first_mail_prompt(setup):
     messages = setup[2][0]
     assert [message["role"] for message in messages] == ["system", "user"]
     assert json.loads(messages[1]["content"]) == {
-        "prompt": "Was ist Liquisto?", "context": body["context"],
+        "prompt": "Was ist Liquisto?", "context": [
+            {key: body["context"][0][key] for key in ("source_id", "label", "observed_at", "content")}
+        ],
     }
     system = messages[0]["content"]
-    assert "Beantworte zuerst die aktuelle Frage im Feld prompt" in system
-    assert "lade nicht erneut zum Antworten ein" in system
-    assert "die Frage zu wiederholen" in system
-    assert "benenne genau die fehlenden Informationen" in system
+    assert "Beantworte den aktuellen prompt direkt" in system
+    assert "Einladungen zum erneuten Antworten" in system
+    assert "Vermeide leere Zusagen" in system
+    assert "stelle genau eine konkrete Rueckfrage" in system
     assert "Was ist Liquisto?" not in system
     assert "Keine Tools, Memory, weiteren Quellen oder Netzwerke" in system
     assert "prepared_actions: []" in system
@@ -279,7 +311,7 @@ async def test_missing_mail_model_fails_closed_without_fallback_or_receipt_reuse
     response = await post(setup)
     assert response.status_code == 502
     assert response.json() == {"detail": "mail_generation_unavailable"}
-    assert setup[3].config.model == "qwen2.5:0.5b-instruct"
+    assert setup[3].config.model == "qwen2.5:1.5b-instruct"
     assert (await post(setup)).status_code == 409
     assert len(setup[2]) == 1
 
