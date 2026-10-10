@@ -16,6 +16,7 @@ from pydantic import SecretStr
 from src.api.routes import liquisto_mail_openai as route
 from src.api.routes.liquisto_mail import MailSettings, canonical_receipt
 from src.api.services import liquisto_mail_openai as provider
+from src.api.services.liquisto_openai_budget import OpenAIHttpBudget
 
 TOKEN = "synthetic-dedicated-runtime-token-0123456789"
 KEY = bytes.fromhex("f2" * 32)
@@ -29,6 +30,7 @@ def payload(message_key="synthetic-message-1", prompt="Was ist Condata?"):
         "recipient": "konstantin@liquisto.com", "profile_id": "synthetic-pilot-profile",
         "profile_sha256": "a" * 64, "message_key": message_key,
         "source_ids": [route.SOURCE], "data_policy": "synthetic-only-v1", "prompt": prompt,
+        "pilot_id": "olivia-openai-pilot-fixture",
         "context": [{"source_id": route.SOURCE, "label": "Synthetic reference",
                      "system": "liquisto-synthetic-test-fixture", "permission": "synthetic:read",
                      "observed_at": "2026-10-10T08:00:00Z", "classification": "public",
@@ -39,11 +41,15 @@ def payload(message_key="synthetic-message-1", prompt="Was ist Condata?"):
 def signed(raw, body, **changes):
     receipt = {name: body[name] for name in (
         "tenant_id", "agent_id", "principal_id", "recipient", "profile_id",
-        "profile_sha256", "message_key", "source_ids", "data_policy",
+        "profile_sha256", "message_key", "source_ids", "data_policy", "pilot_id",
     )}
     receipt.update({
         "contract_version": "olivia-openai-receipt-v1", "operation": "respond-openai",
         "provider": "openai", "model": provider.MODEL,
+        "max_input_tokens": provider.MAX_INPUT_TOKENS, "max_output_tokens": provider.MAX_OUTPUT_TOKENS,
+        "max_attempts": provider.MAX_ATTEMPTS, "budget_micro_usd": provider.BUDGET_MICRO_USD,
+        "price_snapshot": provider.PRICE_SNAPSHOT,
+        "pilot_sha256": "b" * 64,
         "payload_sha256": hashlib.sha256(raw).hexdigest(),
         "nonce": hashlib.sha256(body["message_key"].encode()).hexdigest(),
         "expires_at": int(time.time()) + 60,
@@ -64,6 +70,7 @@ def setup(tmp_path, monkeypatch):
     mail = MailSettings(enabled=True, runtime_token=TOKEN, receipt_key_path=str(key))
     settings = route.OpenAIMailSettings(
         enabled=True, max_requests=5, ledger_path=str(tmp_path / "attempts.sqlite"),
+        pilot_sha256="b" * 64,
     )
     monkeypatch.setattr(route, "get_mail_settings", lambda: mail)
     monkeypatch.setattr(route, "get_openai_mail_settings", lambda: settings)
@@ -74,7 +81,7 @@ def setup(tmp_path, monkeypatch):
     response = SimpleNamespace(answer="Laut Synthetic reference ist Condata eine Datenberatung.",
                                error=False)
 
-    async def fake(key, encoded):
+    async def fake(key, encoded, *, budget):
         assert key.get_secret_value() == SYNTHETIC_KEY
         calls.append(json.loads(encoded))
         if response.error:
@@ -230,6 +237,7 @@ async def test_failed_call_consumes_budget_and_replay_persists(setup):
     assert len(setup.calls) == 5
     setup.settings = route.OpenAIMailSettings(
         enabled=True, max_requests=5, ledger_path=setup.settings.ledger_path,
+        pilot_sha256="b" * 64,
     )
     assert (await post(setup, payload("synthetic-message-7"))).status_code == 429
 
@@ -271,7 +279,8 @@ async def test_unverified_receipt_and_unprotected_ledger_fail_before_provider(se
 
 
 def response_body(answer="Welche Aufgabe soll ich bearbeiten?"):
-    return {"status": "completed", "output": [{"type": "message", "role": "assistant",
+    return {"status": "completed", "usage": {"input_tokens": 1024, "output_tokens": 64},
+            "output": [{"type": "message", "role": "assistant",
             "status": "completed", "content": [{"type": "output_text", "annotations": [],
             "text": json.dumps({"answer": answer, "prepared_actions": []})}]}]}
 
@@ -279,7 +288,7 @@ def response_body(answer="Welche Aufgabe soll ich bearbeiten?"):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure", [None, "redirect", "rate", "timeout", "oversize", "refusal",
                                       "incomplete", "tool", "duplicate", "actions", "long"])
-async def test_provider_exact_endpoint_bounded_output_and_sanitized_failures(monkeypatch, failure):
+async def test_provider_exact_endpoint_bounded_output_and_sanitized_failures(monkeypatch, tmp_path, failure):
     body = response_body()
     code = 200
     if failure == "redirect":
@@ -305,10 +314,12 @@ async def test_provider_exact_endpoint_bounded_output_and_sanitized_failures(mon
 
     def handle(request):
         calls.append(request)
-        assert str(request.url) == provider.ENDPOINT
+        assert str(request.url) in {provider.COUNT_ENDPOINT, provider.ENDPOINT}
         assert request.headers["Authorization"] == "Bearer " + SYNTHETIC_KEY
         if failure == "timeout":
             raise httpx.ReadTimeout(SYNTHETIC_KEY, request=request)
+        if str(request.url) == provider.COUNT_ENDPOINT:
+            return httpx.Response(200, json={"object": "response.input_tokens", "input_tokens": 1024})
         return httpx.Response(code, content=raw, headers={"Location": "https://example.invalid"})
 
     original = httpx.AsyncClient
@@ -324,13 +335,49 @@ async def test_provider_exact_endpoint_bounded_output_and_sanitized_failures(mon
         {"role": "user", "content": "Synthetic user data"},
     ])
     if failure is None:
-        assert await provider.generate_answer(SecretStr(SYNTHETIC_KEY), encoded) == "Welche Aufgabe soll ich bearbeiten?"
+        assert await provider.generate_answer(SecretStr(SYNTHETIC_KEY), encoded,
+                                             budget=OpenAIHttpBudget(tmp_path / "budget.sqlite")) == "Welche Aufgabe soll ich bearbeiten?"
     else:
         with pytest.raises(provider.MailOpenAIError) as caught:
-            await provider.generate_answer(SecretStr(SYNTHETIC_KEY), encoded)
+            await provider.generate_answer(SecretStr(SYNTHETIC_KEY), encoded,
+                                           budget=OpenAIHttpBudget(tmp_path / "budget.sqlite"))
         assert SYNTHETIC_KEY not in str(caught.value)
         assert caught.value.__cause__ is None
-    assert len(calls) == 1
+    assert len(calls) == (1 if failure == "timeout" else 2)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("count", [0, -1, 8193, True, "1024", None])
+async def test_exact_token_preflight_denies_without_creating_a_response(monkeypatch, tmp_path, count):
+    calls = []
+    original = httpx.AsyncClient
+
+    def handle(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, json={"object": "response.input_tokens", "input_tokens": count})
+
+    monkeypatch.setattr(provider.httpx, "AsyncClient", lambda **kwargs: original(
+        transport=httpx.MockTransport(handle), **kwargs,
+    ))
+    encoded = provider.request_bytes([
+        {"role": "system", "content": "Synthetic instruction"},
+        {"role": "user", "content": "Synthetic user data"},
+    ])
+    with pytest.raises(provider.MailOpenAIError):
+        await provider.generate_answer(SecretStr(SYNTHETIC_KEY), encoded,
+                                       budget=OpenAIHttpBudget(tmp_path / "budget.sqlite"))
+    assert calls == [provider.COUNT_ENDPOINT]
+
+
+def test_published_price_ceiling_and_reservation_bound():
+    # Both input and cache-write charges together, plus the regional premium.
+    assert provider.INPUT_PRICE_CEILING >= (100_000 + 125_000) * 110 // 100
+    assert provider.OUTPUT_PRICE_CEILING >= 500_000 * 110 // 100
+    bound = (provider.MAX_INPUT_TOKENS * provider.INPUT_PRICE_CEILING
+             + provider.MAX_OUTPUT_TOKENS * provider.OUTPUT_PRICE_CEILING)
+    assert (bound + 999_999) // 1_000_000 == 2356
+    assert 2356 <= provider.RESERVATION_MICRO_USD
+    assert provider.MAX_ATTEMPTS * provider.RESERVATION_MICRO_USD <= provider.BUDGET_MICRO_USD
 
 
 def test_utf8_request_cap_and_no_history_or_tools():
