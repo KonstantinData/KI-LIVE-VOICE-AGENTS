@@ -21,9 +21,9 @@ Model access remains unverified. There is no fallback to `OPENAI_API_KEY`.
 Run five fixed cases **in one batch**: invented Condata reference, unavailable
 order status, minimal greeting, English request, and a web/tool injection.
 Each case has its own context; only Condata has the explicitly fictional
-reference. There are normally **two HTTP calls**: exact input-token count and
-one generation. Five separately counted generations would exceed the approved
-five-call total and are not the approved acceptance procedure.
+reference. The complete batch makes **one generation HTTP call**, including
+model-access verification. No `/input_tokens`, `/models` or separate probe is
+called. Access errors, rate limits and timeouts consume that same one attempt.
 
 ## Model, token accounting and cost
 
@@ -33,13 +33,21 @@ service tier `default`. The current
 supports these features and lists no dated snapshot. The alias does not pin
 quality permanently; verify the resulting synthetic answers before release.
 
-Every generation is preceded by the official
-[input-token counter](https://developers.openai.com/api/docs/guides/token-counting)
-at `POST https://api.openai.com/v1/responses/input_tokens`. It receives exactly
-the same model, input, text/schema and reasoning fields as generation, including
-role/schema overhead. A count outside 1–8192 rejects generation. The generation
-must report that exact input usage and output usage within its cap. The entire
-request is also capped at 24,000 UTF-8 bytes; bytes are not a token estimate.
+The batch computes its conservative input bound entirely offline. OpenAI's
+[byte-level BPE description](https://github.com/openai/tiktoken/blob/main/README.md)
+explains that tokenization compresses bytes; count one token per UTF-8 byte,
+without the unsafe average-four-bytes shortcut. Count the **entire serialized
+request**, including system/user instructions, role labels and repeated output
+schema, then add **16,384 tokens** for the fixed two-role provider framing and
+schema transformation. This generous allowance is an engineering bound, not an
+official promise of exact framing size or a matching local-model tokenizer.
+
+The current complete payload is 6,414 bytes, giving an offline bound of 22,798
+input tokens. A hard local byte cap of 8,192 gives a worst-case planning ceiling
+of **24,576 input tokens**. Batch output is capped at **1,280 tokens total** and
+each answer at 60 words. Unexpected reported input usage above the offline
+bound, or output usage above its cap, rejects the result and never triggers a
+retry. No extra API fee needs to be inferred for a token-counting request.
 
 The [published standard prices](https://developers.openai.com/api/docs/pricing)
 on 2026-10-10 are USD 0.10/M input, 0.125/M cache writes and 0.50/M output.
@@ -48,23 +56,23 @@ the 10% regional premium: USD 0.25/M input and 0.60/M output. No Fast tier is
 selected; the input cap stays below the long-context premium threshold.
 
 ```text
-single case: ceil(8192 * .25/M + 512 * .60/M) = USD .002356
-five-case batch: ceil(8192 * .25/M + 2560 * .60/M) = USD .003584
+fixed current payload: ceil(22798 * .25/M + 1280 * .60/M) = USD .006468
+local cap: ceil(24576 * .25/M + 1280 * .60/M) = USD .006912
+five such attempts: 5 * USD .006912 = USD .034560 < USD .10
 ```
 
 The protected SQLite ledger reserves **USD .01 before each HTTP attempt**,
-including counting, failures and timeouts. Atomic transactions enforce at most
+including access failures and timeouts. Atomic transactions enforce at most
 five attempts over its lifetime, so reservations cannot exceed USD .05.
 No retry, redirect, proxy inheritance, fallback or refund resets that limit.
 The one fixed batch is claimed permanently before its first request; restart
 does not permit replay or resume. All processes must use the same persistent
 ledger. Never delete, replace or rotate it to gain quota.
 
-These are request bounds under the cited tariffs, not an account-wide billing
-limit. The counter documentation does not explicitly promise zero fees.
-The Runtime operator must confirm that account/region pricing fits the USD .01
-per-call reservation before execution; stop if it cannot be established. A
-separate access probe is unnecessary and would itself consume approved calls.
+These are conservative request bounds under the cited tariffs, not an
+account-wide billing limit. The one-time batch permits only one generation;
+the shared five-attempt ledger remains an additional ceiling for all approved
+processes. Do not perform separate model-access probes or additional requests.
 
 ## Isolated Runtime-thread procedure
 
@@ -122,7 +130,9 @@ The SCAS companion has a default-disabled issuer, empty migration, candidate
 composer and sealed ToolGateway synthetic runner. Preparing these does not
 approve profiles, apply SQL, enable egress or connect productive mail. That
 per-case integration is verified offline; the approved paid acceptance uses the
-two-call standalone batch above. A label alone cannot prove free text synthetic;
+single-call standalone batch above. The inactive signed per-case route retains
+its separate exact token preflight contract; do not enable it for this batch.
+A label alone cannot prove free text synthetic;
 the separately reviewed manifest binds the exact five fixture hashes.
 
 Both paths use verified HTTPS, `store:false`, no tools/retrieval, no conversation

@@ -18,7 +18,8 @@ sys.path.insert(0, str(ROOT))
 from src.api.services.liquisto_mail_openai import PRICE_SNAPSHOT  # noqa: E402
 from src.api.services.liquisto_openai_budget import OpenAIHttpBudget  # noqa: E402
 from src.api.services.liquisto_openai_synthetic_batch import (  # noqa: E402
-    BATCH_ID, batch_request_bytes, run_batch,
+    BATCH_ID, MAX_BATCH_INPUT_TOKENS, MAX_BATCH_OUTPUT_TOKENS,
+    MAX_GENERATION_COST_MICRO_USD, batch_request_bytes, offline_input_token_bound, run_batch,
 )
 
 
@@ -65,10 +66,13 @@ def main():
     if args.describe:
         import hashlib
 
-        print(json.dumps({"batch_id": BATCH_ID, "payload_sha256": hashlib.sha256(batch_request_bytes()).hexdigest(),
-                          "maximum_http_calls": 2, "maximum_input_tokens": 8192,
-                          "maximum_output_tokens": 2560, "price_snapshot": PRICE_SNAPSHOT,
-                          "maximum_standard_generation_cost_micro_usd": 3584}))
+        encoded = batch_request_bytes()
+        print(json.dumps({"batch_id": BATCH_ID, "payload_sha256": hashlib.sha256(encoded).hexdigest(),
+                          "maximum_http_calls": 1, "payload_bytes": len(encoded),
+                          "offline_input_token_bound": offline_input_token_bound(encoded),
+                          "maximum_input_tokens": MAX_BATCH_INPUT_TOKENS,
+                          "maximum_output_tokens": MAX_BATCH_OUTPUT_TOKENS, "price_snapshot": PRICE_SNAPSHOT,
+                          "maximum_standard_generation_cost_micro_usd": MAX_GENERATION_COST_MICRO_USD}))
         return
     if (not args.key_file or not args.ledger_file or not args.output_file
             or args.approved_price_snapshot != PRICE_SNAPSHOT):

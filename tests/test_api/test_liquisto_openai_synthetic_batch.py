@@ -10,6 +10,7 @@ from pydantic import SecretStr
 
 from src.api.services import liquisto_mail_openai as provider
 from src.api.services.liquisto_openai_budget import OpenAIBudgetError, OpenAIHttpBudget
+from src.api.services import liquisto_openai_synthetic_batch as batch
 from src.api.services.liquisto_openai_synthetic_batch import CASES, batch_request_bytes, run_batch
 
 
@@ -39,15 +40,18 @@ def test_fixed_batch_uses_only_its_own_synthetic_reference():
     assert all(case["context"] == [] for case in cases[1:])
     assert "erfundenen Testwelt" in cases[0]["context"][0]["content"]
     assert set(body) == {"model", "input", "reasoning", "max_output_tokens", "store", "service_tier", "text"}
-    assert body["max_output_tokens"] == 2560 and body["store"] is False
+    assert body["max_output_tokens"] == 1280 and body["store"] is False
     assert set(body["text"]["format"]["schema"]["required"]) == set(CASES)
-    bound = (8192 * provider.INPUT_PRICE_CEILING + 2560 * provider.OUTPUT_PRICE_CEILING)
-    assert (bound + 999_999) // 1_000_000 == 3584
+    assert batch.offline_input_token_bound(batch_request_bytes()) == len(batch_request_bytes()) + 16384
+    assert batch.MAX_GENERATION_COST_MICRO_USD == 6912 < provider.RESERVATION_MICRO_USD
+    assert 5 * batch.MAX_GENERATION_COST_MICRO_USD == 34560 < provider.BUDGET_MICRO_USD
+    with pytest.raises(provider.MailOpenAIError):
+        batch.offline_input_token_bound(b"x" * 8193)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("failure", [None, "count", "generate", "usage", "case", "actions", "words"])
-async def test_two_calls_maximum_no_retry_or_repeat(monkeypatch, tmp_path, failure):
+@pytest.mark.parametrize("failure", [None, "access", "generate", "timeout", "usage", "case", "actions", "words"])
+async def test_one_call_maximum_including_access_failure_no_retry(monkeypatch, tmp_path, failure):
     calls = []
     encoded = json.loads(batch_request_bytes())
     answers = {name: {"answer": "Synthetischer Test.", "prepared_actions": []} for name in CASES}
@@ -60,15 +64,12 @@ async def test_two_calls_maximum_no_retry_or_repeat(monkeypatch, tmp_path, failu
 
     def handle(request):
         calls.append(str(request.url))
-        if str(request.url) == provider.COUNT_ENDPOINT:
-            count_body = json.loads(request.content)
-            assert count_body == {name: encoded[name] for name in ("model", "input", "text", "reasoning")}
-            return httpx.Response(403 if failure == "count" else 200,
-                                  json={"object": "response.input_tokens", "input_tokens": 1024})
         assert str(request.url) == provider.ENDPOINT
         assert json.loads(request.content) == encoded
-        return httpx.Response(429 if failure == "generate" else 200, json={
-            "status": "completed", "usage": {"input_tokens": 1025 if failure == "usage" else 1024,
+        if failure == "timeout":
+            raise httpx.ReadTimeout("fixture-only-key", request=request)
+        return httpx.Response(403 if failure == "access" else 429 if failure == "generate" else 200, json={
+            "status": "completed", "usage": {"input_tokens": 24577 if failure == "usage" else 1024,
                                                 "output_tokens": 256},
             "output": [{"type": "message", "role": "assistant", "status": "completed", "content": [
                 {"type": "output_text", "annotations": [], "text": json.dumps(answers)},
@@ -89,10 +90,38 @@ async def test_two_calls_maximum_no_retry_or_repeat(monkeypatch, tmp_path, failu
     else:
         with pytest.raises(provider.MailOpenAIError, match="no_retry"):
             await run_batch(key, budget)
-    assert budget.attempts() == len(calls) == (1 if failure == "count" else 2)
+    assert budget.attempts() == len(calls) == 1
     with pytest.raises(OpenAIBudgetError):
         await run_batch(key, OpenAIHttpBudget(budget.path))
     assert budget.attempts() == len(calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("input_usage", [0, True, "1024", 22799])
+async def test_offline_usage_bound_rejects_drift_without_a_second_call(monkeypatch, tmp_path, input_usage):
+    original = httpx.AsyncClient
+    calls = []
+
+    def handle(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, json={"usage": {"input_tokens": input_usage}})
+
+    monkeypatch.setattr(batch.httpx, "AsyncClient", lambda **kwargs: original(
+        transport=httpx.MockTransport(handle), **kwargs,
+    ))
+    budget = OpenAIHttpBudget(tmp_path / "budget.sqlite")
+    with pytest.raises(provider.MailOpenAIError, match="no_retry"):
+        await run_batch(SecretStr("fixture-only-key"), budget)
+    assert calls == [provider.ENDPOINT] and budget.attempts() == 1
+
+
+@pytest.mark.asyncio
+async def test_fixed_payload_drift_stops_before_http_or_key_use(monkeypatch, tmp_path):
+    monkeypatch.setattr(batch, "batch_request_bytes", lambda: batch.offline_input_token_bound(b"x" * 8193))
+    monkeypatch.setattr(batch.httpx, "AsyncClient", lambda **_: pytest.fail("HTTP client created"))
+    with pytest.raises(provider.MailOpenAIError, match="too_large"):
+        await run_batch(SecretStr("fixture-only-key"), OpenAIHttpBudget(tmp_path / "budget.sqlite"))
+    assert not (tmp_path / "budget.sqlite").exists()
 
 
 def runner():
@@ -130,8 +159,10 @@ def test_describe_never_reads_key_or_consumes_budget(monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["runner", "--describe"])
     module.main()
     description = json.loads(capsys.readouterr().out)
-    assert description["maximum_http_calls"] == 2
-    assert description["maximum_standard_generation_cost_micro_usd"] == 3584
+    assert description["maximum_http_calls"] == 1
+    assert description["payload_bytes"] <= 8192
+    assert description["offline_input_token_bound"] == description["payload_bytes"] + 16384
+    assert description["maximum_standard_generation_cost_micro_usd"] == 6912
 
 
 def test_output_reuse_fails_before_key_read_or_provider(monkeypatch, tmp_path):
