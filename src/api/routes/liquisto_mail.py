@@ -320,9 +320,11 @@ async def respond(
             from src.api.services.liquisto_mail_provider import (
                 RegularMailBudgetStop, RegularMailProviderError, regular_openai_answer,
             )
+            from src.api.services.liquisto_mail_references import prepare_external_reference_messages
 
             if not settings.openai_key_file:
                 raise HTTPException(503, "mail_openai_key_binding_unavailable")
+            messages = prepare_external_reference_messages(messages)
             try:
                 answer = await regular_openai_answer(
                     messages, key_file=Path(settings.openai_key_file),

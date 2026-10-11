@@ -1,5 +1,6 @@
 """Regular mail contract and provider failures; synthetic HTTP only."""
 import json
+import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 
@@ -81,9 +82,14 @@ async def test_existing_authenticated_reply_one_openai_call_regular_contract(reg
     assert "tools" not in outgoing and "previous_response_id" not in outgoing
     projected = json.loads(outgoing["input"][1]["content"])
     assert projected["prompt"] == body["prompt"]
-    assert projected["context"][0]["content"] == json.loads(body["context"][0]["content"])
+    original = json.loads(body["context"][0]["content"])[0]
+    actual = projected["context"][0]["content"][0]
+    assert re.fullmatch(r"ref-[0-9a-f]{24}", actual["record_id"])
+    assert actual == {**original, "record_id": actual["record_id"]}
+    assert original["record_id"] not in requests[0].content.decode()
     assert projected["context"][0]["model_projection"] == {
         "provided_records": 1, "shown_records": 1, "truncated": False,
+        "reference_contract": "olivia-mail-opaque-refs-v1",
     }
     for secret in (recipient, "actual-principal", "reviewed-profile", "n" * 43):
         assert secret not in requests[0].content.decode()
