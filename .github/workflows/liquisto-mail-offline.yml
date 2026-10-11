@@ -42,6 +42,7 @@ jobs:
           PYTHONPATH: .
         run: >-
           python -m pytest tests/test_api/test_liquisto_mail_data.py
-          tests/test_api/test_liquisto_regular_mail_openai.py -q
+          tests/test_api/test_liquisto_regular_mail_openai.py
+          tests/test_api/test_liquisto_mail_references.py -q
       - name: Check Python lint
         run: python -m ruff check src tests
