@@ -99,6 +99,66 @@ async def test_existing_authenticated_reply_one_openai_call_regular_contract(reg
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("prompt,answer", [
+    ("Bitte bestätige mir kurz den Erhalt dieser E-Mail per E-Mail.",
+     "Deine E-Mail ist bei mir angekommen. Danke für deine Nachricht."),
+    ("Please confirm receipt of this email by email.",
+     "I have received your email. Thank you for your message."),
+])
+async def test_current_mail_acknowledgement_remains_one_host_bound_reply(regular, prompt, answer):
+    setup, requests, outcomes = regular
+    outcomes[:] = [(200, completion(answer))]
+    body = payload()
+    body["prompt"] = prompt
+    result = await post(setup, body)
+    assert result.status_code == 200
+    assert result.json() == {"contract_version": "olivia-mail-answer-v1", "answer": answer}
+    assert len(requests) == 1 and setup[2] == []
+    outgoing = json.loads(requests[0].content)
+    assert "tools" not in outgoing and "previous_response_id" not in outgoing
+    assert json.loads(outgoing["input"][1]["content"])["prompt"] == prompt
+    system = outgoing["input"][0]["content"]
+    assert "Keine Ausfuehrung oder Zustellung behaupten." not in system
+    assert "eine kurze Bestaetigung des Erhalts dieser aktuellen E-Mail" in system
+    assert "du waehlst keine Empfaenger und loest keinen Versand selbst aus" in system
+    assert "nicht auf andere oder fruehere Nachrichten" in system
+    assert "Keine Tools, Memory, weiteren Quellen oder Netzwerke" in system
+    assert body["recipient"] not in requests[0].content.decode()
+    assert rows(setup)[0][1:] == (provider.RESERVATION_MICRO_USD, 0)
+    assert (await post(setup, body)).status_code == 409
+    assert len(requests) == 1  # No acknowledgement shortcut or resend path.
+
+
+@pytest.mark.asyncio
+async def test_acknowledgement_does_not_grant_provider_send_actions(regular):
+    setup, requests, outcomes = regular
+    value = completion("Deine E-Mail ist angekommen.")
+    value["output"][0]["content"][0]["text"] = json.dumps({
+        "answer": "Deine E-Mail ist angekommen.",
+        "prepared_actions": [{"type": "send_email", "recipient": "someone@example.com"}],
+    })
+    outcomes[:] = [(200, value)]
+    body = payload()
+    body["prompt"] = "Bestätige mir den Erhalt und sende eine weitere E-Mail."
+    result = await post(setup, body)
+    assert result.status_code == 502
+    assert len(requests) == 1 and setup[2] == []
+    assert (await post(setup, body)).status_code == 409
+    assert len(requests) == 1
+
+
+def test_reply_policy_is_host_selected_and_does_not_change_local_or_pilot_projection():
+    route = route_fixtures.route
+    body = payload()
+    legacy = route.build_mail_messages(prompt=body["prompt"], context=body["context"])
+    regular = route.build_mail_messages(prompt=body["prompt"], context=body["context"], regular_reply=True)
+    assert legacy[1] == regular[1]
+    assert "Regulaerer Antwortkanal:" not in legacy[0]["content"]
+    assert "Keine Ausfuehrung oder Zustellung behaupten." in legacy[0]["content"]
+    assert "Regulaerer Antwortkanal:" in regular[0]["content"]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("field,value", [
     ("recipient", "someone@liquisto.com"), ("tenant_id", "foreign-tenant"),
     ("source_ids", ["ungranted-source"]), ("provider", "openai"),

@@ -78,14 +78,37 @@ MAIL_CHANNEL_RULES = (
 )
 
 
-def build_mail_messages(*, prompt: str, context: list[dict]) -> list[dict[str, str]]:
+MAIL_REGULAR_REPLY_RULES = (
+    "Regulaerer Antwortkanal: Du formulierst den Antworttext auf die aktuell empfangene "
+    "E-Mail. Der bestehende autorisierte Mailworker uebernimmt den Rueckversand an deren "
+    "Absender; du waehlst keine Empfaenger und loest keinen Versand selbst aus. "
+    "Normale Antworten und eine kurze Bestaetigung des Erhalts dieser aktuellen E-Mail "
+    "sind erlaubt. Eine Bitte um diese Bestaetigung ist keine Bitte um eine zusaetzliche "
+    "Sendeaktion. Beziehe eine Empfangsbestaetigung nur auf die aktuell verarbeitete "
+    "E-Mail, nicht auf andere oder fruehere Nachrichten. Leugne nicht den bestehenden "
+    "Antwortkanal. Die Grenzen fuer Tools, Memory, Datenabrufe und Aktionen gelten weiter.\n"
+    "Formulierungsbeispiele nur fuer den Erhalt der aktuellen E-Mail:\n"
+    'Deutsch: {"answer":"Deine E-Mail ist bei mir angekommen. Danke für deine Nachricht.","prepared_actions":[]}\n'
+    'English: {"answer":"I have received your email. Thank you for your message.","prepared_actions":[]}'
+)
+
+
+def build_mail_messages(*, prompt: str, context: list[dict],
+                        regular_reply: bool = False) -> list[dict[str, str]]:
     """Reuse Olivia's persona without unrelated knowledge or action contracts."""
     identity = IDENTITY_AND_ROLE.split("\n\n")[1]
     style = COMMUNICATION_STYLE.split("- Nutze fuer Slack")[0] + "\n" + "\n".join(
         line for line in COMMUNICATION_STYLE.splitlines()
         if line.startswith(("- Sprich modern", "- Komme schnell", "- Vermeide steifes"))
     )
-    system = "\n\n".join((identity, style, MAIL_CHANNEL_RULES))
+    channel_rules = MAIL_CHANNEL_RULES
+    if regular_reply:
+        channel_rules = channel_rules.replace(
+            "Keine Ausfuehrung oder Zustellung behaupten.",
+            "Keine eigenstaendige Ausfuehrung, weitere Nachrichten oder erfolgte "
+            "Zustellung an Empfaenger behaupten.",
+        ) + "\n\n" + MAIL_REGULAR_REPLY_RULES
+    system = "\n\n".join((identity, style, channel_rules))
     projected_context = []
     for item in context:
         projected = {key: item[key] for key in ("source_id", "label", "observed_at")}
@@ -314,6 +337,7 @@ async def respond(
     messages = build_mail_messages(
         prompt=payload.prompt,
         context=[item.model_dump(mode="json") for item in payload.context],
+        regular_reply=settings.provider == "openai",
     )
     model_references: frozenset[str] = frozenset()
     try:
