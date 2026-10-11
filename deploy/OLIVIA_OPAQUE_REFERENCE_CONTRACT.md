@@ -52,7 +52,8 @@ Each `(record_type, exact_original_id)` pair receives a server-generated
 `ref-` plus 24 random hex digits (96 bits), unique within this request. Same
 typed identities reuse the same token, including links to supplied records;
 the same spelling in different types receives different tokens. Random token
-collisions and exact matches with any original ID are retried at most eight
+collisions, exact matches with any original ID, and token occurrences in retained
+business text are retried at most eight
 times, then denied. Each new request gets independent tokens. No new key,
 credential binding, persistent alias table or external reverse lookup exists.
 The temporary map stays in process memory and is discarded after preparation.
@@ -70,7 +71,10 @@ containing `record_id`. This does not anonymize business names or other text.
 and source order remain unchanged. The system instruction tells the model
 these are temporary technical references, not real CRM IDs, not evidence of
 unseen record contents, and not executable capabilities. It should cite source
-labels rather than tokens. There is no reverse substitution in the answer.
+labels rather than tokens. The route rejects answers containing any actually
+minted reference token; it does not reject arbitrary ref-shaped legitimate
+business text. A rejected answer consumes the existing receipt and provider
+attempt without retry. There is no reverse substitution in the answer.
 
 ## Binding, evidence and limitations
 
@@ -105,11 +109,16 @@ of preparation after authentication/receipt validation. Assertions inspect the
 mock provider request and verify original IDs and ID-contained secrets are
 absent, while all non-ID record values remain unchanged.
 
-Local verification: 327 tests passed, with no failures or skips, including
-95 new reference-contract cases. Ruff and `git diff --check` passed. The
+Local verification: all 1,001 repository tests passed with no failures or skips;
+the six selected mail suites account for 333 tests, including 101 new
+reference-contract cases. Full Ruff, `git diff --check`, widget TypeScript lint
+and widget production build passed. The pinned optional `pyVoIP==1.6.8` library
+was installed only into the isolated local test directory to execute its offline
+codec/SIP tests; no telephone service or real network send was started. The
 explicit before/after case proves the unchanged marker rule denies the original
 synthetic task ID, accepts the non-exportable-ID representation, and still
 denies the same original bytes when present in the question.
+The offline CI workflow now explicitly selects the new reference-contract suite.
 
 The frontend's `/assistant/respond` and native CRM identities are unchanged.
 The mail worker's `/assistant/mail/respond` still consumes exactly the existing

@@ -208,6 +208,16 @@ def test_random_token_cannot_reuse_an_original_id(monkeypatch):
     assert original not in request_bytes(result).decode()
 
 
+def test_random_token_does_not_collide_with_legitimate_business_text(monkeypatch):
+    body = payload()
+    body["prompt"] = "Discuss SKU ref-" + "0" * 24
+    tokens = iter(["0" * 24, "1" * 24])
+    monkeypatch.setattr(references.secrets, "token_hex", lambda _: next(tokens))
+    result = references.prepare_external_reference_messages(messages(body))
+    assert projected(result)["prompt"] == body["prompt"]
+    assert references.prepared_reference_tokens(result) == {"ref-" + "1" * 24}
+
+
 def test_duplicate_json_properties_and_reapplying_preparation_deny():
     original = messages()
     original[1]["content"] = '{"prompt":"Synthetic","prompt":"Duplicate","context":[]}'
@@ -303,3 +313,56 @@ async def test_reference_preparation_is_after_authentication_and_provenance_chec
         expected = 422
     assert (await post(setup, body, **args)).status_code == expected
     assert requests == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("answer", ["Aufgabe ref-" + "0" * 24, "Quelle: ref-" + "0" * 24])
+async def test_minted_reference_echo_denies_before_any_mail_answer_is_accepted(regular, monkeypatch, answer):
+    setup, requests, outcomes = regular
+    monkeypatch.setattr(references.secrets, "token_hex", lambda _: "0" * 24)
+    outcomes[:] = [(200, provider_fixtures.completion(answer))]
+    result = await post(setup, payload())
+    assert result.status_code == 502
+    assert "ref-" + "0" * 24 not in result.text
+    assert len(requests) == 1
+    assert (await post(setup, payload())).status_code == 409
+    assert len(requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_legitimate_ref_shaped_business_text_and_source_citation_are_not_amputated(regular,
+                                                                                     monkeypatch):
+    setup, requests, outcomes = regular
+    sku = "ref-" + "0" * 24
+    body = payload()
+    body["prompt"] = "Prüfe Artikel " + sku
+    monkeypatch.setattr(references.secrets, "token_hex", lambda _: "1" * 24)
+    answer = "Laut Open tasks: Review inventory. Artikel " + sku + " ist in der Frage genannt."
+    outcomes[:] = [(200, provider_fixtures.completion(answer))]
+    result = await post(setup, body)
+    assert result.status_code == 200
+    assert result.json()["answer"] == answer
+    actual = projected(json.loads(requests[0].content)["input"])
+    assert actual["prompt"] == body["prompt"]
+    assert actual["context"][0]["label"] == "Open tasks"
+    assert actual["context"][0]["content"][0]["summary"] == "Review inventory"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fail", [False, True])
+async def test_original_ids_and_marked_secrets_do_not_appear_in_logs_or_errors(regular, caplog,
+                                                                          capsys, fail):
+    caplog.set_level("DEBUG")
+    setup, requests, _ = regular
+    original = "prefixsk-" + "a" * 20
+    body = with_id(original)
+    if fail:
+        body["prompt"] = "password=synthetic-prohibited"
+    result = await post(setup, body)
+    assert result.status_code == (502 if fail else 200)
+    captured = capsys.readouterr()
+    surfaces = result.text + caplog.text + captured.out + captured.err
+    for secret in [original, "password=synthetic-prohibited"]:
+        assert secret not in surfaces
+    if requests:
+        assert original not in requests[0].content.decode()

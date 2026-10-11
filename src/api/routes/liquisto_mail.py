@@ -315,16 +315,20 @@ async def respond(
         prompt=payload.prompt,
         context=[item.model_dump(mode="json") for item in payload.context],
     )
+    model_references: frozenset[str] = frozenset()
     try:
         if settings.provider == "openai":
             from src.api.services.liquisto_mail_provider import (
                 RegularMailBudgetStop, RegularMailProviderError, regular_openai_answer,
             )
-            from src.api.services.liquisto_mail_references import prepare_external_reference_messages
+            from src.api.services.liquisto_mail_references import (
+                prepare_external_reference_messages, prepared_reference_tokens,
+            )
 
             if not settings.openai_key_file:
                 raise HTTPException(503, "mail_openai_key_binding_unavailable")
             messages = prepare_external_reference_messages(messages)
+            model_references = prepared_reference_tokens(messages)
             try:
                 answer = await regular_openai_answer(
                     messages, key_file=Path(settings.openai_key_file),
@@ -345,7 +349,8 @@ async def respond(
             )
         draft = ProviderDraft.model_validate(_json(answer))
         if (draft.prepared_actions or not draft.answer.strip()
-                or len(draft.answer) > 6000 or "\x00" in draft.answer):
+                or len(draft.answer) > 6000 or "\x00" in draft.answer
+                or any(token in draft.answer for token in model_references)):
             raise ValueError
         return {"contract_version": "olivia-mail-answer-v1", "answer": draft.answer}
     except (LiquistoAssistantConfigurationError, LiquistoAssistantProviderError,

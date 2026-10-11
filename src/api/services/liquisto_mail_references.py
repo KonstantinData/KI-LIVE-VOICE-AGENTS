@@ -96,7 +96,8 @@ def prepare_external_reference_messages(messages: list[dict[str, str]]) -> list[
     for container, _, _ in slots:
         container["record_id"] = None
     # IDs repeated in user-visible text are not silently rewritten or exported.
-    if any(original in text for text in _strings(data) for original in original_ids):
+    retained_strings = tuple(_strings(data))
+    if any(original in text for text in retained_strings for original in original_ids):
         raise ValueError
     for container, _, _ in slots:
         container["record_id"] = "ref-pending"
@@ -113,7 +114,8 @@ def prepare_external_reference_messages(messages: list[dict[str, str]]) -> list[
                 if not re.fullmatch(r"[0-9a-f]{24}", token):
                     raise ValueError
                 reference = "ref-" + token
-                if reference not in used and reference not in original_ids:
+                if (reference not in used and reference not in original_ids
+                        and not any(reference in text for text in retained_strings)):
                     break
             else:
                 raise ValueError
@@ -126,3 +128,15 @@ def prepare_external_reference_messages(messages: list[dict[str, str]]) -> list[
     prepared[1]["content"] = json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     check_external_projection(prepared)
     return prepared
+
+
+def prepared_reference_tokens(messages: list[dict[str, str]]) -> frozenset[str]:
+    """Only minted typed ID slots, never ref-shaped legitimate business text."""
+    tokens = set()
+    for source in parse_json(messages[1]["content"])["context"]:
+        if source["source_id"] in SOURCE_RECORD_TYPES:
+            for record in source["content"]:
+                tokens.add(record["record_id"])
+                if source["source_id"] == "crm-open-tasks":
+                    tokens.update(reference["record_id"] for reference in record["related_records"])
+    return frozenset(tokens)
