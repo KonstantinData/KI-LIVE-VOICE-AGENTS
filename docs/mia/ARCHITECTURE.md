@@ -7,7 +7,7 @@ Status: recommended Phase 1 design, subject to contract review. No new productio
 | Session/profile/voice/text/tools, planning revisions/jobs/media, runtime audits | KI-LIVE-VOICE-AGENTS |
 | PHP public entry, CRM intake/database/UI/customer history, confirmed appointment projection | mein-kuechenexperte |
 | Calendar provider operations | Explicit approved adapter/calendar binding; not inherited from Anna |
-| Manufacturer catalog versions | Proposed neutral catalog service, location/schema/readiness unresolved |
+| Manufacturer catalog versions | Existing local CARAT catalog core/schema located; proposed neutral service/MIA consumer; readiness incomplete |
 | Dealer assortment/conditions, customer/project data | Each tenant independently |
 | CARAT professional import | Future verified vendor adapter; not current runtime capability |
 
@@ -56,9 +56,9 @@ User proposes one update surface shared by projects/tenants. Recommended separat
 2. Scoped read-only catalog API with explicit consumer entitlements.
 3. Tenant-local overlays for authorized assortment, local prices/discounts/conditions, branding and planning policies.
 4. Tenant-local projects/customer data. No DKH-to-MKE CRM or memory link.
-A shared catalog cannot live as implicitly accessible DKH tenant data. Extracting/migrating it requires an independently reviewed change, data classification and access contract. Reuse existing engine if safe; a new physical database/server is not assumed.
+A shared catalog cannot live as implicitly accessible DKH tenant data. The discovered local catalog_knowledge schema is already supplier/series/version based, without tenant/customer/project entities; its operation and package are still CARAT-owned. Extracting/migrating its classified scope requires an independently reviewed change and consumer access contract. Reuse existing core/evidence without duplicate imports if safe; a new physical database/server is not assumed.
 Identity includes supplier, catalog code, assortment, handle system, market and language; version includes edition/source SHA256. Keep GL and XL separate. Consumers pin an exact certified version; central updates do not retroactively alter existing plans.
-No shared promotion of tenant memory is implied. No actual catalog location or database readiness has been established.
+No shared promotion of tenant memory is implied. Actual local catalog location and exact GL/XL hashes are established; no active business-ready version or MIA consumer exists. See [catalog reuse assessment](CATALOG_REUSE_ASSESSMENT.md). A server copy has not been verified.
 
 ## CRM and calendar
 Resolve current CRM authority before routing. Existing legacy website ledger and running new CRM are distinct; avoid blind dual writes.

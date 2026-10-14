@@ -39,7 +39,7 @@ No real provider/CRM/calendar write occurred. Runtime subset uses fake clients/M
 ## Preliminary requirement status
 All MIA-01..19: NOT RUN / NOT IMPLEMENTED. Existing baselines are reusable regression evidence, not MIA acceptance.
 Source discovery: complete for decision-relevant surfaces. Independent QA reviewed all 12 planning documents and rechecked the corrected budget/proof order, isolated baseline identities, shared-catalog scope and reproducible command receipts. No substantive Phase 0 document blocker remained. Automated Markdown-link, fenced-JSON and assignment/task-ID checks passed; git diff --cached --check passed. Phase 1 executable contract freeze remains open.
-Ballerina: exact source/edition/sample inspection complete; full subset/certification, rights/current availability and live catalog DB status NOT VERIFIED.
+Ballerina: exact source/edition/sample inspection complete. Read-only CARAT follow-up confirmed actual local DB, exact GL/XL PDF hashes and lifecycle states: GL staged/pending, XL remediating/business blocked, neither active. Full subset/certification, rights/current availability and MIA consumer/hosted service remain NOT VERIFIED; see CATALOG_REUSE_ASSESSMENT.md.
 Server: current process/capacity snapshot measured; peak MIA load and integration NOT VERIFIED.
 CARAT: vendor product feasibility only; no arbitrary MIA interface/license/practical import VERIFIED.
 CRM bridge: separate chat active; no completion or real-receipt proof yet.
@@ -49,7 +49,7 @@ CRM bridge: separate chat active; no completion or real-receipt proof yet.
 - Current CRM authority/bridge contract and reliable replay.
 - MIA calendar/service/test grant.
 - Budget + provider benchmark, image usage enforcement.
-- Validated source-bound dealer subset. Actual shared catalog location/rights are prerequisites only for central-service reuse, not for an independently verified PDF-subset demonstrator.
+- Validated source-bound dealer subset. Existing local catalog location is now verified; business-readiness, shared-service rights and MIA consumer grants remain central-service prerequisites, not a reason to block an independently verified PDF-subset demonstrator.
 - Upload/retention/quota safeguards and private media lifecycle.
 - Integrated human/browser/provider/CRM/calendar/phone tests.
 - Operational restore/rollback/load/alerts and explicit release authorization.

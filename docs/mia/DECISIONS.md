@@ -19,7 +19,7 @@
 - 2026-10-14: meeting not agreed, possibly in two days; target 2026-10-16 remains tentative.
 - No budget approved yet.
 - Exact Ballerina GL/XL sales manual 2026 sources supplied, hashes in inventory.
-- Existing Ballerina server database thought to be via SCAS/DKH. Neither service location nor consumer rights verified.
+- Initial Ballerina database attribution to SCAS/DKH was unconfirmed. User's later CARAT hint led to actual local PostgreSQL/catalog_knowledge discovery and matching GL/XL hashes. No active business-ready catalog or MIA consumer grant exists; a separate server copy remains unverified.
 - DKH expressly has no connection to MKE.
 - User proposes central neutral catalog maintenance; architecture discussion, not a data-migration mandate.
 - New CRM bridge chat explicitly requested and created.
@@ -30,7 +30,7 @@
 | Provider total/call benchmark budget + model/account entitlement | Konstantin; bounded approved amount; J/C cost plan |
 | Test calendar/service and permitted actor/actions | calendar owner + G; synthetic destination and grant evidence |
 | Authoritative CRM route/revision/database | F/H; service mapping + synthetic receipt displayed |
-| Neutral catalog service source/deployment location | D/J; actual service reference, read-only metadata |
+| Neutral catalog package/hosted service and MIA consumer | D/J/H; existing local core located, extraction/hosting/grant contract and tested consumer still required |
 | Catalog reusable rights and fields | source owner/H; approved consumer grant/media/price rights |
 | 12-20 GL records/front mappings | D + independent I; full subset visual verification |
 | Production retention, privacy notices and resume proof | A/H + owner; approved purpose/expiry/deletion implementation |

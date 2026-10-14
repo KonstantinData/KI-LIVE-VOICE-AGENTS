@@ -7,7 +7,7 @@ Status 2026-10-14: Phase 0 evidence collected; contracts proposed; runtime imple
 | MIA-P03 | P1 coordinator + A/B/C/F/H | freeze identity/brief/job/catalog/intake DTOs and error states | P01 + specialist reviews | JSON schemas/fixtures + consumer contract tests; INTERFACES | proposed; required before interface implementation |
 | MIA-R01 | P1 B + foundation owner | immutable tenant/agent/session/project binding | P01, interface freeze | spoof/switch/isolation/KEA default; architecture/schema | open; release blocker |
 | MIA-D01 | P1 D | 12-20 visually verified GL variants, separate XL identity | supplied PDFs | exact page/region/hash + 100% independent subset review | source sampled; full subset not curated |
-| MIA-D02 | P1 D/J/H | locate existing catalog; central neutral service feasibility | D01 + service location | lifecycle gates/rights/consumer grants; ADR | service unlocated; no relocation authorized |
+| MIA-D02 | P1 D/J/H | reuse located catalog core; central neutral service/MIA consumer feasibility | existing core + source classification/grants | lifecycle gates/rights/consumer isolation; ADR | local CARAT DB and exact source hashes verified; no active versions or MIA grant; no relocation authorized |
 | MIA-C01 | P1 C | structured brief/version/edit/export | R01,D01 | unknown geometry/conflict/concurrency/5 edits; interfaces | open |
 | MIA-E01 | P1 E | isolated explicit entry + concept UI/text path | R01,C01 schemas | mobile/keyboard/instance collision/DE-EN; UX | open; dirty website must be isolated |
 | MIA-E02 | P1 E | integrated production-MVP voice/media/upload/resume/contact/booking UI | E01,R02,C02,F02,G02,H01 | complete browser/mobile/a11y + error journey; product copy | open; live provider evidence required |

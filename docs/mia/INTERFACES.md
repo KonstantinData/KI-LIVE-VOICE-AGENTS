@@ -64,6 +64,7 @@ Read-only version-qualified query: manufacturer + complete series identity + exa
 No tenant customer/project content in common catalog. Consumer identity/grant resolves allowed catalog/edition/fields. Tenant commercial overlays are separately authorized and never returned to another tenant.
 Unsupported GL/XL combinations, expired/discontinued entries, unknown constraints or uncertified semantics fail closed for article selection.
 Media/price fields require distinct permitted use. No direct browser database access; secrets server-side.
+The located CARAT runtime's consumer registry is a readiness registration, not authorization. A neutral service must add explicit authenticated grants and allowlisted DTO projection; private local source paths, raw page text and unapproved prices must not be exported by default.
 
 ## CRM handoff
 ```json

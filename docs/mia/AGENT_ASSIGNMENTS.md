@@ -15,7 +15,7 @@ These are real isolated agent contexts, not eleven separate sidebar chats. No sp
 | H Security/privacy | MIA-H01,H02 | threat review, upload/resume/grants/retention proof | independent tests/review; bounded hardening via owning agent | all frozen contracts |
 | I Independent QA | MIA-I01,I02 | scenario suites, regressions, hypothesis evaluation, final report | tests/browser fixtures; docs/mia/ACCEPTANCE_REPORT.md | combined commits/test environment |
 | J DevOps | MIA-J01,J02 | isolated env, quotas/worker/CI/monitoring/rollback | R deploy/CI/runtime ops; W approved release manifests | resource/budget policy, tested migrations |
-| K CARAT | MIA-K01,K02 | neutral export + verified vendor feasibility | R export schema/adapter; no unrelated CARAT repo work | plan schema; vendor docs/license/test installation |
+| K CARAT | MIA-K01,K02 | neutral export + verified vendor feasibility | R export schema/adapter; user-authorized read-only catalog-source discovery; no CARAT business/UI/customer work | plan schema; vendor docs/license/test installation |
 
 ## Shared-file ownership
 One coordinator-approved runtime foundation owner changes Conversation migration, profile/schema/config, common resolver and dispatch routes. B/C/E/F/G consume released DTOs; they do not independently rewrite shared files.
