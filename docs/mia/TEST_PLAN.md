@@ -16,11 +16,11 @@ Every result records requirement IDs, runtime+website+catalog SHAs/versions, env
 | Requirements | Required tests |
 |---|---|
 | MIA-01,14,16 | all-transport profile selection; unknown/disabled/foreign/Anna denied; same visitor KEA/MIA separation; mid-session spoof; actual KEA/Anna regression |
-| MIA-02,03,04 | live voice interruption/corrections, microphone refusal text continuation; typed extraction provenance/unknown/conflicts |
+| MIA-02,03,04 | live voice interruption/corrections, microphone refusal text continuation; extraction provenance/unknown/conflicts; no spoken answer recap or repeated answered question; contextual empathy/humor and conditional visual aids |
 | MIA-05,06 | real first-image and five edits; immutable snapshots, optimistic conflicts, requested-change fulfilment and unrelated visual drift review |
 | MIA-07,14 | malformed/polyglot/upload decode/page/pixel limits/quarantine; tenant/agent quota races; signed media expiry; PII/injection |
 | MIA-08 | token theft/foreign project/expiry/revocation/restart/mobile cookie behavior; IDs alone denied |
-| MIA-09,10 | declined consent no PII; secure form; sequential/20-way concurrent identical replay one receipt/record/mail intent; payload mismatch conflict; correct CRM UI |
+| MIA-09,10 | first personalized concept/refinement without postcode/contact; no lead gate or stock-picture substitute; declined contact consent no PII; protected form never spoken; sequential/20-way replay one receipt/record/mail intent; payload mismatch conflict; correct CRM UI; email sent/verified only on separate authoritative evidence |
 | MIA-11,12 | actual test calendar; consent bound to exact slot; concurrent booking; DST; timeout-after-write reconcile; provider success/mail failure; change/cancel authority |
 | MIA-12,15 | restart during provider job/outbox, cancelled run, ambiguous paid outcome, durable quotas and zero automatic duplicate dispatch |
 | MIA-13 | desktop + actual smartphone; 320 CSS px/keyboard/zoom/reflow/screen-reader focus/labels/reduced motion |
@@ -40,7 +40,7 @@ Separate:
 - Subjective satisfaction: actual participants' 0-100 perceived match and 5-point satisfaction, reasons.
 Do not average unrelated metrics into “78% match”. Report first/final concept, median/distribution, fraction >=70, sample/denominator and missing outputs. Human sample and thresholds must be approved before pilot.
 
-Timing: discovery start -> reviewed brief, provider generation time, entry -> visible first concept and total journey separately; report p50/p95 and failure rates, voice/text/upload differences. 2-3min and 70-80% targets are not achieved claims.
+Timing: discovery start -> first-concept request with sufficient structured input, provider generation time, entry -> visible first concept and total journey separately; report p50/p95 and failure rates, voice/text/upload differences. No spoken summary is a timing prerequisite. 2-3min and 70-80% targets are not achieved claims.
 
 ## Existing commands
 R: python -m ruff check src tests; python -m pytest tests -q; pnpm --filter ki-team-widget lint; pnpm --filter ki-team-widget build.

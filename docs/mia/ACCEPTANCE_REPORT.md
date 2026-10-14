@@ -56,3 +56,8 @@ CRM bridge: separate chat active; no completion or real-receipt proof yet.
 
 ## Closure rule
 No package or project is complete because an agent reports code written. Coordinator checks combined functionality, security, tests, documentation, evidence and outstanding scope deviations. Production requires concrete release-specific authorization.
+
+## Conversation and value-first follow-up, 2026-10-15
+Product/UX independently accepted the updated requirements and scripted conversation sketch after correction: no spoken answer recaps, relevant follow-up questions, contextual empathy/humor, selective visuals, and a visible personalized concept before optional postcode/contact capture. The conversation guide is the fourteenth planning document. These are requirement/preview changes, not implemented runtime behavior.
+
+Local browser checks exercised family/frustration/humor examples, already-answered household/material questions, null storage for unknown opening and room dimensions, schematic fallback labels, unchanged window capture, the contact preview's validation feedback, absence of contact identifiers in widget state, and 320px reflow. No JavaScript page errors were observed. Markdown links/JSON examples and staged diff checks passed. The preview makes no backend submission; no real email, provider, CRM or calendar operation was executed. Actual voice/laughter and the personalized concept-generation function remain NOT RUN / NOT IMPLEMENTED.

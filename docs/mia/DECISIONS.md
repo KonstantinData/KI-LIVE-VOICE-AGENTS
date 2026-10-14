@@ -14,6 +14,8 @@
 | ADR-MIA-011 | mandatory | Neutral export is preparation, not working CARAT import. Actual vendor contract/license/test import required. |
 | ADR-MIA-012 | recommended | Anonymous demo retention 7d; optional resume 30d; separate approved production/CRM purposes. These are proposals, not legal deadlines. |
 | ADR-MIA-013 | mandatory | No product/fixed-price/stock/licensing assumptions from manufacturer PDFs or image-source docs. |
+| ADR-MIA-014 | user requirement, 2026-10-15 | Fluid personal dialogue without spoken answer recaps; brief contextual empathy and optional appropriate humor/laughter. Images appear selectively. Internal structured state and explicit contact/booking consent remain required. See CONVERSATION_DESIGN.md. |
+| ADR-MIA-015 | user requirement, 2026-10-15 | Deliver a real visible personalized concept before optional postcode/contact capture. Communicate this value at entry. Sales qualification cannot replace the concept; contact, email verification and booking remain separate voluntary steps with truthful receipt states. |
 
 ## User inputs
 - 2026-10-14: meeting not agreed, possibly in two days; target 2026-10-16 remains tentative.

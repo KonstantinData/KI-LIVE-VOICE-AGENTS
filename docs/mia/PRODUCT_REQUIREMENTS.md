@@ -3,8 +3,8 @@ Status: proposed; not implemented. Product owner A, coordinator accountable.
 
 ## Product and release scope
 MIA (mia-kitchen-design) is an explicitly selected AI concept assistant for mein-kuechenexperte.de. KEA remains available independently; Anna remains a phone-only agent.
-Flow: select MIA -> voice/text choice -> natural discovery -> review brief -> concept -> up to five targeted revisions -> optional secure contact -> optional explicitly confirmed booking -> correct CRM handoff.
-The structured brief, uncertainty and image form one concept. Images are not manufacture-ready plans. Contact is not required to see or revise a concept.
+Flow: select MIA -> voice/text choice -> natural discovery with conditional visual aids -> concept -> up to five targeted revisions -> optional secure contact -> optional explicitly confirmed booking -> correct CRM handoff.
+The structured brief, uncertainty and image form one concept. Images are not manufacture-ready plans. Contact is not required to see or revise a concept. Communicate the immediate visible-result goal at entry; show the visitor's first concept before optional postcode/name/email/phone capture. Do not substitute a later-contact promise or generic stock picture for that result.
 MKE currently positions itself as an independent adviser. Ballerina source access does not establish dealer status, price authority, supplier availability or public media rights.
 
 ### Demonstrator
@@ -23,13 +23,13 @@ Vendor-verified/licensed CARAT adapter and practical import test; expanded appro
 |---|---|
 | MIA-01 | KEA/MIA have independent entries; selected identity is enforced server-side, cannot switch existing session or select Anna |
 | MIA-02 | Voice/text both complete discovery; denied microphone/disconnection yields text continuation, no automatic recording |
-| MIA-03 | Natural dialog covers use/household, functional priorities, style/materials, room and optional budget; corrections and skipped answers supported |
-| MIA-04 | Reviewed brief distinguishes customer facts, extracted data, assumptions, unknowns, conflicts; dimensions unknown remain null |
+| MIA-03 | Natural dialog covers use/household, priorities, style/materials, room and optional budget; no recited answer summaries or fixed picture questionnaire; proportionate empathy and context-appropriate light humor; corrections/skipped answers supported |
+| MIA-04 | Internal structured brief distinguishes customer facts, extracted data, assumptions, unknowns and conflicts; no mandatory spoken recap; dimensions unknown remain null; clarify specific ambiguities only |
 | MIA-05 | Personalized concept references the accepted brief/version; no false technical/product/price guarantee |
 | MIA-06 | One initial concept + five successful revisions; requested structured changes only; previous versions viewable; visual drift disclosed |
 | MIA-07 | Optional validated private PDF/sketch/image input; provider-processing disclosure and bounded analysis |
 | MIA-08 | Consent-based scoped resume with expiry/revocation; IDs or contact-form submission alone do not verify ownership |
-| MIA-09 | Voluntary secure contact form; no solicited spoken PII; separate purposes and no compulsory marketing consent |
+| MIA-09 | Optional protected postcode/first-name/last-name/email/phone form after first visible concept; initial generation/refinement never require these fields; no solicited spoken PII; separate purposes and no compulsory marketing consent |
 | MIA-10 | Selected concept, structured wishes, assumptions, media/history references reach the authoritative CRM once; retries observable |
 | MIA-11 | Correct calendar/service/timezone; availability recheck, explicit action-bound confirmation; provider success before confirmed UI |
 | MIA-12 | Generation/CRM/calendar failures preserve last confirmed state; retry/cancel/restart never invent success or duplicate effects |
@@ -42,6 +42,7 @@ Vendor-verified/licensed CARAT adapter and practical import test; expanded appro
 | MIA-19 | Backup/restore/rollback/alerts exercised; production only after concrete approval |
 
 ## Customer wording candidates
+Follow [conversation design](CONVERSATION_DESIGN.md): one relevant next question, optional brief acknowledgment, no formulaic recap. Audible empathy/humor requires separate live-voice validation.
 - Entry: “MIA – Küchenideen entwickeln”; preserve KEA existing name/purpose.
 - Introduction: “Ich bin MIA, Ihre KI-Assistentin für erste Küchenideen.”
 - Image: “KI-Konzeptvisualisierung. Maße, technische Machbarkeit und konkrete Produkte sind noch nicht fachlich geprüft.”

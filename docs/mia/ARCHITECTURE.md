@@ -17,7 +17,7 @@ flowchart LR
   Visitor --> Website[PHP MIA entry / widget]
   Website --> Session[Server-bound tenant + agent + project session]
   Session --> Dialogue[Voice or text discovery]
-  Dialogue --> Brief[Reviewed versioned kitchen brief]
+  Dialogue --> Brief[Structured versioned kitchen brief]
   Brief --> Catalog[Read-only approved catalog version]
   Catalog --> Validation[Source and planning constraints]
   Validation --> Jobs[PostgreSQL durable jobs + reservations]

@@ -7,6 +7,7 @@ Active area: mein-kuechenexperte.de. Runtime and website/CRM repositories are ex
 - [Inventory](SOURCE_INVENTORY.md): current sources, repository states and actual integration gaps.
 - [Catalog reuse assessment](CATALOG_REUSE_ASSESSMENT.md): located local CARAT catalog database, exact source matches, unresolved readiness and neutral-service proposal.
 - [Product requirements](PRODUCT_REQUIREMENTS.md): demonstrator, production MVP, acceptance IDs.
+- [Conversation design](CONVERSATION_DESIGN.md): fluid dialogue, contextual empathy/humor and selective visual support, without spoken recaps.
 - [Architecture](ARCHITECTURE.md): ownership, session identity, jobs, versioning, media and shared catalog proposal.
 - [Interfaces](INTERFACES.md): proposed versioned contracts and state machines.
 - [Assignments](AGENT_ASSIGNMENTS.md): all eleven specialist roles and file ownership.
