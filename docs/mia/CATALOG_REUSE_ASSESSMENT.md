@@ -72,4 +72,3 @@ The existing end_to_end_planning gate/probe proves read-only catalog-bundle reso
 Actual local connection, PostgreSQL read-only mode, exact source-hash matches, aggregate counts, lifecycle metadata and catalog table names were verified. No raw prices, supplier document text, customer records or CARAT UI state were read. Repository changes are limited to MIA planning documentation. Existing CARAT process was already running and remained untouched; no CARAT session/test was started by this inspection.
 
 Independent QA inspected the catalog models/runtime/migrations and rechecked this corrected assessment. Documentation reuse findings were accepted after distinguishing schema shape, content classification, readiness registration and actual authorization. All 13 local Markdown links/JSON examples passed checks; git diff --check passed. No parser/runtime implementation tests were required or rerun for this documentation-only change.
-
