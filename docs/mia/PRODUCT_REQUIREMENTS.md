@@ -65,4 +65,8 @@ Follow [conversation design](CONVERSATION_DESIGN.md): one relevant next question
 11. Competing slot booking and timeout-after-write reconciliation.
 12. Expired/foreign resume capability: no disclosure.
 
-Discovery 2-3 minutes and 70-80% perceived match are hypotheses. A possible 2026-10-16 meeting is unconfirmed. Budget and real-user pilot remain open.
+Start-to-first-visible-personalized-furnished-result in 2-3 minutes and 70-80% perceived match are hypotheses. Visitor pauses, planning and rendering count toward that primary time; discovery-only timing is insufficient. Subsequent revisions are measured separately. A possible 2026-10-16 meeting is unconfirmed. Budget and real-user pilot remain open.
+
+## Integrated product discussion, 2026-10-15
+
+The seven-role [workshop results](TEAM_WORKSHOP_RESULTS.md) and [German customer-experience draft](EXPERIENCE_DRAFT_DE.md) integrate the user's dialogue, room, template, immediate-result and seller-handoff requirements. They are discussion proposals, not implementation acceptance. In particular, the proposed model-based 3D approach, six-to-eight initial variants and generic-furniture demonstrator with a separate source-verified article sample await discussion. The earlier Ballerina-subset demo dependency above is not silently waived by the proposal. Existing source authorization, tenant isolation and runtime readiness gates are unchanged.

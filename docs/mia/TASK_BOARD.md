@@ -1,9 +1,12 @@
 # Task board and dependency plan
 Status 2026-10-14: Phase 0 evidence collected; contracts proposed; runtime implementation not started. Possible meeting 2026-10-16, unconfirmed.
 
+2026-10-15 workshop: MIA-P04 produces a first integrated experience draft for discussion. Its generic-furniture demo/separate article-sample proposal would revise the D01 dependency of the general demo; the earlier rows/timebox below are not proof of an approved scope change. The first-result time hypothesis includes dialogue and rendering; see TEAM_WORKSHOP_RESULTS.md.
+
 | ID | Priority / owner | Goal and result | Depends on | Tests / docs | Status / risk |
 |---|---|---|---|---|---|
 | MIA-P01 | P1 A | approved journey and demo/MVP split | inventory | MIA-01..19; PRD | proposed; timing unmeasured |
+| MIA-P04 | P1 coordinator + seven senior product roles | integrated first customer-experience draft and cross-role critique | P01 + current user requirements | TEAM_WORKSHOP_BRIEF, TEAM_WORKSHOP_RESULTS, EXPERIENCE_DRAFT_DE; independent document review | workshop conducted; first draft for user discussion; not a working demo or accepted new implementation scope |
 | MIA-P03 | P1 coordinator + A/B/C/F/H | freeze identity/brief/job/catalog/intake DTOs and error states | P01 + specialist reviews | JSON schemas/fixtures + consumer contract tests; INTERFACES | proposed; required before interface implementation |
 | MIA-R01 | P1 B + foundation owner | immutable tenant/agent/session/project binding | P01, interface freeze | spoof/switch/isolation/KEA default; architecture/schema | open; release blocker |
 | MIA-D01 | P1 D | 12-20 visually verified GL variants, separate XL identity | supplied PDFs | exact page/region/hash + 100% independent subset review | source sampled; full subset not curated |

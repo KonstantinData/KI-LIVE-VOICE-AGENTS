@@ -11,7 +11,7 @@ Existing KI-TEAM host staging is a production-host mutation and needs scoped aut
 
 ## Proposed limits
 Default-off independent MIA/voice/image/handoff/booking switches. Their final setting names belong in schema/config docs during implementation.
-- Voice hard maximum 5min, discovery target2-3min measured separately.
+- Proposed voice hard maximum 5min; first-visible-personalized-furnished-result target 2-3min includes discovery, visitor pauses, planning and rendering. Measure discovery as a diagnostic subinterval, not the primary success metric. These budgets remain proposals, not enforced limits or achieved performance.
 - One initial image + max5 successful edits; one active generation/project.
 - 3 uploads/session, 10MiB/file, 30MiB/session; separately bound PDF pages/decoded pixels/CPU.
 - Initial2 concurrent MIA sessions / 1 generation worker.

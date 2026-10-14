@@ -6,7 +6,7 @@
 | ADR-MIA-003 | recommended | Separate authoritative concept geometry from illustrative render_scene and image. Unknown dimensions stay null. |
 | ADR-MIA-004 | recommended | Existing PostgreSQL/private storage + bounded durable worker; no new server/volume/broker without evidence. |
 | ADR-MIA-005 | mandatory | Keep original dirty checkouts unchanged; isolated implementation branches/worktrees and PR integration. W fetch corruption is outside automatic destructive repair scope. |
-| ADR-MIA-006 | recommended | First demonstration uses one certified small GL subset; XL remains independent. Full catalogs/CARAT do not block demo. |
+| ADR-MIA-006 | earlier recommendation; revision proposed in ADR-MIA-016 | First demonstration uses one certified small GL subset; XL remains independent. Full catalogs/CARAT do not block demo. The workshop proposes decoupling the general furniture experience from that source-verified article sample; await user discussion before treating the dependency as waived. |
 | ADR-MIA-007 | unresolved | Current CRM receiver/database authority must be verified. Separate user-created CRM bridge chat owns implementation. No blind dual writes. |
 | ADR-MIA-008 | unresolved | Choose real provider/calendar/service/test destination; do not widen Anna-only grant or infer Zeeg API availability. |
 | ADR-MIA-009 | recommended | Image provider adapter and benchmark configurable current models. No paid call absent concrete approved budget. |
@@ -16,6 +16,7 @@
 | ADR-MIA-013 | mandatory | No product/fixed-price/stock/licensing assumptions from manufacturer PDFs or image-source docs. |
 | ADR-MIA-014 | user requirement, 2026-10-15 | Fluid personal dialogue without spoken answer recaps; brief contextual empathy and optional appropriate humor/laughter. Images appear selectively. Internal structured state and explicit contact/booking consent remain required. See CONVERSATION_DESIGN.md. |
 | ADR-MIA-015 | user requirement, 2026-10-15 | Deliver a real visible personalized concept before optional postcode/contact capture. Communicate this value at entry. Sales qualification cannot replace the concept; contact, email verification and booking remain separate voluntary steps with truthful receipt states. |
+| ADR-MIA-016 | workshop recommendation for user discussion, 2026-10-15 | Measure 2-3 minutes from conversation start through first personal furnished result, including planning/rendering. Prefer consistent model-based 3D and 6-8 curated template variants initially. Propose generic fixed-size demo furniture plus a separate source-verified Ballerina article sample instead of blocking the whole experience on a catalog subset. These scope/implementation proposals are not approved by the workshop itself; source/tenant/readiness gates remain unchanged. See TEAM_WORKSHOP_RESULTS.md and EXPERIENCE_DRAFT_DE.md. |
 
 ## User inputs
 - 2026-10-14: meeting not agreed, possibly in two days; target 2026-10-16 remains tentative.

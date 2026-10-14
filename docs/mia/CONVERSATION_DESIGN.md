@@ -61,11 +61,13 @@ The reference images are design inputs, not a verified dealer assortment or redi
 
 ## Two-to-three-minute target
 
+Following the [senior workshop](TEAM_WORKSHOP_RESULTS.md), the primary target is conversation start to the first visible personalized furnished concept, including visitor speech, pauses, planning and rendering. Discovery duration is a diagnostic subinterval, not a substitute for that outcome. Later revisions are measured separately. The earlier scripted examples do not establish this speed.
+
 Adapt order to the visitor's answer and skip filled fields. Use one question per turn. Preserve short pauses and interruptions; avoid unnecessary confirmations, repeated paraphrases and a forced closing recap.
 
 Prioritize personal must-haves/must-avoids, coarse room feasibility, intended use, visual preferences and optional budget. After about 150 seconds, avoid opening optional detail topics. A short transition can be “Ich zeige Ihnen eine erste Idee. Danach können wir gezielt etwas verändern.”
 
-Measure actual discovery duration including visitor speech and pauses. The time target and 70-80% perceived-match hypothesis remain unproven until real participant tests. Do not claim that a fixed script or fast tapping guarantees them.
+Measure actual discovery duration including visitor speech and pauses, and the complete first-result interval above. The time target and 70-80% perceived-match hypothesis remain unproven until real participant tests. Do not claim that a fixed script or fast tapping guarantees them. Reaching 150 seconds is not a reason to begin an unbounded rendering wait; the end-to-end time remains the primary measure.
 
 ## Acceptance checks
 

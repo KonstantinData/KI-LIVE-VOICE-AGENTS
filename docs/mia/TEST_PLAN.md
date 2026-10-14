@@ -40,7 +40,9 @@ Separate:
 - Subjective satisfaction: actual participants' 0-100 perceived match and 5-point satisfaction, reasons.
 Do not average unrelated metrics into “78% match”. Report first/final concept, median/distribution, fraction >=70, sample/denominator and missing outputs. Human sample and thresholds must be approved before pilot.
 
-Timing: discovery start -> first-concept request with sufficient structured input, provider generation time, entry -> visible first concept and total journey separately; report p50/p95 and failure rates, voice/text/upload differences. No spoken summary is a timing prerequisite. 2-3min and 70-80% targets are not achieved claims.
+Timing: the primary 2-3min hypothesis is conversation start -> visible personalized furnished first concept, including visitor speech/pauses, planning and rendering. Measure discovery start -> first-concept request, rendering/provider generation and total journey separately for diagnosis; report p50/p95 and failure rates, voice/text/upload differences. No spoken summary is a timing prerequisite. Neither the time target nor 70-80% perceived match is an achieved claim.
+
+Workshop discussion demonstrator: the proposed model-based furnished 3D path can demonstrate geometry/plan/unit-list consistency and functional revisions without a photorealistic provider. This does not close later real-provider/voice acceptance gates. The generic furniture path and separate source-verified article sample remain scope recommendations for user discussion; see TEAM_WORKSHOP_RESULTS.md.
 
 ## Existing commands
 R: python -m ruff check src tests; python -m pytest tests -q; pnpm --filter ki-team-widget lint; pnpm --filter ki-team-widget build.
