@@ -55,6 +55,12 @@ Use a visual when it reduces ambiguity or visitor effort. Omit it when spoken in
 
 Separate room openness from desired kitchen shape. Separate refrigerator integration, appliance type and nominal width. A broad choice such as “wood” establishes a visual/material preference, not a verified manufacturer SKU, price or specific solid-wood construction.
 
+### Appliance appearance: customer choice
+
+The user's correction replaces a blanket fully-integrated-appliance default with a short adaptive preference question. Example: “Möchten Sie Kühlschrank und Geschirrspüler hinter den Möbelfronten verschwinden lassen, oder sollen einzelne Geräte sichtbar bleiben?” Accept a mixed answer in the same turn; store integration separately for each appliance. A fully integrated dishwasher and a visible side-by-side refrigerator are a valid combination. Refrigerator type, integration and width remain separate fields; do not infer an exact width from “side-by-side”. Skip already answered parts and respect retained appliances. If time is short, leave unresolved choices open for refinement rather than adding a mandatory appliance questionnaire.
+
+Furniture-led design and discreet extraction remain possible design preferences, not universal customer requirements. Ovens and the cooktop may remain visible in this design direction. Ask about extraction separately only when relevant; an answer about the refrigerator or dishwasher does not determine it. Any unconfirmed visual choice used in the first draft is a changeable proposal, not a stated customer preference.
+
 For a selected wall, always show the interior-facing wall elevation and an unambiguous left-to-right direction. Missing dimensions remain unknown. Only ask exact opening widths/offsets when available and decision-relevant; do not turn the discovery conversation into an unbounded measuring exercise.
 
 The reference images are design inputs, not a verified dealer assortment or redistribution license. This change does not copy their photographs or catalog artwork into public assets.

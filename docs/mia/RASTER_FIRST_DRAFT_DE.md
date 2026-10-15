@@ -54,6 +54,18 @@ Das Ergebnis muss diese Entscheidungen tatsächlich im Möbelmodell zeigen. Ein 
 
 Vorbereitete 3D-Möbel und Materialien sind der technische Vorschlag des Teams für eine schnelle, realistisch wirkende Darstellung. Das ist noch keine implementierte oder gemessene Funktion. Konkrete Herstellerartikel werden nur bei belegter Zuordnung ergänzt; ansonsten bleiben sie offen.
 
+## Einbaugeräte oder sichtbare Geräte
+
+MIA klärt den Gestaltungswunsch bei Bedarf mit einer kurzen Frage:
+
+**MIA:** „Möchten Sie Kühlschrank und Geschirrspüler hinter den Möbelfronten verschwinden lassen, oder sollen einzelne Geräte sichtbar bleiben?“
+
+**Kunde:** „Der Geschirrspüler soll voll integriert sein. Beim Kühlschrank möchte ich einen Side-by-Side.“
+
+MIA übernimmt beide Wünsche getrennt: voll integrierter Geschirrspüler und sichtbarer Side-by-Side-Kühlschrank. Einbauten und Standgeräte dürfen im selben Entwurf zusammenkommen. Die genaue Kühlschrankbreite bleibt offen, solange sie nicht genannt wurde.
+
+Die Möbel können das Gesamtbild prägen; ein zurückhaltender Abzug und sichtbar inszenierte Backöfen beziehungsweise das Kochfeld sind eine mögliche Gestaltungsrichtung. Vollintegration wird jedoch nicht pauschal vorausgesetzt. Bereits genannte Wünsche und vorhandene Geräte ersetzen die entsprechende Nachfrage. Noch offene Entscheidungen können nach dem ersten Entwurf geklärt werden; ein vorläufiger Gestaltungsvorschlag wird nicht als Kundenwunsch ausgegeben.
+
 ## Das Gespräch nach dem ersten Entwurf
 
 **MIA:** „Was daran passt schon gut zu Ihnen – und was würden Sie verändern?“
