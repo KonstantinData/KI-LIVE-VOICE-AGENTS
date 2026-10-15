@@ -85,3 +85,9 @@ Alle sieben Rollen unterstützen diesen Ansatz als eigenständigen Weg: **wunsch
 Der wichtigste Prüfpunkt ist die spätere Raumübertragung: Bleibt der persönliche Nutzen erhalten, wenn die tatsächliche Geometrie eine andere Aufstellung verlangt? Eine kleine erste Erprobung sollte deshalb unterschiedliche Wünsche sowie einen später nicht passenden Inselwunsch enthalten. Wunschentsprechung und Verständnis der vorläufigen Raumpassung werden getrennt geprüft. Die angestrebten 70–80 % sind weiterhin kein belegtes Ergebnis.
 
 Dies ist ein Konzept zur Diskussion. Die bisherige Präsentation bleibt unverändert; sie zeigt den vorherigen Ablauf.
+
+## Detailliertes Ablaufschema des Erstgesprächs
+
+Die bearbeitbare [draw.io-Datei](diagrams/FIRST_CONVERSATION.drawio) enthält drei Seiten: den Gesamtverlauf vom Websitekontakt bis zur Entwurfsankündigung, die adaptive Fragelogik mit Zeitsteuerung sowie einen konkreten Beispieldialog. Jede Seite endet bei „Ich erstelle jetzt einen ersten Entwurf.“ Die eigentliche Generierung und die weitere Detailarbeit gehören nicht zu diesem Schema.
+
+Die Datei wurde unabhängig inhaltlich geprüft und in draw.io mit allen drei Seiten exportiert und visuell geprüft. Bewusst offengelassene oder erfolglos geklärte Angaben lösen keine wiederholte Nachfrage aus. Die Zeitfenster im Beispiel sind Planungsannahmen, keine gemessene Gesprächsdauer.
