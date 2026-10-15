@@ -195,20 +195,23 @@
         <mxCell id="gap" value="&lt;b&gt;Relevante Angabe&#10;noch ungefragt?&lt;/b&gt;" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;fillColor=#FFF2D7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
           <mxGeometry x="900" y="990" width="300" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="select" value="&lt;b&gt;Genau eine relevante Frage auswählen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Bekannte und bewusst offengelassene Themen überspringen.&lt;br&gt;Die vier Fragefelder unten sind Alternativen, keine Pflichtfolge." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+        <mxCell id="select" value="&lt;b&gt;Genau eine relevante Frage auswählen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Bekannte und bewusst offengelassene Themen überspringen.&lt;br&gt;Die fünf Fragefelder unten sind Alternativen, keine Pflichtfolge." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
           <mxGeometry x="790" y="1230" width="520" height="145" as="geometry" />
         </mxCell>
-        <mxCell id="q-use" value="&lt;b&gt;Alltag / Verbesserung&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Was soll in Ihrer neuen Küche besser funktionieren?“&lt;br&gt;Nur wenn noch nicht erkennbar." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="70" y="1460" width="410" height="165" as="geometry" />
+        <mxCell id="q-use" value="&lt;b&gt;Alltag / Verbesserung&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Was soll besser funktionieren?“&lt;br&gt;Nur wenn noch nicht erkennbar." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1460" width="350" height="185" as="geometry" />
         </mxCell>
-        <mxCell id="q-must" value="&lt;b&gt;Unverzichtbares / Behaltenes&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Was muss unbedingt dabei sein oder bleiben?“&lt;br&gt;Gerätewünsche aufnehmen, keine Detailmaßkette." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="560" y="1460" width="410" height="165" as="geometry" />
+        <mxCell id="q-must" value="&lt;b&gt;Unverzichtbares&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Was muss unbedingt dabei sein oder bleiben?“&lt;br&gt;Keine Detailmaßkette." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="470" y="1460" width="350" height="185" as="geometry" />
         </mxCell>
-        <mxCell id="q-style" value="&lt;b&gt;Atmosphäre / Stil&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Welche Richtung gefällt Ihnen?“&lt;br&gt;Bei Bedarf wenige Stilbilder.&lt;br&gt;Sprache oder Text bleiben möglich." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="1460" width="410" height="165" as="geometry" />
+        <mxCell id="q-style" value="&lt;b&gt;Atmosphäre / Stil&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Welche Richtung gefällt Ihnen?“&lt;br&gt;Wenige Stilbilder nur bei Bedarf." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1460" width="350" height="185" as="geometry" />
         </mxCell>
-        <mxCell id="q-form" value="&lt;b&gt;Küchenform nur bei Bedarf&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Haben Sie schon eine Küchenform im Kopf?“&lt;br&gt;Ohne Präferenz darf MIA eine passende Grundplanung vorschlagen." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1540" y="1460" width="410" height="165" as="geometry" />
+        <mxCell id="q-form" value="&lt;b&gt;Küchenform&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Haben Sie schon eine Küchenform im Kopf?“&lt;br&gt;Sonst Vorschlag zulässig." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="1460" width="350" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="q-devices" value="&lt;b&gt;Geräte sichtbar oder integriert?&lt;/b&gt;&lt;br&gt;&lt;br&gt;Nur offene Geräte fragen.&lt;br&gt;Mischung möglich.&lt;br&gt;Details: Seite 04." style="shape=process;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="1630" y="1460" width="330" height="185" as="geometry" />
         </mxCell>
         <mxCell id="response" value="&lt;b&gt;Kunde antwortet / korrigiert&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Weiß nicht“, „später“ oder keine Bildauswahl:&lt;br&gt;als bewusst offen / nicht klärbar markieren.&lt;br&gt;Diesen Punkt nicht erneut auswählen.&lt;br&gt;Korrekturen ändern nur den betroffenen Wert." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F1F4F2;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
           <mxGeometry x="790" y="1740" width="520" height="175" as="geometry" />
@@ -248,13 +251,16 @@
         <mxCell id="edge-5" value="Ja" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="conflict" target="clarify">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge-6" value="Antwort / nicht klärbar / später" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="clarify" target="response">
+        <mxCell id="edge-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="clarify" target="response">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="2000" y="840" />
               <mxPoint x="2000" y="1827" />
             </Array>
           </mxGeometry>
+        </mxCell>
+        <mxCell id="clarify-response-label" value="Antwort / nicht klärbar / später" style="text;html=1;whiteSpace=wrap;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontColor=#193C32;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="1500" y="950" width="450" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge-7" value="Nein" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="conflict" target="gap">
           <mxGeometry relative="1" as="geometry" />
@@ -274,14 +280,14 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1050" y="1400" />
-              <mxPoint x="275" y="1400" />
+              <mxPoint x="245" y="1400" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="q-use" target="response">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="275" y="1680" />
+              <mxPoint x="245" y="1680" />
               <mxPoint x="1050" y="1680" />
             </Array>
           </mxGeometry>
@@ -290,14 +296,14 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1050" y="1400" />
-              <mxPoint x="765" y="1400" />
+              <mxPoint x="645" y="1400" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="q-must" target="response">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="765" y="1680" />
+              <mxPoint x="645" y="1680" />
               <mxPoint x="1050" y="1680" />
             </Array>
           </mxGeometry>
@@ -306,14 +312,14 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1050" y="1400" />
-              <mxPoint x="1255" y="1400" />
+              <mxPoint x="1045" y="1400" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge-15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="q-style" target="response">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1255" y="1680" />
+              <mxPoint x="1045" y="1680" />
               <mxPoint x="1050" y="1680" />
             </Array>
           </mxGeometry>
@@ -322,19 +328,35 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1050" y="1400" />
-              <mxPoint x="1745" y="1400" />
+              <mxPoint x="1445" y="1400" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="edge-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="q-form" target="response">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1745" y="1680" />
+              <mxPoint x="1445" y="1680" />
               <mxPoint x="1050" y="1680" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="response" target="merge">
+        <mxCell id="edge-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="select" target="q-devices">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1050" y="1400" />
+              <mxPoint x="1795" y="1400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="q-devices" target="response">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1795" y="1680" />
+              <mxPoint x="1050" y="1680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="response" target="merge">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="35" y="1827" />
@@ -347,7 +369,7 @@
         <mxCell id="loop-label" value="Nächste Antwort" style="text;html=1;whiteSpace=wrap;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=18;fontColor=#193C32;fontStyle=0;spacing=0;" vertex="1" parent="1">
           <mxGeometry x="55" y="1180" width="250" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="edge-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="assignment" target="terminal">
+        <mxCell id="edge-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="assignment" target="terminal">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1725" y="2160" />
@@ -463,6 +485,135 @@
               <mxPoint x="1230" y="1772" />
             </Array>
           </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="appliances" name="04 · Gerätewünsche gezielt klären">
+    <mxGraphModel dx="1500" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2100" pageHeight="2520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="04 · Gerätewünsche gezielt klären" style="text;html=1;whiteSpace=wrap;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=34;fontColor=#193C32;fontStyle=1;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="2020" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Ergänzung zu Seite 02 · Kühlschrank und Geschirrspüler getrennt behandeln · Einbau- und Standgeräte dürfen zusammenkommen" style="text;html=1;whiteSpace=wrap;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=19;fontColor=#193C32;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="85" width="2020" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="footer" value="MIA · mein-kuechenexperte.de · Konzeptstand 15.10.2026 · Ablaufvorschlag, keine gemessene Produktfunktion" style="text;html=1;whiteSpace=wrap;fillColor=none;strokeColor=none;align=left;verticalAlign=middle;fontFamily=Arial;fontSize=15;fontColor=#627367;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="2472" width="2020" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="a-start" value="&lt;b&gt;Gerätegestaltung ist gerade relevant&lt;/b&gt;&lt;br&gt;&lt;br&gt;Auswahl im adaptiven Fragerouter auf Seite 02.&lt;br&gt;Keine zusätzliche Pflichtstation." style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F1F4F2;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="170" width="580" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="a-known" value="&lt;b&gt;Welche Angaben sind bereits bekannt?&lt;/b&gt;&lt;br&gt;&lt;br&gt;Je Gerät prüfen: Integration / Sichtbarkeit, Gerätetyp, Behaltenes.&lt;br&gt;„Kühl-Gefrier-Kombination“ allein klärt die Integration nicht." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="340" width="580" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a-gap" value="&lt;b&gt;Relevante Integration&#10;noch ungefragt?&lt;/b&gt;" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;fillColor=#FFF2D7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="890" y="550" width="320" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="a-time" value="&lt;b&gt;Neue Frage noch zulässig?&lt;/b&gt;&lt;br&gt;Unter ca. 90 Sekunden&lt;br&gt;und kein Abschlusswunsch?" style="shape=rhombus;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;fillColor=#FFF2D7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="890" y="790" width="320" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="a-skip" value="&lt;b&gt;Gerätefrage überspringen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Bekannte Wünsche erhalten.&lt;br&gt;Bewusst offengelassene Punkte nicht erneut fragen." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F1F4F2;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="65" y="550" width="540" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="a-open" value="&lt;b&gt;Offene Angaben offen lassen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Keinen pauschalen Integrationsstandard einsetzen.&lt;br&gt;Details können nach dem ersten Entwurf folgen." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F1F4F2;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="65" y="800" width="540" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="a-question" value="&lt;b&gt;Nur die fehlenden Angaben ansprechen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Beide offen:&lt;br&gt;„Möchten Sie Kühlschrank und Geschirrspüler hinter den Möbelfronten verschwinden lassen, oder sollen einzelne Geräte sichtbar bleiben?“&lt;br&gt;&lt;br&gt;Nur ein Gerät offen, z. B.:&lt;br&gt;„Soll Ihr Kühlschrank hinter einer Möbelfront verschwinden oder sichtbar bleiben?“" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E5EEE7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1050" width="580" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="a-answer" value="&lt;b&gt;Kunde antwortet frei&lt;/b&gt;&lt;br&gt;&lt;br&gt;„Der Geschirrspüler soll voll integriert sein.&lt;br&gt;Beim Kühlschrank möchte ich einen Side-by-Side.“&lt;br&gt;&lt;br&gt;Auch „weiß nicht“, Korrekturen und gemischte Antworten zulassen." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F1F4F2;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=20;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1430" width="580" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="a-dish" value="&lt;b&gt;Geschirrspüler separat übernehmen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Integration: voll integriert.&lt;br&gt;Möbelfront vor dem Gerät.&lt;br&gt;Keine Übertragung auf den Kühlschrank." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="65" y="1730" width="540" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="a-fridge" value="&lt;b&gt;Kühlschrank separat übernehmen&lt;/b&gt;&lt;br&gt;&lt;br&gt;Typ: Side-by-Side.&lt;br&gt;Im Gesprächskontext als sichtbaren Vorschlag darstellen.&lt;br&gt;Ohne klare Sichtbarkeitspräferenz: vorläufig kennzeichnen.&lt;br&gt;Breite bleibt unbekannt, solange nicht genannt." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="1730" width="580" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="a-unclear" value="&lt;b&gt;Unklare oder fehlende Antwort&lt;/b&gt;&lt;br&gt;&lt;br&gt;Nur eindeutig Beantwortetes übernehmen.&lt;br&gt;Keine pauschale Zustimmung für beide Geräte erfinden.&lt;br&gt;„Weiß nicht / später“ bleibt bewusst offen." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF2D7;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="1510" y="1430" width="510" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="a-rules" value="&lt;b&gt;Keine zusätzliche Detailplanung&lt;/b&gt;&lt;br&gt;&lt;br&gt;Keine Breiten aus dem Gerätetyp ableiten.&lt;br&gt;Behaltene Geräte respektieren.&lt;br&gt;Abzug ist eine eigene Präferenz.&lt;br&gt;Keine Anschluss- oder Raummaßfragen.&lt;br&gt;Keine technische Einbaufreigabe." style="shape=note;size=20;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="1510" y="340" width="510" height="295" as="geometry" />
+        </mxCell>
+        <mxCell id="a-merge" value="&lt;b&gt;Zum Fragerouter zurück: Antwortstatus aktualisieren&lt;/b&gt;&lt;br&gt;&lt;br&gt;Wünsche je Gerät und offene Angaben in denselben Entwurfsauftrag übernehmen.&lt;br&gt;Eine gezielte Klärung nur über den zeitgeprüften Router; keine automatische zweite Gerätefrage." style="shape=process;whiteSpace=wrap;html=1;fillColor=#FAF8F1;strokeColor=#788C80;fontColor=#193C32;fontFamily=Arial;fontSize=19;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="2010" width="580" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="a-end" value="&lt;b&gt;„Ich erstelle jetzt einen ersten Entwurf.“&lt;/b&gt;&lt;br&gt;&lt;br&gt;Wenn der Router abschließt; weiterhin höchstens 120 Sekunden Erstgespräch." style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#193C32;strokeColor=#193C32;fontColor=#FFFFFF;fontFamily=Arial;fontSize=22;align=center;verticalAlign=middle;spacing=14;shadow=0;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="760" y="2320" width="580" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-start" target="a-known">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-known" target="a-gap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3" value="Nein" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-gap" target="a-skip">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4" value="Ja" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-gap" target="a-time">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-5" value="Nein" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-time" target="a-open">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-6" value="Ja" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-time" target="a-question">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-question" target="a-answer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-8" value="Beispiel: Geschirrspüler" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.65;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-answer" target="a-dish">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="335" y="1557" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-9" value="Beispiel: Kühlschrank" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-answer" target="a-fridge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-10" value="Falls offen / unklar" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-answer" target="a-unclear">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-dish" target="a-merge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="335" y="2110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-fridge" target="a-merge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-unclear" target="a-merge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1765" y="2110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-skip" target="a-merge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="632" />
+              <mxPoint x="30" y="2150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.9;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-open" target="a-merge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="45" y="882" />
+              <mxPoint x="45" y="2174" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-16" value="Router schließt ab" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=24;html=1;endArrow=block;endFill=1;strokeColor=#193C32;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontFamily=Arial;fontSize=18;fontColor=#193C32;labelBackgroundColor=#FFFFFF;labelBorderColor=none;" edge="1" parent="1" source="a-merge" target="a-end">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
