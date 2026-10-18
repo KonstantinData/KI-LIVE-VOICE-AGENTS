@@ -14,8 +14,8 @@ def smtp(monkeypatch):
     monkeypatch.setenv("ANNA_DIRECT_SMTP", "true")
     values = {
         "SMTP_HOST": "ssl0.ovh.net", "SMTP_PORT": "587",
-        "SMTP_SECURITY": "starttls", "SMTP_USER": mail.OWNER_MAILBOX,
-        "SMTP_FROM_EMAIL": mail.OWNER_MAILBOX, "CONTACT_EMAIL": mail.OWNER_MAILBOX,
+        "SMTP_SECURITY": "starttls", "SMTP_USER": mail.ANNA_MAILBOX,
+        "SMTP_FROM_EMAIL": mail.ANNA_MAILBOX, "CONTACT_EMAIL": mail.OWNER_MAILBOX,
         "SMTP_PASS": "test-$PASSWORD-secret",
     }
     config = MagicMock(return_value=values)
@@ -43,10 +43,12 @@ async def test_notification_uses_verified_tls_and_fixed_recipient(smtp):
     ]
     context = client.starttls.call_args.kwargs["context"]
     assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
-    client.login.assert_called_once_with(mail.OWNER_MAILBOX, "test-$PASSWORD-secret")
+    client.login.assert_called_once_with(mail.ANNA_MAILBOX, "test-$PASSWORD-secret")
     message = client.send_message.call_args.args[0]
     assert client.send_message.call_args.kwargs["to_addrs"] == [mail.OWNER_MAILBOX]
     assert message["To"] == mail.OWNER_MAILBOX
+    assert mail.ANNA_MAILBOX in message["From"]
+    assert client.send_message.call_args.kwargs["from_addr"] == mail.ANNA_MAILBOX
     assert "customer@example.test" in message.get_content()
     assert "PRIVATE TRANSCRIPT" not in message.get_content()
     assert "attacker@example.test" not in str(message)
@@ -127,7 +129,7 @@ async def test_customer_summary_uses_single_confirmed_recipient_and_public_copy(
     client = smtp[1]
     message = client.send_message.call_args.args[0]
     assert client.send_message.call_args.kwargs == {
-        "from_addr": mail.OWNER_MAILBOX, "to_addrs": ["erika+call@example.test"],
+        "from_addr": mail.ANNA_MAILBOX, "to_addrs": ["erika+call@example.test"],
     }
     assert message["To"] == "erika+call@example.test"
     assert message["Reply-To"] == mail.OWNER_MAILBOX

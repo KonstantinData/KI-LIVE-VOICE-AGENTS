@@ -14,6 +14,7 @@ from dotenv import dotenv_values
 
 SMTP_SECRET_PATH = "/run/secrets/anna_smtp"
 OWNER_MAILBOX = "kontakt@mein-kuechenexperte.de"
+ANNA_MAILBOX = "anna.weber@mein-kuechenexperte.de"
 
 
 class SMTPDeliveryError(RuntimeError):
@@ -31,8 +32,8 @@ def _configuration() -> dict[str, str]:
         "SMTP_HOST": "ssl0.ovh.net",
         "SMTP_PORT": "587",
         "SMTP_SECURITY": "starttls",
-        "SMTP_USER": OWNER_MAILBOX,
-        "SMTP_FROM_EMAIL": OWNER_MAILBOX,
+        "SMTP_USER": ANNA_MAILBOX,
+        "SMTP_FROM_EMAIL": ANNA_MAILBOX,
         "CONTACT_EMAIL": OWNER_MAILBOX,
     }
     if any(values.get(key) != expected for key, expected in required.items()):
@@ -82,7 +83,7 @@ def _deliver(message: EmailMessage | None, recipient: str = OWNER_MAILBOX) -> bo
             client.login(config["SMTP_USER"], config["SMTP_PASS"])
             if message is not None:
                 refused = client.send_message(
-                    message, from_addr=OWNER_MAILBOX, to_addrs=[recipient]
+                    message, from_addr=ANNA_MAILBOX, to_addrs=[recipient]
                 )
                 if refused:
                     raise SMTPDeliveryError("smtp_delivery_failed")
@@ -111,7 +112,7 @@ async def send_phone_notification(
         f"{contact.get('first_name', '')} {contact.get('last_name', '')}", 160
     )
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = OWNER_MAILBOX
     message["Subject"] = "Anna: Neues Telefonanliegen"
     message["Date"] = formatdate(localtime=False)
@@ -145,7 +146,7 @@ async def send_customer_summary(
     if not name:
         raise SMTPDeliveryError("smtp_customer_name_required")
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Reply-To"] = OWNER_MAILBOX
     message["Subject"] = "Ihre Gesprächszusammenfassung – Mein Küchenexperte"
@@ -250,7 +251,7 @@ async def send_appointment_confirmation(
     )
 
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Reply-To"] = OWNER_MAILBOX
     message["Subject"] = subject
@@ -271,7 +272,7 @@ async def send_calendar_notification(operation: dict) -> bool:
     details = operation.get("details", {})
     original = operation.get("original") or {}
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Subject"] = "ANNA: " + labels[action]
     message["Date"] = formatdate(localtime=False)
