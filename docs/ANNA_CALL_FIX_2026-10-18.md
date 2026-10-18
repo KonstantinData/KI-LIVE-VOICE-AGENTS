@@ -104,3 +104,34 @@ The deployment record and rollback images are recorded under
 `/opt/anna/releases/mailbox-6028eaebf854`. The protected SMTP backup is not a
 repository artifact. No email was sent. Provider authentication for Anna's own
 mailbox remains the blocking acceptance gate.
+
+## Configured implicit TLS support and network diagnosis
+
+The operator selected `SMTP_PORT=465` and `SMTP_SECURITY=SSL` and confirmed
+successful webmail login. The application previously rejected this valid TLS
+mode before connecting. Commit `9019be859c3ac54a447ff4d7f5c7ab45718f3f2c` fixes
+that restriction: 465/SSL uses `SMTP_SSL` with certificate verification;
+587/STARTTLS remains supported. Insecure or mismatched port/mode combinations
+remain rejected. All 412 telephone tests and targeted Ruff passed.
+
+Both services were deployed using derived images
+`mkx-anna:tls-9019be859c3a` and `mkx-calendar:tls-9019be859c3a`. Their source hashes,
+running state, environment values, mounts, users, and accepted SMTP configuration
+were verified. Asterisk was not restarted. Release and rollback records are in
+`/opt/anna/releases/tls-9019be859c3a`. The protected SMTP configuration was not
+changed during this TLS correction.
+
+The remaining failure on the configured port occurs before authentication:
+TCP connections from the production host to `ssl0.ovh.net:465` time out.
+The same endpoint completes verified TLS from the operator workstation.
+Production host port 587 connects and completes STARTTLS, but an independent
+no-send test with the current credentials still returns SMTP 535 there.
+Webmail success therefore does not establish SMTP authentication from this host.
+
+The host's UFW policy allows outbound traffic, iptables OUTPUT accepts traffic,
+and no relevant local blocking rule was found. The port-465 behavior is
+consistent with Hetzner Cloud's documented default outbound SMTP restriction;
+the specific account-level restriction has not been inspected in its control
+panel. See [Hetzner Cloud FAQ](https://docs.hetzner.com/de/cloud/servers/faq/).
+Provider-side port 465 access must be resolved before testing authentication with
+the selected production transport. No message was sent by any diagnostic test.
