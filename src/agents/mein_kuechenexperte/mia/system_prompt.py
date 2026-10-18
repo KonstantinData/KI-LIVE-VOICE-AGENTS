@@ -17,27 +17,25 @@ from src.db.models.studio import Studio
 def _build_mia_base_prompt(
     studio: Studio,
     context: Mapping[str, object] | None = None,
-    address_mode: str = "sie",
+    address_mode: str = "du",
 ) -> str:
     """Build channel-neutral planning instructions and non-authoritative context.
 
     Context must be JSON-serializable. It preserves explicit unknowns and does
     not grant tool authority or certify action outcomes.
     """
+    if address_mode != "du":
+        raise ValueError("MIA uses 'du' address mode only.")
     business_context = get_mkx_business_context(studio)
     style = build_conversation_style(address_mode)
-    concept_label = (
-        "Deine Küchenidee im Beispielraum"
-        if address_mode == "du"
-        else "Ihre Küchenidee im Beispielraum"
-    )
+    concept_label = "Deine persönliche Design-Idee im Beispielraum"
     sections = [
         MIA_IDENTITY,
         style,
         MIA_CONVERSATION_CONTRACT.format(concept_label=concept_label),
         MIA_TONALITY,
         MIA_RULES,
-        "## MKX-Geschäftswissen\n" + business_context,
+        "## Geschäftswissen von Mein Küchenexperte\n" + business_context,
     ]
     if context is not None:
         sections.append(
@@ -53,11 +51,13 @@ def _build_mia_base_prompt(
 def build_mia_system_prompt(
     studio: Studio,
     context: Mapping[str, object] | None = None,
-    address_mode: str = "sie",
+    address_mode: str = "du",
 ) -> str:
     """Build MIA's offline text prompt without enabling a runtime agent."""
     return (
         _build_mia_base_prompt(studio, context, address_mode)
         + "\n\n## Textkanal\nAntworte knapp in natürlichem Deutsch. Eine gezielte "
-        "Frage pro Runde; keine gesprochenen Regieanweisungen."
+        "Frage pro Runde; keine gesprochenen Regieanweisungen. Nutze vorhandene "
+        "Bildkarten und Texteingabe gleichwertig. Ein Wechsel des Eingabewegs "
+        "beginnt das Briefing nicht neu und erfordert keine Wiederholung."
     )

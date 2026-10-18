@@ -5,7 +5,8 @@ MKX (Mein Kuechenexperte) is the tenant. Its agents have separate roles:
 - **KEA**: website reception and controlled project intake. Runtime and text/voice
   prompt sections live in [`kea`](kea). Identity comes from the tenant registry;
   studio knowledge comes from `registry/tenants/mein-kuechenexperte/knowledge`.
-- **MIA**: planning assistant. Existing requirements and architecture live in
+- **MIA**: planning assistant. The current prompt journey is described in
+  [`mia/README.md`](mia/README.md); earlier requirements and architecture live in
   [`docs/mia`](../../../docs/mia/README.md). [`mia`](mia) contains independent
   prompt sections and offline text/voice builders only. It is not part of KEA;
   no runtime MIA agent, endpoint, registry activation or planner is supplied by
@@ -14,12 +15,11 @@ MKX (Mein Kuechenexperte) is the tenant. Its agents have separate roles:
   package lives in [`anna`](anna). Shared telephone transport remains in
   [`src/telephony`](../../telephony).
 
-Approved follow-up, 2026-10-18: relocate all of the former `src/agents/anna`
-package, including `calendar`, under this MKX directory and update imports/start
-assets. Telephone/calendar behavior, agent/profile IDs and authority do not
-change. `deploy/anna` and `deploy/anna-server` remain in place. This is a local
-source reorganization, not deployment or new live acceptance. Earlier inventory
-and implementation receipts describe their historical paths and remain intact.
+Anna's former `src/agents/anna` package, including `calendar`, is now under this
+MKX directory. `deploy/anna` and `deploy/anna-server` remain operational asset
+directories. Package ownership does not change telephone/calendar authority or
+agent/profile IDs. Earlier inventory and implementation receipts describe their
+historical paths and remain intact.
 
 [`shared`](shared) holds selected role-neutral MKX conversation policy and
 business context. Goals, examples, address/channel behavior and tool/contact
@@ -28,14 +28,17 @@ inherit shared prompts. KEA owns its deterministic `text_flow.py` and
 `text_flow_nodes.py` along with text/voice composition. Shared infrastructure
 belongs to runtime/core rather than another agent's prompt package.
 
-MIA's documented flow uses bounded prepared layouts in a raster scene before
-actual-room adaptation. Initial dialogue is at most 120 seconds, with no room,
-window, door or connection questions before the first draft, no spoken recap
-and optional contact only after a visible concept and refinement. Offline
-prompts express these requirements; they do not execute furniture selection,
-rendering, revisions or booking. Agent-bound session/project authorization and
-an explicit MIA runtime/profile remain separate work. Neither uninterrupted
-long-speech handling nor the diagram's 10x10 m scene is decided here.
+MIA aims for an approximately two-minute introduction covering five essentials:
+coarse room situation and preferred kitchen form, style, colors/material
+appearance, a central desired feature and explicit exclusions. It then guides
+the visitor through a photorealistic design idea in an example room, qualitative
+feedback and a few focused refinements. Budget orientation, uploads and personal
+consultation are optional follow-up steps. Viewing, refining and downloading an
+image must not require contact details; a private, time-limited continuation link
+is also part of the intended journey. The prompts require each capability to
+exist before MIA offers or confirms it. They do not implement image generation,
+UI controls, storage, upload handling, continuation links or booking. An explicit
+MIA runtime/profile and session/project authorization remain separate work.
 
 See [ADR 0003](../../../docs/adr/0003-mkx-agent-ownership.md) for approval and
 validation boundaries. Historical structural-migration tests are not evidence

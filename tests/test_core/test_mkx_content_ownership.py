@@ -45,8 +45,8 @@ def test_mia_never_inherits_kea_intake_knowledge(studio, builder):
     prompt = builder(studio)
     assert "KEA-Aufnahme und Übergabe" not in prompt
     assert KEA_CONVERSATION_CONTRACT not in prompt
-    assert "Erstentwurf und Verfeinerung erfordern keine Kontaktdaten" in prompt
-    assert "keine Fragen zu Raummaßen" in prompt
+    assert "MIA, die KI-Planungsassistentin" in prompt
+    assert "Mein Küchenexperte" in prompt
 
 
 @pytest.mark.parametrize("address_mode", ["du", "sie"])
