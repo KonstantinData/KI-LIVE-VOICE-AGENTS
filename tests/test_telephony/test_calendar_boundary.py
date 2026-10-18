@@ -17,6 +17,101 @@ def test_calendar_gate_never_grants_kea(monkeypatch):
     assert not calendar_enabled("other", "anna-phone-assistant")
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("start,end,expected_start,expected_end", [
+    ("2026-10-23T09:00", "2026-10-26T12:00", "2026-10-23T09:00:00+02:00", "2026-10-26T12:00:00+01:00"),
+    ("2027-03-26", "2027-03-29", "2027-03-26T00:00:00+01:00", "2027-03-29T00:00:00+02:00"),
+    ("2026-10-26T08:00:00Z", "2026-10-26T11:00:00Z", "2026-10-26T09:00:00+01:00", "2026-10-26T12:00:00+01:00"),
+    ("2026-10-25T02:30:00+02:00", "2026-10-25T02:45:00+01:00", "2026-10-25T02:30:00+02:00", "2026-10-25T02:45:00+01:00"),
+])
+async def test_search_bounds_resolve_each_date_without_guessing_dst(
+    monkeypatch, start, end, expected_start, expected_end,
+):
+    monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true")
+    client = PhoneCalendarTools("mein-kuechenexperte", "anna-phone-assistant", "call")
+    requests = []
+
+    async def request(path, payload):
+        requests.append(payload)
+        return {"success": True, "slots": []}
+
+    client._request = request
+    result = await client.execute("find_free_slots", {
+        "start": start, "end": end, "duration_minutes": 60,
+    }, "Anrufer: Vormittags bitte.")
+    assert result["success"]
+    assert requests[0]["arguments"] == {
+        "start": expected_start, "end": expected_end,
+        "duration_minutes": 60, "time_of_day": "morning",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("start,reason", [
+    ("2027-03-28T02:30:00", "nonexistent_local_time"),
+    ("2027-03-28T02:30:00+01:00", "nonexistent_local_time"),
+    ("2026-10-25T02:30:00", "ambiguous_local_time_requires_explicit_offset"),
+    ("2026-10-25T02:30:00+03:00", "ambiguous_local_time_requires_explicit_offset"),
+    ("morgen", "expected_iso_date_or_datetime"),
+    ("2026-02-30T09:00:00", "expected_iso_date_or_datetime"),
+    (None, "expected_iso_date_or_datetime"),
+])
+async def test_invalid_search_boundary_returns_actionable_error_without_dispatch(monkeypatch, start, reason):
+    monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true")
+    client = PhoneCalendarTools("mein-kuechenexperte", "anna-phone-assistant", "call")
+
+    async def request(path, payload):
+        pytest.fail("Invalid or ambiguous search must not reach the calendar service")
+
+    client._request = request
+    result = await client.execute("find_free_slots", {
+        "start": start, "end": "2027-03-29T12:00:00", "duration_minutes": 60,
+    }, "")
+    assert result == {"success": False, "error": "invalid_datetime", "field": "start",
+                      "reason": reason, "clock_timezone": "Europe/Berlin",
+                      "source": "search_datetime_validation"}
+
+
+@pytest.mark.asyncio
+async def test_wrong_dst_offset_returns_exact_retry_without_changing_caller_constraints(monkeypatch):
+    monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true")
+    client = PhoneCalendarTools("mein-kuechenexperte", "anna-phone-assistant", "call")
+    requests = []
+
+    async def request(path, payload):
+        requests.append(payload)
+        return {"success": True, "slots": []}
+
+    client._request = request
+    arguments = {"start": "2026-10-23T09:00:00+02:00", "end": "2026-10-26T12:00:00+02:00",
+                 "duration_minutes": 60, "time_of_day": "afternoon"}
+    result = await client.execute("find_free_slots", arguments, "Anrufer: Vormittags bitte.")
+    assert result["error"] == "invalid_datetime"
+    assert result["reason"] == "offset_does_not_match_berlin_date"
+    assert result["corrected_arguments"]["end"] == "2026-10-26T12:00:00+01:00"
+    assert arguments["end"] == "2026-10-26T12:00:00+02:00"
+    assert requests == []
+    assert (await client.execute("find_free_slots", result["corrected_arguments"], "Anrufer: Vormittags bitte."))["success"]
+    assert requests[0]["arguments"]["time_of_day"] == "morning"
+    assert requests[0]["arguments"]["duration_minutes"] == 60
+
+
+@pytest.mark.asyncio
+async def test_naive_search_normalization_does_not_change_availability_validation(monkeypatch):
+    monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true")
+    client = PhoneCalendarTools("mein-kuechenexperte", "anna-phone-assistant", "call")
+    requests = []
+
+    async def request(path, payload):
+        requests.append(payload)
+        return {"success": False, "error": "invalid_datetime"}
+
+    client._request = request
+    arguments = {"start": "2026-10-26T09:00:00", "end": "2026-10-26T10:00:00"}
+    assert (await client.execute("check_availability", arguments, ""))["error"] == "invalid_datetime"
+    assert requests[0]["arguments"] == arguments
+
+
 @pytest.mark.parametrize("reference", ["Der Letztere.", "Den Letzteren.", "Der letzte."])
 def test_latter_reference_selects_last_offered_slot(reference):
     client = PhoneCalendarTools("mein-kuechenexperte", "anna-phone-assistant", "call")

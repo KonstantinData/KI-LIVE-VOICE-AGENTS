@@ -87,6 +87,10 @@ async def test_independent_customer_and_owner_outcomes(monkeypatch, internal_ok,
     assert result["internal_email_sent"] is internal_ok
     assert result["customer_email_sent"] is customer_ok
     assert result["customer_summary_requested"] is True
+    if not result["success"]:
+        assert result["error"] == "delivery_not_confirmed"
+        assert result["retry_automatically"] is False
+        assert "do not offer another send" in result["next_step"]
 
 
 @pytest.mark.asyncio

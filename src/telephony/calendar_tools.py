@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import re
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -41,17 +41,21 @@ def _tool(name: str, description: str, properties: dict, required: list[str]) ->
 
 def calendar_tool_definitions() -> list[dict]:
     """Only bounded domain arguments are exposed; no mailbox IDs or Graph payloads."""
-    stamp = {"type": "string", "description": "ISO-8601 mit UTC-Offset, z.B. 2026-10-14T15:00:00+02:00"}
+    stamp = {"type": "string", "description": "ISO-8601 mit dem für das jeweilige Datum gültigen Europe/Berlin-Offset. Exakt aus dem Kalenderergebnis übernehmen; Sommer-/Winterzeit beachten."}
     text = {"type": "string", "maxLength": 160}
     contact = {"name": text, "email": text, "phone": text}
     interval = {"start": stamp, "end": stamp}
+    search_interval = {
+        field: {"type": "string", "description": "Suchgrenze als ISO-Datum oder lokale ISO-Datumszeit in Europe/Berlin; ohne Offset erlaubt. Einen Offset nur angeben, wenn er für dieses Datum gilt."}
+        for field in ("start", "end")
+    }
     result = [
         _tool("get_conversation_context", "Liefert den bereits erfassten Gesprächskontext und Bestätigungsstatus. Intern verwenden, um bekannte Angaben nicht erneut abzufragen.", {}, []),
         _tool("get_booking_policy", "Liefert interne Buchungsregeln, Betriebsmodus und aktuelle Zeit. Vor der Terminsuche aufrufen. Diese Daten niemals dem Anrufer nennen.", {}, []),
         _tool("get_calendar_events", "Liefert ausschließlich belegte Zeitfenster, keine Kundendetails.", interval, ["start", "end"]),
         _tool("check_availability", "Prüft einen Zeitraum, ohne eine Reservierung vorzunehmen.", interval, ["start", "end"]),
-        _tool("find_free_slots", "Sucht freie Termine innerhalb der internen Buchungszeiten und der bekannten Tageszeitpräferenz. Dem Anrufer ausschließlich konkrete freie Termine nennen, niemals die zugrunde liegenden Regeln.",
-              {**interval, "duration_minutes": {"type": "integer", "minimum": 15, "maximum": 240},
+        _tool("find_free_slots", "Sucht freie Termine innerhalb der internen Buchungszeiten und der bekannten Tageszeitpräferenz. Dem Anrufer ausschließlich konkrete freie Termine nennen, niemals die zugrunde liegenden Regeln. Bei invalid_datetime liegt ein Eingabefehler vor, keine Kalenderstörung: corrected_arguments einmal übernehmen und die Suche wiederholen; sonst das ISO-Format anhand der Fehlerhinweise korrigieren. Mehrdeutige Uhrzeiten zuerst klären.",
+              {**search_interval, "duration_minutes": {"type": "integer", "minimum": 15, "maximum": 240},
                "time_of_day": {"type": "string", "enum": ["morning", "afternoon", "early_evening", "evening"]}},
               ["start", "end", "duration_minutes"]),
         _tool(
@@ -230,6 +234,40 @@ class PhoneCalendarTools:
         self.state.ingest_transcript(transcript)
         return self.state.contact_ready(details)
 
+    @staticmethod
+    def _search_boundary(value: Any) -> tuple[str, bool]:
+        """Resolve read-only Berlin search bounds without guessing DST instants."""
+        if not isinstance(value, str) or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?(?:Z|[+-]\d{2}:\d{2})?)?",
+            value,
+        ):
+            raise ValueError("expected_iso_date_or_datetime")
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError("expected_iso_date_or_datetime") from None
+        zone = ZoneInfo("Europe/Berlin")
+        if parsed.tzinfo is not None:
+            local = parsed.astimezone(zone)
+            if parsed.utcoffset() == timedelta(0) or (
+                local.replace(tzinfo=None) == parsed.replace(tzinfo=None)
+                and local.utcoffset() == parsed.utcoffset()
+            ):
+                return local.isoformat(), False
+        wall = parsed.replace(tzinfo=None)
+        candidates = {}
+        for fold in (0, 1):
+            candidate = wall.replace(tzinfo=zone, fold=fold)
+            if candidate.astimezone(timezone.utc).astimezone(zone).replace(tzinfo=None) == wall:
+                candidates[candidate.utcoffset()] = candidate
+        if not candidates:
+            raise ValueError("nonexistent_local_time")
+        if len(candidates) != 1:
+            raise ValueError("ambiguous_local_time_requires_explicit_offset")
+        normalized = next(iter(candidates.values())).isoformat()
+        # An incorrect explicit offset requires a visible correction and retry.
+        return normalized, parsed.tzinfo is not None
+
     def _search_constraints(self, arguments: dict) -> dict:
         """Bind semantic preferences to the search, before the service's slot limit."""
         args = dict(arguments)
@@ -330,6 +368,22 @@ class PhoneCalendarTools:
             return {"success": False, "error": "time_clarification_required",
                     "question": self.state.clarification_question}
         if name == "find_free_slots":
+            normalized = dict(arguments)
+            corrections = False
+            for field in ("start", "end"):
+                try:
+                    normalized[field], corrected = self._search_boundary(arguments.get(field))
+                    corrections |= corrected
+                except ValueError as exc:
+                    return {"success": False, "error": "invalid_datetime", "field": field,
+                            "reason": str(exc), "clock_timezone": "Europe/Berlin",
+                            "source": "search_datetime_validation"}
+            if corrections:
+                return {"success": False, "error": "invalid_datetime",
+                        "reason": "offset_does_not_match_berlin_date",
+                        "clock_timezone": "Europe/Berlin", "source": "search_datetime_validation",
+                        "corrected_arguments": normalized}
+            arguments = normalized
             arguments = self._search_constraints(arguments)
             try:
                 if datetime.fromisoformat(arguments["start"]) >= datetime.fromisoformat(arguments["end"]):

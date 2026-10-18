@@ -192,6 +192,28 @@ def test_prompt_delivery_mode_uses_same_exact_flag_as_dispatcher(monkeypatch):
     assert "customer_summary_consent_confirmed" not in session["tools"][0]["parameters"]["properties"]
 
 
+@pytest.mark.parametrize("calendar", [False, True])
+def test_direct_delivery_failure_closes_handoff_without_retry_or_response_promise(monkeypatch, calendar):
+    monkeypatch.setenv("ANNA_DIRECT_SMTP", "true")
+    monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true" if calendar else "false")
+    session, _, _ = phone_session_config("mein-kuechenexperte", "anna-phone-assistant")
+    prompt = session["instructions"]
+
+    # Assert the complete session retains the distinct receipt and failure policies.
+    assert "Nur internal_email_sent=true bestätigt die interne Weiterleitung" in prompt
+    assert "Nur customer_email_sent=true bestätigt den Versand" in prompt
+    assert "Eine versandte Kunden-Zusammenfassung bestätigt keine interne Weiterleitung" in prompt
+    assert "Nach einem fehlgeschlagenen oder unklaren Versand" in prompt
+    assert "Rufe submit_phone_contact_handoff nicht noch einmal auf" in prompt
+    assert "biete keinen erneuten\nVersuch an" in prompt
+    assert "frage nicht erneut nach Zustimmung zur Weiterleitung" in prompt
+    assert "oder einen weiteren Versuch wünscht" in prompt
+    assert "Die Weiterleitung konnte ich leider\nnicht bestätigen" in prompt
+    assert "Bitte wenden Sie sich direkt an kontakt@mein-kuechenexperte.de" in prompt
+    assert "Ja, ich bin noch da." in prompt
+    assert "Auch vor dem Versand darfst du keine persönliche Rückmeldung zusagen" in prompt
+
+
 def test_anna_calendar_prompt_keeps_policy_internal_and_dialog_natural(monkeypatch):
     monkeypatch.setenv("ANNA_CALENDAR_TOOLS_ENABLED", "true")
     monkeypatch.setenv("ANNA_DIRECT_SMTP", "true")

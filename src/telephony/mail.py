@@ -86,6 +86,8 @@ def _deliver(message: EmailMessage | None, recipient: str = OWNER_MAILBOX) -> bo
                 )
                 if refused:
                     raise SMTPDeliveryError("smtp_delivery_failed")
+    except smtplib.SMTPAuthenticationError:
+        raise SMTPDeliveryError("smtp_authentication_failed") from None
     except SMTPDeliveryError:
         raise
     except (smtplib.SMTPException, OSError, ValueError, UnicodeError):

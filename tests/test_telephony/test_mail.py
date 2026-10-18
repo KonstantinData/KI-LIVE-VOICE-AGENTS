@@ -59,6 +59,14 @@ def test_connection_check_does_not_send(smtp):
     client.send_message.assert_not_called()
 
 
+def test_authentication_failure_is_distinct_and_sanitized(smtp):
+    smtp[1].login.side_effect = smtplib.SMTPAuthenticationError(535, b"private provider response")
+    with pytest.raises(mail.SMTPDeliveryError, match="^smtp_authentication_failed$") as caught:
+        mail.check_smtp_connection()
+    assert caught.value.__suppress_context__
+    smtp[1].send_message.assert_not_called()
+
+
 @pytest.mark.parametrize("key,value", [
     ("SMTP_HOST", "attacker.example"), ("SMTP_PORT", "25"),
     ("SMTP_SECURITY", "none"), ("SMTP_USER", "other@example.test"),
