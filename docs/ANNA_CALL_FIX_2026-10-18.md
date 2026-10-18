@@ -75,3 +75,32 @@ list ordering. Verification was changed to compare environment names and values
 independently of ordering; the subsequent activation passed. No call was active
 at either restart. Mail authentication is still pending operator secret repair;
 no real message or booking was submitted during this release.
+
+## Dedicated SMTP identity correction
+
+The operator clarified that Anna owns `anna.weber@mein-kuechenexperte.de`.
+Commit `6028eaebf854e22308c3baa994efa646fc953ef0` separates that SMTP login and
+sender identity from the fixed operational recipient
+`kontakt@mein-kuechenexperte.de`. Customer mail continues to reply to the
+operational mailbox. The full telephone suite again passed 409 tests; targeted
+Ruff passed.
+
+The operator updated the protected secret. A subsequent check found a typo in
+the public login field and a changed operational recipient. Only `SMTP_USER` and
+`CONTACT_EMAIL` were corrected after a protected server-side backup; the
+password was retained unchanged and never printed. The corrected public
+configuration validates, but the no-send authentication probe still fails.
+
+Both services now use derived images `mkx-anna:mailbox-6028eaebf854` and
+`mkx-calendar:mailbox-6028eaebf854`. Existing production mail functions were
+preserved using narrowly matched identity replacements. Four source invariants
+were checked for each service: matching host/container source hashes, unchanged
+environment values, unchanged mounts, and unchanged runtime user. Both containers
+are running with restart count zero; Asterisk was not restarted. A verification
+attempt rolled back before mount-list comparison was made independent of order;
+the subsequent activation passed.
+
+The deployment record and rollback images are recorded under
+`/opt/anna/releases/mailbox-6028eaebf854`. The protected SMTP backup is not a
+repository artifact. No email was sent. Provider authentication for Anna's own
+mailbox remains the blocking acceptance gate.
