@@ -1,5 +1,17 @@
 # ANNA Microsoft 365 calendar integration
 
+## Approved package relocation, 2026-10-18
+
+Anna's MKX-owned source package, including the calendar service, moves from
+the historical `src/agents/anna` path to
+`src/agents/mein_kuechenexperte/anna`. This is a local package/import/start-asset
+migration, not a change to telephone behavior, calendar policy, grants, public
+agent/profile IDs, environment variables, service names or stored operation data.
+`src/telephony` and `deploy/anna` / `deploy/anna-server` remain in place.
+KEA and MIA do not acquire Anna's calendar authority. The historical deployment
+and acceptance evidence below remains dated evidence; this relocation does not
+establish a new deployment, real-call acceptance or live calendar verification.
+
 ## Scope and current state
 
 ### Business-account migration (2026-09-28)
@@ -130,7 +142,7 @@ required Compose file lists. Restart Anna only with zero active call channels.
 
 ## Architecture and changed files
 
-- `src/agents/anna/calendar/config.py`: fixed mailbox and fail-closed environment.
+- `src/agents/mein_kuechenexperte/anna/calendar/config.py`: fixed mailbox and fail-closed environment.
 - `oauth.py`: delegated authorization code + PKCE, browser-bound expiring state,
   encrypted SQLite token vault, serialized refresh and `/me` identity check.
 - `graph.py`: bounded Graph client, paginated calendarView, conditional writes,

@@ -7,8 +7,8 @@ import json
 from cryptography.fernet import Fernet
 import pytest
 
-from src.agents.anna.calendar.config import CalendarConfig, CalendarError
-from src.agents.anna.calendar.service import CalendarService
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig, CalendarError
+from src.agents.mein_kuechenexperte.anna.calendar.service import CalendarService
 
 
 def policy(**changes):

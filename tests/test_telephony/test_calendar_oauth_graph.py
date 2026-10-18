@@ -11,9 +11,9 @@ import httpx
 import pytest
 from cryptography.fernet import Fernet
 
-from src.agents.anna.calendar.config import MASTER_CALENDAR, CalendarConfig, CalendarError
-from src.agents.anna.calendar.graph import BASE, GraphCalendar
-from src.agents.anna.calendar.oauth import OAuthManager
+from src.agents.mein_kuechenexperte.anna.calendar.config import MASTER_CALENDAR, CalendarConfig, CalendarError
+from src.agents.mein_kuechenexperte.anna.calendar.graph import BASE, GraphCalendar
+from src.agents.mein_kuechenexperte.anna.calendar.oauth import OAuthManager
 
 
 @pytest.fixture

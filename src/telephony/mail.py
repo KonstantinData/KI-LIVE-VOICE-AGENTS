@@ -14,6 +14,7 @@ from dotenv import dotenv_values
 
 SMTP_SECRET_PATH = "/run/secrets/anna_smtp"
 OWNER_MAILBOX = "kontakt@mein-kuechenexperte.de"
+ANNA_MAILBOX = "anna.weber@mein-kuechenexperte.de"
 
 
 class SMTPDeliveryError(RuntimeError):
@@ -29,18 +30,20 @@ def _configuration() -> dict[str, str]:
         raise SMTPDeliveryError("smtp_not_configured") from None
     required = {
         "SMTP_HOST": "ssl0.ovh.net",
-        "SMTP_PORT": "587",
-        "SMTP_SECURITY": "starttls",
-        "SMTP_USER": OWNER_MAILBOX,
-        "SMTP_FROM_EMAIL": OWNER_MAILBOX,
+        "SMTP_USER": ANNA_MAILBOX,
+        "SMTP_FROM_EMAIL": ANNA_MAILBOX,
         "CONTACT_EMAIL": OWNER_MAILBOX,
     }
     if any(values.get(key) != expected for key, expected in required.items()):
         raise SMTPDeliveryError("smtp_invalid_configuration")
+    port = values.get("SMTP_PORT", "")
+    security = str(values.get("SMTP_SECURITY", "")).lower()
+    if (port, security) not in {("587", "starttls"), ("465", "ssl")}:
+        raise SMTPDeliveryError("smtp_invalid_configuration")
     password = values.get("SMTP_PASS")
     if not password:
         raise SMTPDeliveryError("smtp_not_configured")
-    return {**required, "SMTP_PASS": password}
+    return {**required, "SMTP_PORT": port, "SMTP_SECURITY": security, "SMTP_PASS": password}
 
 
 def _text(value: object, limit: int) -> str:
@@ -75,17 +78,23 @@ def _deliver(message: EmailMessage | None, recipient: str = OWNER_MAILBOX) -> bo
     recipient = validate_customer_email(recipient)
     config = _configuration()
     try:
-        with smtplib.SMTP(config["SMTP_HOST"], 587, timeout=20) as client:
+        implicit_tls = config["SMTP_SECURITY"] == "ssl"
+        factory = smtplib.SMTP_SSL if implicit_tls else smtplib.SMTP
+        options = {"context": ssl.create_default_context()} if implicit_tls else {}
+        with factory(config["SMTP_HOST"], int(config["SMTP_PORT"]), timeout=20, **options) as client:
             client.ehlo()
-            client.starttls(context=ssl.create_default_context())
-            client.ehlo()
+            if not implicit_tls:
+                client.starttls(context=ssl.create_default_context())
+                client.ehlo()
             client.login(config["SMTP_USER"], config["SMTP_PASS"])
             if message is not None:
                 refused = client.send_message(
-                    message, from_addr=OWNER_MAILBOX, to_addrs=[recipient]
+                    message, from_addr=ANNA_MAILBOX, to_addrs=[recipient]
                 )
                 if refused:
                     raise SMTPDeliveryError("smtp_delivery_failed")
+    except smtplib.SMTPAuthenticationError:
+        raise SMTPDeliveryError("smtp_authentication_failed") from None
     except SMTPDeliveryError:
         raise
     except (smtplib.SMTPException, OSError, ValueError, UnicodeError):
@@ -109,7 +118,7 @@ async def send_phone_notification(
         f"{contact.get('first_name', '')} {contact.get('last_name', '')}", 160
     )
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = OWNER_MAILBOX
     message["Subject"] = "Anna: Neues Telefonanliegen"
     message["Date"] = formatdate(localtime=False)
@@ -143,7 +152,7 @@ async def send_customer_summary(
     if not name:
         raise SMTPDeliveryError("smtp_customer_name_required")
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Reply-To"] = OWNER_MAILBOX
     message["Subject"] = "Ihre Gesprächszusammenfassung – Mein Küchenexperte"
@@ -248,7 +257,7 @@ async def send_appointment_confirmation(
     )
 
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Reply-To"] = OWNER_MAILBOX
     message["Subject"] = subject
@@ -269,7 +278,7 @@ async def send_calendar_notification(operation: dict) -> bool:
     details = operation.get("details", {})
     original = operation.get("original") or {}
     message = EmailMessage()
-    message["From"] = f"Mein Küchenexperte <{OWNER_MAILBOX}>"
+    message["From"] = f"Anna Weber – Mein Küchenexperte <{ANNA_MAILBOX}>"
     message["To"] = recipient
     message["Subject"] = "ANNA: " + labels[action]
     message["Date"] = formatdate(localtime=False)

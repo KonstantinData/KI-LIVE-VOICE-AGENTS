@@ -7,10 +7,9 @@ import structlog
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
-from src.agents.lisa.agent import LisaAgent
+from src.agents.mein_kuechenexperte.kea.text_flow import KeaTextFlow
+from src.agents.mein_kuechenexperte.kea.text_flow_nodes import FlowChoice, FlowResponse
 from src.api.config import get_settings
-from src.api.services.kea_text_flow import KeaTextFlow
-from src.api.services.kea_text_flow_nodes import FlowChoice, FlowResponse
 from src.api.websocket.manager import manager
 from src.db.database import AsyncSessionLocal
 from src.db.models.conversation import Conversation
@@ -55,17 +54,7 @@ async def handle_chat(
     visitor_id: str,
     consent_given: bool = False,
 ) -> None:
-    """
-    WebSocket-Handler für den Chat-Endpoint.
-
-    /ws/chat?studio={slug}&visitor={visitor_id}
-
-    1. Studio anhand slug laden → Verbindung schließen wenn nicht gefunden
-    2. Konversation finden oder erstellen (via visitor_id)
-    3. Agent initialisieren
-    4. Bei jeder Nachricht: agent.process_message() → DB commit → Antwort senden
-    5. Bei Disconnect: finalize_conversation() → DB commit → Verbindung trennen
-    """
+    """Serve the registered MKX website entry through KEA's deterministic flow."""
     origin = websocket.headers.get("origin")
     if not _origin_allowed(origin):
         await websocket.close(code=4403)
@@ -106,7 +95,7 @@ async def handle_chat(
             return
 
         profile = get_tenant_profile_for_studio(studio.slug)
-        if profile is not None and studio.slug != "mein-kuechenexperte":
+        if profile is None or studio.slug != "mein-kuechenexperte":
             await websocket.send_json({
                 "type": "error",
                 "message": "Der Textchat ist für diesen Tenant noch nicht konfiguriert.",
@@ -147,15 +136,13 @@ async def handle_chat(
             "visitor_id": visitor_id,
         })
 
-        # ── Agent initialisieren ──────────────────────────────────────────────
-        agent = LisaAgent(session=session)
+        # All admitted chats use KEA's website flow; no alternate agent fallback.
         public_agent_name = _public_agent_name(studio.slug)
-        kea_flow = KeaTextFlow(session=session) if studio.slug == "mein-kuechenexperte" else None
+        kea_flow = KeaTextFlow(session=session)
 
-        if kea_flow is not None:
-            flow_response = await kea_flow.start(conversation)
-            await session.commit()
-            await _send_flow_response(websocket, flow_response)
+        flow_response = await kea_flow.start(conversation)
+        await session.commit()
+        await _send_flow_response(websocket, flow_response)
 
         # ── Nachrichten-Loop ──────────────────────────────────────────────────
         try:
@@ -195,35 +182,17 @@ async def handle_chat(
                 await websocket.send_json({"type": "typing", "role": "assistant"})
 
                 try:
-                    # Agent verarbeitet Nachricht (7-Schritte-Loop)
-                    if kea_flow is not None:
-                        flow_response = await kea_flow.handle(
-                            conversation,
-                            message_text=message_text,
-                            action_id=str(action_id) if action_id else None,
-                            action_label=action_label_text if action_label else None,
-                        )
-                    else:
-                        response_text = await agent.process_message(
-                            user_message=message_text,
-                            conversation=conversation,
-                            studio=studio,
-                        )
+                    flow_response = await kea_flow.handle(
+                        conversation,
+                        message_text=message_text,
+                        action_id=str(action_id) if action_id else None,
+                        action_label=action_label_text if action_label else None,
+                    )
 
-                    # Alle DB-Änderungen dieser Nachricht committen
-                    # (Nachrichten, Lead-Updates, Conversation.lead_id)
+                    # Persist this turn before sending the response.
                     await session.commit()
 
-                    # Antwort an Client senden
-                    if kea_flow is not None:
-                        await _send_flow_response(websocket, flow_response)
-                    else:
-                        await websocket.send_json({
-                            "type": "message",
-                            "role": "assistant",
-                            "content": response_text,
-                            "timestamp": datetime.now(timezone.utc).isoformat(),
-                        })
+                    await _send_flow_response(websocket, flow_response)
                 except Exception as e:
                     await session.rollback()
                     log.error("ws.message_error", visitor=visitor_id, error=str(e))
@@ -238,21 +207,18 @@ async def handle_chat(
         except WebSocketDisconnect:
             log.info("ws.disconnected", visitor=visitor_id)
 
-            # Gesprächszusammenfassung generieren + Konversation schließen
+            # Preserve the flow's staff summary without an extra LLM call.
             try:
-                if kea_flow is not None:
-                    conversation.status = "closed"
-                    conversation.summary = (
-                        conversation.summary
-                        or "KEA Textchat: geführte Projekteinordnung im Widget."
-                    )
-                    log.info(
-                        "kea.finalized",
-                        visitor=visitor_id,
-                        conversation_id=str(conversation.id),
-                    )
-                else:
-                    await agent.finalize_conversation(conversation, studio)
+                conversation.status = "closed"
+                conversation.summary = (
+                    conversation.summary
+                    or "KEA Textchat: geführte Projekteinordnung im Widget."
+                )
+                log.info(
+                    "kea.finalized",
+                    visitor=visitor_id,
+                    conversation_id=str(conversation.id),
+                )
                 await session.commit()
                 log.info(
                     "ws.finalized",

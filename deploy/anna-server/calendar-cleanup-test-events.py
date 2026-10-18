@@ -3,9 +3,9 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from src.agents.anna.calendar.config import CalendarConfig
-from src.agents.anna.calendar.graph import GraphCalendar
-from src.agents.anna.calendar.oauth import OAuthManager
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig
+from src.agents.mein_kuechenexperte.anna.calendar.graph import GraphCalendar
+from src.agents.mein_kuechenexperte.anna.calendar.oauth import OAuthManager
 
 
 async def main():

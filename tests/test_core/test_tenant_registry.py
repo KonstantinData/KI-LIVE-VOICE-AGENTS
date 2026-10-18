@@ -107,8 +107,8 @@ def test_realtime_session_config_uses_tenant_runtime_profile():
     assert config["audio"]["output"]["voice"] == "shimmer"
     assert "metadata" not in config
     assert "Du bist KEA" in config["instructions"]
-    assert "kein Kuechenfachberater" in config["instructions"]
-    assert "Angebotsfragen" in config["instructions"]
+    assert "kein Küchenfachberater" in config["instructions"]
+    assert "Fragen zu Angeboten" in config["instructions"]
     assert "niemals Lisa" not in config["instructions"]
     assert agent_display_name("mein-kuechenexperte") == "KEA"
 

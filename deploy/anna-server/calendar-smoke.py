@@ -4,10 +4,10 @@ import asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from src.agents.anna.calendar.config import CalendarConfig
-from src.agents.anna.calendar.graph import GraphCalendar
-from src.agents.anna.calendar.oauth import OAuthManager
-from src.agents.anna.calendar.service import CalendarService
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig
+from src.agents.mein_kuechenexperte.anna.calendar.graph import GraphCalendar
+from src.agents.mein_kuechenexperte.anna.calendar.oauth import OAuthManager
+from src.agents.mein_kuechenexperte.anna.calendar.service import CalendarService
 from src.telephony.mail import send_calendar_notification
 
 

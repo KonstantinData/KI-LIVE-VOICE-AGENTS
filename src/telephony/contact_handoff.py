@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import re
 import os
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
 
 from src.tenants.models import PhoneAgentProfile
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PhoneContactHandoffError(RuntimeError):
@@ -106,8 +109,9 @@ async def submit_phone_contact_handoff(
                 },
                 session_id=session_id,
             )
-        except SMTPDeliveryError:
-            pass  # Preserve each independent outcome without exposing provider details.
+        except SMTPDeliveryError as exc:
+            code = "smtp_authentication_failed" if str(exc) == "smtp_authentication_failed" else "smtp_delivery_failed"
+            LOGGER.warning("anna_internal_email_failed code=%s", code)
         if customer_requested:
             try:
                 customer_accepted = await send_customer_summary(
@@ -116,13 +120,17 @@ async def submit_phone_contact_handoff(
                 )
             except SMTPDeliveryError:
                 pass
-        return {
+        result = {
             "success": internal_accepted and (not customer_requested or customer_accepted),
             "internal_email_sent": internal_accepted,
             "customer_email_sent": customer_accepted,
             "crm_captured": False,
             "customer_summary_requested": customer_requested,
         }
+        if not result["success"]:
+            result.update(error="delivery_not_confirmed", retry_automatically=False,
+                          next_step="Offer kontakt@mein-kuechenexperte.de; do not offer another send or request consent again.")
+        return result
     if arguments.get("transcript_consent_confirmed") is not True:
         raise PhoneContactHandoffError("transcript_consent_required")
 

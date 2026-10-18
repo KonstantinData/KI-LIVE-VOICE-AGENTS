@@ -14,8 +14,8 @@ def smtp(monkeypatch):
     monkeypatch.setenv("ANNA_DIRECT_SMTP", "true")
     values = {
         "SMTP_HOST": "ssl0.ovh.net", "SMTP_PORT": "587",
-        "SMTP_SECURITY": "starttls", "SMTP_USER": mail.OWNER_MAILBOX,
-        "SMTP_FROM_EMAIL": mail.OWNER_MAILBOX, "CONTACT_EMAIL": mail.OWNER_MAILBOX,
+        "SMTP_SECURITY": "starttls", "SMTP_USER": mail.ANNA_MAILBOX,
+        "SMTP_FROM_EMAIL": mail.ANNA_MAILBOX, "CONTACT_EMAIL": mail.OWNER_MAILBOX,
         "SMTP_PASS": "test-$PASSWORD-secret",
     }
     config = MagicMock(return_value=values)
@@ -43,10 +43,12 @@ async def test_notification_uses_verified_tls_and_fixed_recipient(smtp):
     ]
     context = client.starttls.call_args.kwargs["context"]
     assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
-    client.login.assert_called_once_with(mail.OWNER_MAILBOX, "test-$PASSWORD-secret")
+    client.login.assert_called_once_with(mail.ANNA_MAILBOX, "test-$PASSWORD-secret")
     message = client.send_message.call_args.args[0]
     assert client.send_message.call_args.kwargs["to_addrs"] == [mail.OWNER_MAILBOX]
     assert message["To"] == mail.OWNER_MAILBOX
+    assert mail.ANNA_MAILBOX in message["From"]
+    assert client.send_message.call_args.kwargs["from_addr"] == mail.ANNA_MAILBOX
     assert "customer@example.test" in message.get_content()
     assert "PRIVATE TRANSCRIPT" not in message.get_content()
     assert "attacker@example.test" not in str(message)
@@ -57,6 +59,39 @@ def test_connection_check_does_not_send(smtp):
     assert mail.check_smtp_connection()
     client.login.assert_called_once()
     client.send_message.assert_not_called()
+
+
+def test_implicit_ssl_uses_configured_port_without_starttls(smtp, monkeypatch):
+    plain_factory, _, values, _ = smtp
+    values.update(SMTP_PORT="465", SMTP_SECURITY="SSL")
+    factory = MagicMock()
+    client = factory.return_value.__enter__.return_value
+    monkeypatch.setattr(mail.smtplib, "SMTP_SSL", factory)
+    assert mail.check_smtp_connection()
+    assert factory.call_args.args == ("ssl0.ovh.net", 465)
+    context = factory.call_args.kwargs["context"]
+    assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
+    client.login.assert_called_once_with(mail.ANNA_MAILBOX, values["SMTP_PASS"])
+    client.starttls.assert_not_called()
+    client.send_message.assert_not_called()
+    plain_factory.assert_not_called()
+
+
+@pytest.mark.parametrize("port,security", [("465", "starttls"), ("587", "SSL")])
+def test_mismatched_port_and_tls_mode_fail_before_network(smtp, port, security):
+    factory, _, values, _ = smtp
+    values.update(SMTP_PORT=port, SMTP_SECURITY=security)
+    with pytest.raises(mail.SMTPDeliveryError, match="smtp_invalid_configuration"):
+        mail.check_smtp_connection()
+    factory.assert_not_called()
+
+
+def test_authentication_failure_is_distinct_and_sanitized(smtp):
+    smtp[1].login.side_effect = smtplib.SMTPAuthenticationError(535, b"private provider response")
+    with pytest.raises(mail.SMTPDeliveryError, match="^smtp_authentication_failed$") as caught:
+        mail.check_smtp_connection()
+    assert caught.value.__suppress_context__
+    smtp[1].send_message.assert_not_called()
 
 
 @pytest.mark.parametrize("key,value", [
@@ -119,7 +154,7 @@ async def test_customer_summary_uses_single_confirmed_recipient_and_public_copy(
     client = smtp[1]
     message = client.send_message.call_args.args[0]
     assert client.send_message.call_args.kwargs == {
-        "from_addr": mail.OWNER_MAILBOX, "to_addrs": ["erika+call@example.test"],
+        "from_addr": mail.ANNA_MAILBOX, "to_addrs": ["erika+call@example.test"],
     }
     assert message["To"] == "erika+call@example.test"
     assert message["Reply-To"] == mail.OWNER_MAILBOX

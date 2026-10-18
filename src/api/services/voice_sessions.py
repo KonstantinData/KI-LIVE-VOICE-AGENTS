@@ -5,7 +5,7 @@ What:    Shared session helpers for browser live voice routes.
 Does:    Validates origins and feature flags, loads tenants, creates conversations, builds provider config.
 Why:     Voice routes need reusable tenant-safe orchestration without oversized route files.
 Who:     FastAPI voice routes.
-Depends: fastapi, sqlalchemy, src.agents.lisa, src.api.config, src.tenants
+Depends: fastapi, sqlalchemy, src.agents, src.api.config, src.tenants
 """
 
 import hashlib
@@ -16,9 +16,8 @@ from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.lisa.voice_prompt import (
-    build_lisa_voice_prompt,
-    kea_voice_contract_sections,
+from src.agents.mein_kuechenexperte.kea.voice_prompt import (
+    build_kea_voice_prompt,
 )
 from src.agents.liquisto_assistant.prompt import build_liquisto_assistant_voice_prompt
 from src.api.config import get_settings
@@ -63,8 +62,7 @@ def voice_enabled(studio: Studio, agent_id: str | None = None) -> bool:
             and voice_agent.enabled
             and voice_agent.audience == "public"
         )
-    config = studio.config or {}
-    return bool(config.get("voice_enabled")) and get_settings().enable_voice_sessions
+    return False
 
 
 def safety_identifier(studio: Studio, visitor_id: str) -> str:
@@ -123,48 +121,26 @@ def realtime_session_config(
     agent_id: str | None = None,
 ) -> dict[str, Any]:
     """Builds the OpenAI Realtime session configuration for a tenant live voice agent."""
-    settings = get_settings()
     profile = get_tenant_profile_for_studio(studio.slug)
     voice_agent = selected_voice_agent(studio, agent_id)
-    if profile is not None and voice_agent is None:
+    if profile is None or voice_agent is None:
         raise ValueError("Tenant voice agent profile is not available.")
-    model = voice_agent.model if voice_agent is not None else settings.openai_realtime_model
-    voice = voice_agent.voice if voice_agent is not None else settings.openai_realtime_voice
-    agent_name = (
-        voice_agent.display_name
-        if voice_agent is not None
-        else str((studio.config or {}).get("agent_name") or "Live Voice Agent")
-    )
-    domain_guidance = None
-    contract_sections: tuple[str, ...] = ()
-    if (
-        voice_agent is not None
-        and voice_agent.prompt_profile == "mein-kuechenexperte-project-intake"
-    ):
-        domain_guidance = (
-            "Du bist kein Kuechenfachberater im Sprachchat. Du klaerst Projekte "
-            "fuer Kuechen und angrenzende Wohnraeume vor und erlaeuterst die "
-            "unabhaengige Beratung und Planung. Das kostenlose Vorgespraech "
-            "dient nur dem Kennenlernen und der Bedarfsklaerung. Weitergehende "
-            "Leistungen sind kostenpflichtig; Umfang und Preis werden "
-            "individuell vor der Beauftragung vereinbart."
-        )
-        contract_sections = kea_voice_contract_sections()
-    if voice_agent is not None and voice_agent.prompt_profile == "liquisto-assistant":
+    model = voice_agent.model
+    voice = voice_agent.voice
+    agent_name = voice_agent.display_name
+    if voice_agent.prompt_profile == "liquisto-assistant":
         if tools:
             raise ValueError("Olivia voice profile does not permit tools.")
         instructions = build_liquisto_assistant_voice_prompt(
             studio_slug=studio.slug,
             address_mode=address_mode,
         )
-    elif voice_agent is None or voice_agent.prompt_profile == "mein-kuechenexperte-project-intake":
-        instructions = build_lisa_voice_prompt(
+    elif voice_agent.prompt_profile == "mein-kuechenexperte-project-intake":
+        instructions = build_kea_voice_prompt(
             studio,
             lead_summary,
             address_mode,
             agent_display_name=agent_name,
-            domain_guidance=domain_guidance,
-            contract_sections=contract_sections,
         )
     else:
         raise ValueError("Tenant voice prompt profile is not supported.")
@@ -188,10 +164,7 @@ def realtime_session_config(
         },
         "reasoning": {"effort": "low"},
     }
-    if tools and (
-        voice_agent is None
-        or voice_agent.prompt_profile == "mein-kuechenexperte-project-intake"
-    ):
+    if tools and voice_agent.prompt_profile == "mein-kuechenexperte-project-intake":
         config["tools"] = tools
         config["tool_choice"] = "auto"
     return config

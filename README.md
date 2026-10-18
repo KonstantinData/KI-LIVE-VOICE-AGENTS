@@ -35,6 +35,11 @@ Das war es. Der Chat-Button erscheint, und der für diesen Tenant konfigurierte 
 
 ## Tenant-Runtime-Modell
 
+Agent ownership and source layout: [MKX agents](src/agents/mein_kuechenexperte/README.md)
+and [ADR 0003](docs/adr/0003-mkx-agent-ownership.md). KEA is the website intake
+assistant, MIA the separately planned planning assistant, and Anna the telephone
+assistant. Public chat/voice creation requires a registered tenant profile.
+
 Ein einziges Chat-Fenster für den Besucher — im Hintergrund wird ein tenant-spezifisches Runtime-Profil geladen.
 
 | Ebene | Aufgabe |

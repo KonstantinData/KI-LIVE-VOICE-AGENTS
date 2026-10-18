@@ -1,11 +1,10 @@
 """
-Vorlage für einen neuen Agenten.
+Template for a new tenant-owned text agent.
 
-So verwendest du diese Vorlage:
-1. Kopiere den Ordner `_template/` nach `agents/lisa/` (oder max/, anna/, etc.)
-2. Benenne die Klasse um (z.B. TemplateAgent → LisaAgent)
-3. Implementiere get_system_prompt(), get_tools(), get_knowledge_categories()
-4. Registriere den Agenten in src/api/websocket/chat_handler.py
+1. Copy this template into a separate tenant/agent package.
+2. Rename TemplateAgent to the new agent's implementation name.
+3. Implement get_system_prompt(), get_tools(), get_knowledge_categories().
+4. Add explicit tenant/profile dispatch in the owning runtime entry point.
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession

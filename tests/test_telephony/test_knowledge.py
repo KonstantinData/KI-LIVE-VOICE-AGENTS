@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from src.agents.anna import knowledge
+from src.agents.mein_kuechenexperte.anna import knowledge
 from src.tenants.knowledge import TenantKnowledgeChunk
 
 

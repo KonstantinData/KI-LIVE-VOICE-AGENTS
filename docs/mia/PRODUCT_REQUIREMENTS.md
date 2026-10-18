@@ -1,0 +1,96 @@
+# Product requirements
+Status: proposed; not implemented. Product owner A, coordinator accountable.
+
+Reconciled 2026-10-18: these are planning-product requirements. The approved
+content cleanup adds offline MIA prompt builders only; it does not implement
+the planner, expose endpoints or activate a registry profile. The later
+raster-first instructions below supersede the older measured-room-first path.
+
+## Product and release scope
+MIA (mia-kitchen-design) is an explicitly selected AI concept assistant for mein-kuechenexperte.de. KEA remains available independently; Anna remains a phone-only agent.
+Flow: select MIA -> voice/text choice -> natural discovery with conditional visual aids -> concept -> up to five targeted revisions -> optional secure contact -> optional explicitly confirmed booking -> correct CRM handoff.
+The structured brief, uncertainty and image form one concept. Images are not manufacture-ready plans. Contact is not required to see or revise a concept. Communicate the immediate visible-result goal at entry; show the visitor's first concept before optional postcode/name/email/phone capture. Do not substitute a later-contact promise or generic stock picture for that result.
+MKE currently positions itself as an independent adviser. Ballerina source access does not establish dealer status, price authority, supplier availability or public media rights.
+
+### Demonstrator
+One source-bound, fully verified small Ballerina series subset; synthetic participants/uploads; full discovery/brief/concept/revision journey; protected handoff preview and clearly labelled synthetic CRM/calendar outcomes. No production writes.
+An unpaid schematic renderer and provider fixtures can prove UI/model workflow. Claim real photorealistic generation only after authorized actual image-generation/edit tests. Fixture voice/image/calendar evidence never closes real-provider gates.
+
+### Production MVP
+Server-bound identity and permissions on every transport; natural voice + complete text fallback; validated source/profile constraints; immutable revisions/private media; durable jobs/cancel/recovery; effective budgets; protected resume; secure contact; real test CRM delivery and provider-confirmed booking; retention, monitoring, independent QA and rollback.
+Missing real booking or CRM proof remains an MVP blocker. CARAT does not block the demonstrator.
+
+### Later
+Vendor-verified/licensed CARAT adapter and practical import test; expanded approved catalogs/studios; professionally reviewed technical planning.
+
+## Acceptance requirements
+| ID | User need / decisive result |
+|---|---|
+| MIA-01 | KEA/MIA have independent entries; selected identity is enforced server-side, cannot switch existing session or select Anna |
+| MIA-02 | Voice/text both complete discovery; denied microphone/disconnection yields text continuation, no automatic recording |
+| MIA-03 | Initial dialogue covers cooking use, desired improvement, atmosphere and must-haves/retained devices; known answers replace questions. At most 120 seconds including both speakers, pauses and interaction. Ask no room/window/door/connection questions before the first raster draft; unsolicited room information is retained for later. No spoken answer recap, fixed picture questionnaire or mandatory budget/device-detail qualification; proportionate empathy/humor and corrections/skips supported |
+| MIA-04 | Internal structured brief distinguishes customer facts, extracted data, assumptions, unknowns and conflicts; no mandatory spoken recap; dimensions unknown remain null; clarify specific ambiguities only |
+| MIA-05 | Every visitor first sees a wish-driven furnished concept in a neutral raster scene, selected from prepared layouts with bounded allowed changes; no free planning. Concept references the accepted brief/version; actual-room adaptation follows the visible draft, with no false fit/technical/product/price guarantee |
+| MIA-06 | One initial concept + five successful revisions; requested structured changes only; previous versions viewable; visual drift disclosed |
+| MIA-07 | Optional validated private PDF/sketch/image input; provider-processing disclosure and bounded analysis |
+| MIA-08 | Consent-based scoped resume with expiry/revocation; IDs or contact-form submission alone do not verify ownership |
+| MIA-09 | Optional protected postcode/first-name/last-name/email/phone form after first visible concept; initial generation/refinement never require these fields; no solicited spoken PII; separate purposes and no compulsory marketing consent |
+| MIA-10 | Selected concept, structured wishes, assumptions, media/history references reach the authoritative CRM once; retries observable |
+| MIA-11 | Correct calendar/service/timezone; availability recheck, explicit action-bound confirmation; provider success before confirmed UI |
+| MIA-12 | Generation/CRM/calendar failures preserve last confirmed state; retry/cancel/restart never invent success or duplicate effects |
+| MIA-13 | 320px mobile, keyboard, screen reader, zoom/reflow, focus, reduced motion and useful image description |
+| MIA-14 | No browser API keys; tenant/agent/project isolation, injection resistance, private media and enforced deletion/retention |
+| MIA-15 | Atomic voice/model/image/edit/upload/concurrency/storage/spend limits; attribution by tenant/agent/function |
+| MIA-16 | KEA/Anna source and actual customer journeys regressions checked; MIA kill switch independent |
+| MIA-17 | Neutral export documents geometry/material/appliance/source/uncertainty; CARAT import never claimed without practical evidence |
+| MIA-18 | Timing and perceived 70-80% match evaluated reproducibly, separate objective dimensions and customer rating |
+| MIA-19 | Backup/restore/rollback/alerts exercised; production only after concrete approval |
+
+## Customer wording candidates
+Follow [conversation design](CONVERSATION_DESIGN.md): one relevant next question, optional brief acknowledgment, no formulaic recap. Audible empathy/humor requires separate live-voice validation.
+- Entry: “MIA – Küchenideen entwickeln”; preserve KEA existing name/purpose.
+- Introduction: “Ich bin MIA, Ihre KI-Assistentin für erste Küchenideen.”
+- Image: “KI-Konzeptvisualisierung. Maße, technische Machbarkeit und konkrete Produkte sind noch nicht fachlich geprüft.”
+- Unknown room: “Die Maße sind noch offen. Ich kennzeichne die Annahmen.”
+- Secure form: “Bitte tragen Sie Ihre Kontaktdaten hier im geschützten Formular ein.”
+- Timeout: “Die Buchung ist noch nicht bestätigt. Wir prüfen den Status.”
+- Confirmation only on authoritative result: “Ihr Termin ist bestätigt.”
+
+## Synthetic journeys
+1. No measurements: useful inspiration, island feasibility unresolved.
+2. 2.4 x 3.1m room, door/window, island desire conflicting with circulation.
+3. Family/two cooks/storage, no open shelves: functional and must-avoid fidelity.
+4. Accessible-use needs: retain preferences, no accessibility certification.
+5. Voice interruption changes dark to light fronts; corrected brief used.
+6. Five revisions: front/worktop/handles/appliance position/lighting.
+7. Optional uncertain-scale plan, then corrected measurement and source provenance.
+8. Invalid Ballerina series/width/front/discontinued choice rejected.
+9. Microphone denied, narrow mobile, no contact: complete successful journey.
+10. Image/CRM outage, duplicate form click and restart.
+11. Competing slot booking and timeout-after-write reconciliation.
+12. Expired/foreign resume capability: no disclosure.
+
+Current timing acceptance distinguishes at most 120 seconds of initial dialogue
+(both speakers, pauses and interaction), rendering wait and complete time to
+the first visible furnished concept. The earlier 2-3-minute total-result target
+is historical workshop guidance; no timing or 70-80% perceived-match claim is
+validated. Later revisions are measured separately. The tentative 2026-10-16
+meeting is historical context, not a current deadline. Provider budget and
+real-user pilot remain open.
+
+## Integrated product discussion, 2026-10-15
+
+The seven-role [workshop results](TEAM_WORKSHOP_RESULTS.md) and [German customer-experience draft](EXPERIENCE_DRAFT_DE.md) integrate the user's dialogue, room, template, immediate-result and seller-handoff requirements. They are discussion proposals, not implementation acceptance. In particular, the proposed model-based 3D approach, six-to-eight initial variants and generic-furniture demonstrator with a separate source-verified article sample await discussion. The earlier Ballerina-subset demo dependency above is not silently waived by the proposal. Existing source authorization, tenant isolation and runtime readiness gates are unchanged.
+
+### New user-directed alternative: raster-first
+
+The user's later instruction changes the first-stage discussion: at most 120 seconds of conversation, with no pre-result room-measurement intake; a wish-driven draft in a neutral grid-based scene is the regular start for every visitor. Details and actual-room adaptation follow the visible draft. The user expressly excludes free planning. See the [new shared discussion](RASTER_FIRST_WORKSHOP.md) and [German alternative](RASTER_FIRST_DRAFT_DE.md). The prior two-to-three-minute measured-room-first path and presentation remain historical proposals, not constraints to reintroduce into this alternative. Whole time to first visible result remains separately measured; actual timing, rendering and adaptation are not implemented or accepted by this discussion.
+
+Ask no room, window, door or connection questions before that first draft,
+including optional exceptions; retain unsolicited room data for later. Handling
+uninterrupted speech beyond 120 seconds and the diagram's 10x10 m presentation
+scene remain unresolved. Neither is silently decided by prompt cleanup.
+
+### User correction: appliance integration is a per-appliance preference
+
+Do not impose fully integrated appliances as a universal default. A short adaptive question can establish whether the visitor wants the refrigerator and dishwasher concealed behind furniture fronts or individually visible. Preserve mixed answers, for example a fully integrated dishwasher together with a visible side-by-side refrigerator. Keep appliance type, integration and dimensions separate; a side-by-side preference does not supply an exact width. Skip known answers, preserve retained devices and leave unresolved choices open when the conversation time limit requires it. Furniture-led design and concealed extraction are possible preferences, not inferred requirements. This updates concept and conversation requirements only; it does not change the generated example image or implement runtime behavior.
