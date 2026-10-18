@@ -61,6 +61,31 @@ def test_connection_check_does_not_send(smtp):
     client.send_message.assert_not_called()
 
 
+def test_implicit_ssl_uses_configured_port_without_starttls(smtp, monkeypatch):
+    plain_factory, _, values, _ = smtp
+    values.update(SMTP_PORT="465", SMTP_SECURITY="SSL")
+    factory = MagicMock()
+    client = factory.return_value.__enter__.return_value
+    monkeypatch.setattr(mail.smtplib, "SMTP_SSL", factory)
+    assert mail.check_smtp_connection()
+    assert factory.call_args.args == ("ssl0.ovh.net", 465)
+    context = factory.call_args.kwargs["context"]
+    assert context.verify_mode == ssl.CERT_REQUIRED and context.check_hostname
+    client.login.assert_called_once_with(mail.ANNA_MAILBOX, values["SMTP_PASS"])
+    client.starttls.assert_not_called()
+    client.send_message.assert_not_called()
+    plain_factory.assert_not_called()
+
+
+@pytest.mark.parametrize("port,security", [("465", "starttls"), ("587", "SSL")])
+def test_mismatched_port_and_tls_mode_fail_before_network(smtp, port, security):
+    factory, _, values, _ = smtp
+    values.update(SMTP_PORT=port, SMTP_SECURITY=security)
+    with pytest.raises(mail.SMTPDeliveryError, match="smtp_invalid_configuration"):
+        mail.check_smtp_connection()
+    factory.assert_not_called()
+
+
 def test_authentication_failure_is_distinct_and_sanitized(smtp):
     smtp[1].login.side_effect = smtplib.SMTPAuthenticationError(535, b"private provider response")
     with pytest.raises(mail.SMTPDeliveryError, match="^smtp_authentication_failed$") as caught:

@@ -30,18 +30,20 @@ def _configuration() -> dict[str, str]:
         raise SMTPDeliveryError("smtp_not_configured") from None
     required = {
         "SMTP_HOST": "ssl0.ovh.net",
-        "SMTP_PORT": "587",
-        "SMTP_SECURITY": "starttls",
         "SMTP_USER": ANNA_MAILBOX,
         "SMTP_FROM_EMAIL": ANNA_MAILBOX,
         "CONTACT_EMAIL": OWNER_MAILBOX,
     }
     if any(values.get(key) != expected for key, expected in required.items()):
         raise SMTPDeliveryError("smtp_invalid_configuration")
+    port = values.get("SMTP_PORT", "")
+    security = str(values.get("SMTP_SECURITY", "")).lower()
+    if (port, security) not in {("587", "starttls"), ("465", "ssl")}:
+        raise SMTPDeliveryError("smtp_invalid_configuration")
     password = values.get("SMTP_PASS")
     if not password:
         raise SMTPDeliveryError("smtp_not_configured")
-    return {**required, "SMTP_PASS": password}
+    return {**required, "SMTP_PORT": port, "SMTP_SECURITY": security, "SMTP_PASS": password}
 
 
 def _text(value: object, limit: int) -> str:
@@ -76,10 +78,14 @@ def _deliver(message: EmailMessage | None, recipient: str = OWNER_MAILBOX) -> bo
     recipient = validate_customer_email(recipient)
     config = _configuration()
     try:
-        with smtplib.SMTP(config["SMTP_HOST"], 587, timeout=20) as client:
+        implicit_tls = config["SMTP_SECURITY"] == "ssl"
+        factory = smtplib.SMTP_SSL if implicit_tls else smtplib.SMTP
+        options = {"context": ssl.create_default_context()} if implicit_tls else {}
+        with factory(config["SMTP_HOST"], int(config["SMTP_PORT"]), timeout=20, **options) as client:
             client.ehlo()
-            client.starttls(context=ssl.create_default_context())
-            client.ehlo()
+            if not implicit_tls:
+                client.starttls(context=ssl.create_default_context())
+                client.ehlo()
             client.login(config["SMTP_USER"], config["SMTP_PASS"])
             if message is not None:
                 refused = client.send_message(
