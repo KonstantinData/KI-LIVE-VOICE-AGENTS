@@ -105,7 +105,7 @@ def test_phone_identity_cannot_alias_browser_or_duplicate():
 
 
 def test_anna_rejects_foreign_or_unapproved_knowledge(monkeypatch):
-    from src.agents.anna.prompt import build_anna_prompt
+    from src.agents.mein_kuechenexperte.anna.prompt import build_anna_prompt
     from src.tenants.knowledge import TenantKnowledgeChunk, TenantKnowledgeSource
 
     profile = get_tenant_profile("mein-kuechenexperte")
@@ -125,7 +125,7 @@ def test_anna_rejects_foreign_or_unapproved_knowledge(monkeypatch):
                                      "source_url": "https://mein-kuechenexperte.de/preise",
                                  }),
         ))
-    monkeypatch.setattr("src.agents.anna.prompt.load_anna_knowledge", lambda: source)
+    monkeypatch.setattr("src.agents.mein_kuechenexperte.anna.prompt.load_anna_knowledge", lambda: source)
     prompt = build_anna_prompt(profile, agent)
     assert "approved-marker" in prompt
     assert "restricted-marker" not in prompt

@@ -1,8 +1,7 @@
 """
-System-Prompt Builder für den Template-Agenten.
+System prompt builder for the template agent.
 
-Für komplexere Agenten (Lisa, Max, etc.) wird der System-Prompt
-in mehrere Bausteine aufgeteilt und hier zusammengesetzt.
+Keep role-specific prompt sections in the owning tenant/agent package.
 """
 
 from src.db.models.studio import Studio
@@ -20,7 +19,7 @@ def build_system_prompt(
 
     Args:
         studio: Das aktuelle Studio.
-        agent_name: Name des Agenten (z.B. "Lisa").
+        agent_name: Public name selected by the tenant profile.
         role_description: Beschreibung der Rolle und Aufgaben.
         knowledge_snippets: Relevante Wissens-Chunks aus der Wissensbasis.
         lead_summary: Bekannte Informationen über den aktuellen Kunden.

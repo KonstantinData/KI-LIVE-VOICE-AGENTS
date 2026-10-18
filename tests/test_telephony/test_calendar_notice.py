@@ -7,8 +7,8 @@ import json
 import pytest
 from cryptography.fernet import Fernet
 
-from src.agents.anna.calendar.config import CalendarConfig, CalendarError
-from src.agents.anna.calendar.service import CalendarService
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig, CalendarError
+from src.agents.mein_kuechenexperte.anna.calendar.service import CalendarService
 from tests.test_telephony.test_calendar_policy import Graph, policy, details, prepare, commit
 
 
@@ -28,7 +28,7 @@ def clock(monkeypatch):
         def now(cls, tz=None):
             return cls.current.astimezone(tz)
 
-    monkeypatch.setattr("src.agents.anna.calendar.service.datetime", Clock)
+    monkeypatch.setattr("src.agents.mein_kuechenexperte.anna.calendar.service.datetime", Clock)
     return Clock
 
 

@@ -5,7 +5,7 @@ What:    Deterministic text-chat runtime for the Mein Küchenexperte tenant.
 Does:    Persists controlled KEA orientation turns and returns choice payloads.
 Why:     KEA needs a guided website flow without drifting into consulting.
 Who:     The public widget WebSocket handler.
-Depends: sqlalchemy, src.api.services.kea_text_flow_nodes, db models.
+Depends: sqlalchemy, src.agents.mein_kuechenexperte.kea.text_flow_nodes, db models.
 """
 
 from __future__ import annotations
@@ -15,8 +15,9 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.services.kea_text_flow_nodes import NODES, START_NODE, SUMMARY_NODE
-from src.api.services.kea_text_flow_nodes import FlowChoice, FlowNode, FlowResponse, choice
+from src.agents.mein_kuechenexperte.kea.text_flow_nodes import (
+    NODES, START_NODE, SUMMARY_NODE, FlowChoice, FlowNode, FlowResponse, choice,
+)
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
 from src.tenants.knowledge import get_tenant_knowledge_for_studio

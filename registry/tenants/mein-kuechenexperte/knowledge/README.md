@@ -8,7 +8,8 @@ agent.
 - `chunks.json` is the versioned source for prompt and future vector import.
 - `tenant_id` must match `registry/tenants/mein-kuechenexperte/tenant.json`.
 - `scope_id` must match the tenant `knowledge.scope_id`.
-- Chunk `category` values should stay aligned with `LisaAgent.get_knowledge_categories()`.
+- Chunk `category` values should stay aligned with `KeaAgent.get_knowledge_categories()`
+  in `src/agents/mein_kuechenexperte/kea`.
 - Do not add secrets, raw customer data, private uploads, CRM records, or
   unverifiable contact details.
 - Unknown facts must stay explicit instead of being filled with placeholders.

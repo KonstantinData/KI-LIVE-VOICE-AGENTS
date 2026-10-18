@@ -1,7 +1,24 @@
 # Task board and dependency plan
-Status 2026-10-14: Phase 0 evidence collected; contracts proposed; runtime implementation not started. Possible meeting 2026-10-16, unconfirmed.
+Status 2026-10-18: Phase 0 evidence and proposed runtime contracts remain the
+baseline. The approved content cleanup separates shared MKX policy, KEA
+reception and offline MIA prompt builders; it does not activate MIA or implement
+planning/session/rendering engines. The former tentative 2026-10-16 meeting is
+historical context, not a current delivery deadline.
 
-2026-10-15 workshop: MIA-P04 produces a first integrated experience draft for discussion. Its generic-furniture demo/separate article-sample proposal would revise the D01 dependency of the general demo; the earlier rows/timebox below are not proof of an approved scope change. The first-result time hypothesis includes dialogue and rendering; see TEAM_WORKSHOP_RESULTS.md.
+Current user requirements take precedence over older rows/timeboxes: max120s
+initial dialogue including both speakers/pauses/interaction; no room, window,
+door or connection questions before the first raster draft, including optional
+exceptions; prepared layouts with bounded changes; separate appliance
+preferences; no spoken recap; first concept/refinement before optional contact.
+See [current requirements](PRODUCT_REQUIREMENTS.md), [conversation design](CONVERSATION_DESIGN.md)
+and [raster-first flow](RASTER_FIRST_DRAFT_DE.md). Rendering wait and total first
+result time are measured separately. Long uninterrupted speech and 10x10 m
+scene labels remain unresolved, not defaults.
+
+Historical 2026-10-15 workshop: MIA-P04 produced the earlier measured-room-first
+draft for discussion. Raster-first supersedes that entry flow. The proposed
+generic-furniture demo/separate article sample and catalog dependencies remain
+separate scope decisions; content cleanup does not approve catalog adoption.
 
 | ID | Priority / owner | Goal and result | Depends on | Tests / docs | Status / risk |
 |---|---|---|---|---|---|
@@ -38,7 +55,7 @@ Status 2026-10-14: Phase 0 evidence collected; contracts proposed; runtime imple
 - Wave 3: combined integration + independent I; resolve failures with owning agent; rerun affected tests/dependencies.
 - Wave 4: real-provider/test CRM/calendar/human evaluation, operational proof and concrete production release authorization.
 
-## Demonstrator timebox
+## Historical demonstrator timebox (not a current commitment)
 Day 1: freeze bounded contracts, validate one GL subset, implement text brief + deterministic schematic + version UI with synthetic adapters.
 Day 2: voice fallback, five changes, protected form/handoff preview, provider test only after bounded budget, independent rehearsal and failure paths.
 Do not promise this schedule as delivery evidence. If real provider/calendar/CRM prerequisites remain absent, disclose demo simulation; production MVP stays open. Neutral catalog extraction should not block one authorized verified subset.

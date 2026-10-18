@@ -104,9 +104,9 @@ async def test_voice_session_requires_consent(db_client, db_session):
 
 
 @pytest.mark.asyncio
-async def test_voice_session_rejects_disabled_studio(db_client, db_session):
-    """Studio-level feature flag disables voice even when global voice is on."""
-    studio = await _seed_voice_studio(db_session, voice_enabled=False)
+async def test_voice_session_rejects_unregistered_studio(db_client, db_session):
+    """Legacy DB flags do not grant access to a tenant-owned voice agent."""
+    studio = await _seed_voice_studio(db_session, voice_enabled=True)
 
     response = await db_client.post(
         "/voice/sessions/webrtc",
@@ -181,7 +181,9 @@ async def test_voice_session_creates_conversation_and_returns_sdp(
     monkeypatch,
 ):
     """Broker creates a tenant-bound voice conversation without exposing API keys."""
-    studio = await _seed_voice_studio(db_session)
+    studio = await _seed_registered_studio(
+        db_session, slug="mein-kuechenexperte", name="Mein Küchenexperte",
+    )
 
     async def fake_create_call(self, *, client_sdp, session_config, safety_identifier):
         assert client_sdp == "v=0"
@@ -236,7 +238,9 @@ async def test_voice_session_endpoint_returns_ephemeral_secret(
     monkeypatch,
 ):
     """Live widget route returns only an ephemeral Realtime secret."""
-    studio = await _seed_voice_studio(db_session)
+    studio = await _seed_registered_studio(
+        db_session, slug="mein-kuechenexperte", name="Mein Küchenexperte",
+    )
     monkeypatch.setattr("src.api.routes.voice.httpx.AsyncClient", _FakeAsyncClient)
 
     response = await db_client.post(

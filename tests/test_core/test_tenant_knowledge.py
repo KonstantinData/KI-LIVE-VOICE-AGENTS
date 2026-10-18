@@ -2,7 +2,7 @@
 
 import uuid
 
-from src.agents.lisa.system_prompt import build_lisa_system_prompt
+from src.agents.mein_kuechenexperte.kea.system_prompt import build_kea_system_prompt
 from src.db.models.studio import Studio
 from src.tenants.knowledge import get_tenant_knowledge_for_studio
 
@@ -24,7 +24,7 @@ def test_mein_kuechenexperte_runtime_knowledge_source_matches_profile():
     assert any(chunk.id == "secure-contact-handoff" for chunk in source.chunks)
 
 
-def test_lisa_prompt_includes_registry_backed_runtime_knowledge():
+def test_kea_prompt_includes_registry_backed_runtime_knowledge():
     """KEA receives tenant registry knowledge in the runtime system prompt."""
     studio = Studio(
         id=uuid.uuid4(),
@@ -35,7 +35,7 @@ def test_lisa_prompt_includes_registry_backed_runtime_knowledge():
         config={},
     )
 
-    prompt = build_lisa_system_prompt(
+    prompt = build_kea_system_prompt(
         studio=studio,
         knowledge_snippets=[],
         lead_summary=None,

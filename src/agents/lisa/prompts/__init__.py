@@ -1,1 +1,0 @@
-"""Prompt-Bausteine für KEA."""

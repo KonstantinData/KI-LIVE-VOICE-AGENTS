@@ -10,6 +10,11 @@ A multi-tenant system for AI-powered live voice and chat agents that helps kitch
 
 ## What is this?
 
+Agent ownership and source layout: [MKX agents](src/agents/mein_kuechenexperte/README.md)
+and [ADR 0003](docs/adr/0003-mkx-agent-ownership.md). KEA is the website intake
+assistant, MIA the separately planned planning assistant, and Anna the telephone
+assistant. Public chat/voice creation requires a registered tenant profile.
+
 This project is the technical foundation for tenant-specific Live Voice Agents. The runtime agent is generic; name, prompt profile, tools, policies, knowledge, upload rules, and widget copy are composed from the tenant registry.
 
 The system is designed as a **ready-to-use platform**: A kitchen studio receives a tenant, configures its profile, and the selected Live Voice Agent starts working. Multiple tenants can use the system simultaneously without affecting each other.

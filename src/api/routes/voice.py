@@ -5,7 +5,7 @@ What:    FastAPI routes for browser live voice sessions.
 Does:    Brokers WebRTC SDP, persists consent-safe transcripts, executes allowlisted tools.
 Why:     Voice mode needs tenant checks, consent checks, server-side credentials, and audits.
 Who:     Website widget voice mode.
-Depends: fastapi, sqlalchemy, src.api.services, src.agents.lisa
+Depends: fastapi, sqlalchemy, src.api.services, src.agents.mein_kuechenexperte.kea
 """
 
 import uuid
@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.lisa.agent import LisaAgent
+from src.agents.mein_kuechenexperte.kea.agent import KeaAgent
 from src.api.config import get_settings
 from src.api.services.crm_handoff import (
     CrmHandoffFailedError,
@@ -760,8 +760,8 @@ async def end_voice_session(
         session, studio, payload.visitor_id, payload.conversation_id
     )
     profile = get_tenant_profile_for_studio(studio.slug)
-    if profile is None or profile.tenant_id == "mein-kuechenexperte":
-        await LisaAgent(session=session).finalize_conversation(conversation, studio)
+    if profile is not None and profile.tenant_id == "mein-kuechenexperte":
+        await KeaAgent(session=session).finalize_conversation(conversation, studio)
     else:
         conversation.status = "closed"
     session.add(

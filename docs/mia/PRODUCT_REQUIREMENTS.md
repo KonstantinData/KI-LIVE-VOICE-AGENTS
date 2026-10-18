@@ -1,6 +1,11 @@
 # Product requirements
 Status: proposed; not implemented. Product owner A, coordinator accountable.
 
+Reconciled 2026-10-18: these are planning-product requirements. The approved
+content cleanup adds offline MIA prompt builders only; it does not implement
+the planner, expose endpoints or activate a registry profile. The later
+raster-first instructions below supersede the older measured-room-first path.
+
 ## Product and release scope
 MIA (mia-kitchen-design) is an explicitly selected AI concept assistant for mein-kuechenexperte.de. KEA remains available independently; Anna remains a phone-only agent.
 Flow: select MIA -> voice/text choice -> natural discovery with conditional visual aids -> concept -> up to five targeted revisions -> optional secure contact -> optional explicitly confirmed booking -> correct CRM handoff.
@@ -23,9 +28,9 @@ Vendor-verified/licensed CARAT adapter and practical import test; expanded appro
 |---|---|
 | MIA-01 | KEA/MIA have independent entries; selected identity is enforced server-side, cannot switch existing session or select Anna |
 | MIA-02 | Voice/text both complete discovery; denied microphone/disconnection yields text continuation, no automatic recording |
-| MIA-03 | Natural dialog covers use/household, priorities, style/materials, room and optional budget; no recited answer summaries or fixed picture questionnaire; proportionate empathy and context-appropriate light humor; corrections/skipped answers supported |
+| MIA-03 | Initial dialogue covers cooking use, desired improvement, atmosphere and must-haves/retained devices; known answers replace questions. At most 120 seconds including both speakers, pauses and interaction. Ask no room/window/door/connection questions before the first raster draft; unsolicited room information is retained for later. No spoken answer recap, fixed picture questionnaire or mandatory budget/device-detail qualification; proportionate empathy/humor and corrections/skips supported |
 | MIA-04 | Internal structured brief distinguishes customer facts, extracted data, assumptions, unknowns and conflicts; no mandatory spoken recap; dimensions unknown remain null; clarify specific ambiguities only |
-| MIA-05 | Personalized concept references the accepted brief/version; no false technical/product/price guarantee |
+| MIA-05 | Every visitor first sees a wish-driven furnished concept in a neutral raster scene, selected from prepared layouts with bounded allowed changes; no free planning. Concept references the accepted brief/version; actual-room adaptation follows the visible draft, with no false fit/technical/product/price guarantee |
 | MIA-06 | One initial concept + five successful revisions; requested structured changes only; previous versions viewable; visual drift disclosed |
 | MIA-07 | Optional validated private PDF/sketch/image input; provider-processing disclosure and bounded analysis |
 | MIA-08 | Consent-based scoped resume with expiry/revocation; IDs or contact-form submission alone do not verify ownership |
@@ -65,7 +70,13 @@ Follow [conversation design](CONVERSATION_DESIGN.md): one relevant next question
 11. Competing slot booking and timeout-after-write reconciliation.
 12. Expired/foreign resume capability: no disclosure.
 
-Start-to-first-visible-personalized-furnished-result in 2-3 minutes and 70-80% perceived match are hypotheses. Visitor pauses, planning and rendering count toward that primary time; discovery-only timing is insufficient. Subsequent revisions are measured separately. A possible 2026-10-16 meeting is unconfirmed. Budget and real-user pilot remain open.
+Current timing acceptance distinguishes at most 120 seconds of initial dialogue
+(both speakers, pauses and interaction), rendering wait and complete time to
+the first visible furnished concept. The earlier 2-3-minute total-result target
+is historical workshop guidance; no timing or 70-80% perceived-match claim is
+validated. Later revisions are measured separately. The tentative 2026-10-16
+meeting is historical context, not a current deadline. Provider budget and
+real-user pilot remain open.
 
 ## Integrated product discussion, 2026-10-15
 
@@ -74,6 +85,11 @@ The seven-role [workshop results](TEAM_WORKSHOP_RESULTS.md) and [German customer
 ### New user-directed alternative: raster-first
 
 The user's later instruction changes the first-stage discussion: at most 120 seconds of conversation, with no pre-result room-measurement intake; a wish-driven draft in a neutral grid-based scene is the regular start for every visitor. Details and actual-room adaptation follow the visible draft. The user expressly excludes free planning. See the [new shared discussion](RASTER_FIRST_WORKSHOP.md) and [German alternative](RASTER_FIRST_DRAFT_DE.md). The prior two-to-three-minute measured-room-first path and presentation remain historical proposals, not constraints to reintroduce into this alternative. Whole time to first visible result remains separately measured; actual timing, rendering and adaptation are not implemented or accepted by this discussion.
+
+Ask no room, window, door or connection questions before that first draft,
+including optional exceptions; retain unsolicited room data for later. Handling
+uninterrupted speech beyond 120 seconds and the diagram's 10x10 m presentation
+scene remain unresolved. Neither is silently decided by prompt cleanup.
 
 ### User correction: appliance integration is a per-appliance preference
 

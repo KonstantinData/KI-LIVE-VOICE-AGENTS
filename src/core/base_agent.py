@@ -5,7 +5,7 @@ What:    Abstract base class for all AI agents in the system.
 Does:    Implements the 7-step agent loop: context loading, intent recognition, knowledge retrieval,
          tool provisioning, LLM invocation, tool execution, and result persistence.
 Why:     Ensures all agents follow the same processing pattern; reduces code duplication.
-Who:     All concrete agents (Lisa, Max, Anna, Tom, Sara) inherit from this.
+Who:     Text agents such as MKX's KEA and the agent template inherit from this.
 Depends: sqlalchemy, structlog, src.core.{knowledge, llm, memory, tool_registry, tool_runner, types},
          src.db.models.{conversation, message, studio}
 """

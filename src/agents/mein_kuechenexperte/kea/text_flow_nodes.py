@@ -4,7 +4,7 @@ KEA Text Flow Nodes
 What:    Static node definitions for the Mein Küchenexperte KEA text flow.
 Does:    Defines choices and prompts for the three website-oriented entry paths.
 Why:     Keeping static flow data separate keeps the runtime service small.
-Who:     src.api.services.kea_text_flow
+Who:     src.agents.mein_kuechenexperte.kea.text_flow
 Depends: dataclasses
 """
 

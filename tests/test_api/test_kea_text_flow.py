@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
-from src.api.services.kea_text_flow import KeaTextFlow
+from src.agents.mein_kuechenexperte.kea.text_flow import KeaTextFlow
 from src.db.models.conversation import Conversation
 from src.db.models.message import Message
 from tests.test_api.upload_helpers import seed_studio
@@ -165,7 +165,8 @@ async def test_kea_text_flow_answers_website_questions_and_keeps_handoff_working
 def test_kea_text_flow_does_not_invent_missing_website_facts(monkeypatch):
     """Missing curated content must not revive obsolete fixed-price promises."""
     monkeypatch.setattr(
-        "src.api.services.kea_text_flow.get_tenant_knowledge_for_studio", lambda _: None
+        "src.agents.mein_kuechenexperte.kea.text_flow.get_tenant_knowledge_for_studio",
+        lambda _: None,
     )
     response = KeaTextFlow(None)._global_intent("Was kostet der Strategie-Check?")
     assert "keine gesicherten Informationen" in response.text

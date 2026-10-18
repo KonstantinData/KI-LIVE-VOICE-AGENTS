@@ -6,7 +6,8 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.lisa.system_prompt import build_lisa_system_prompt
+from src.agents.mein_kuechenexperte.kea.profile import get_kea_profile
+from src.agents.mein_kuechenexperte.kea.system_prompt import build_kea_system_prompt
 from src.core.base_agent import BaseAgent
 from src.core.llm import LLMClient
 from src.core.tool_registry import ToolRegistry
@@ -24,7 +25,7 @@ Hebe Wichtiges hervor: Budget, Zeitrahmen, Besonderheiten, offene Fragen.
 Schreibe aus der Perspektive des Studios — nüchtern, informativ, kein Marketing."""
 
 
-class LisaAgent(BaseAgent):
+class KeaAgent(BaseAgent):
     """
     KEA — website project-intake assistant.
 
@@ -50,7 +51,7 @@ class LisaAgent(BaseAgent):
         knowledge_snippets: list[str],
         lead_summary: str | None,
     ) -> str:
-        return build_lisa_system_prompt(
+        return build_kea_system_prompt(
             studio=studio,
             knowledge_snippets=knowledge_snippets,
             lead_summary=lead_summary,
@@ -66,7 +67,7 @@ class LisaAgent(BaseAgent):
         return ToolRegistry()
 
     def get_knowledge_categories(self) -> list[str]:
-        """Lisa sucht in allen relevanten Wissenskategorien."""
+        """Returns the knowledge categories used by KEA."""
         return ["faq", "sortiment", "referenzen", "aktionen", "studio"]
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ class LisaAgent(BaseAgent):
         Setzt den Konversationskontext für die Tools und ruft dann
         den Standard-7-Schritte-Loop aus BaseAgent auf.
         """
+        get_kea_profile(studio)
         self._current_conversation_id = conversation.id
         self._current_studio_id = studio.id
         self._current_studio_slug = studio.slug
@@ -95,7 +97,8 @@ class LisaAgent(BaseAgent):
         conversation: Conversation,
         studio: Studio,
     ) -> ToolRegistry:
-        """Returns Lisa's tool registry bound to a specific conversation."""
+        """Returns KEA's tool registry bound to a specific conversation."""
+        get_kea_profile(studio)
         self._current_conversation_id = conversation.id
         self._current_studio_id = studio.id
         self._current_studio_slug = studio.slug
@@ -119,6 +122,7 @@ class LisaAgent(BaseAgent):
         3. Zusammenfassung via LLM generieren
         4. In Conversation.summary speichern
         """
+        profile = get_kea_profile(studio)
         # Konversation schließen
         conversation.status = "closed"
 
@@ -133,12 +137,13 @@ class LisaAgent(BaseAgent):
         messages: list[Message] = list(msg_result.scalars().all())
 
         if not messages:
-            log.info("lisa.finalize.no_messages", conversation_id=str(conversation.id))
+            log.info("kea.finalize.no_messages", conversation_id=str(conversation.id))
             return
 
         # Gesprächsprotokoll für die Zusammenfassung aufbauen
         transcript = "\n".join(
-            f"{'Kunde' if m.role == 'user' else 'Lisa'}: {m.content}" for m in messages
+            f"{'Kunde' if m.role == 'user' else profile.display_name}: {m.content}"
+            for m in messages
         )
 
         # Zusammenfassung via LLM generieren
@@ -159,14 +164,14 @@ class LisaAgent(BaseAgent):
             )
             summary = response.content
         except Exception as e:
-            log.warning("lisa.finalize.summary_failed", error=str(e))
+            log.warning("kea.finalize.summary_failed", error=str(e))
             summary = f"[Automatische Zusammenfassung fehlgeschlagen: {e}]"
 
         # Store the runtime summary on the conversation; CRM lead handling is external.
         conversation.summary = summary
 
         log.info(
-            "lisa.finalize.done",
+            "kea.finalize.done",
             conversation_id=str(conversation.id),
             message_count=len(messages),
         )

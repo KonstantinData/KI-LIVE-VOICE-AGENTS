@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.agents.anna.calendar.config import CalendarConfig  # noqa: E402
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig  # noqa: E402
 
 
 def env_values(path):

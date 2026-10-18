@@ -1,5 +1,16 @@
 # Anna prompt composition and supported behavior
 
+## Approved package relocation, 2026-10-18
+
+Anna's independent MKX package, including `calendar`, moves to
+`src/agents/mein_kuechenexperte/anna`. Imports and start assets follow that
+package; phone behavior, prompt content, agent/profile IDs, grants and calendar
+policy do not change. `src/telephony` and `deploy/anna` / `deploy/anna-server`
+remain separate shared transport and deployment locations. KEA and MIA inherit
+no Anna permissions through the common tenant directory. This local relocation
+does not renew the dated deployment evidence below or prove live telephone
+behavior; migration verification is reported separately.
+
 Status: deployed to the Anna worker on 2026-09-28. The running container matches
 the three tested runtime files. Anna's SIP contact is present, the provider trunk
 is registered, and the worker reports zero restarts. Direct SMTP remains enabled.
@@ -16,7 +27,7 @@ provider acceptance of the changed session requires separate approval/verificati
 
 ## Sources and assembly
 
-`src/agents/anna/prompt.py` owns the shared identity, language, conversation,
+`src/agents/mein_kuechenexperte/anna/prompt.py` owns Anna's identity, language, conversation,
 public-information, privacy and authority rules. It also owns separate direct
 email, CRM handoff and calendar sections. `src/telephony/profiles.py` resolves
 the tenant grants and calendar opt-in, then builds both the tool list and prompt.

@@ -11,7 +11,7 @@ This table clearly defines which language is used in which context:
 | Area | Language | Rationale |
 | ---- | -------- | --------- |
 | **UI Text** (Widget) | 🇩🇪 German | Customer-facing, German-speaking target audience |
-| **Chat Responses** (Lisa, Max, Anna, Tom, Sara) | 🇩🇪 German | Customer-facing, natural conversation |
+| **MKX Agent Responses** (KEA, Anna; planned MIA) | 🇩🇪 German | Customer-facing, natural conversation |
 | **READMEs** | 🇩🇪 German + 🇬🇧 English | Both versions for international collaboration |
 | **Code** (Variables, Functions, Classes) | 🇬🇧 English | Universally readable, software development standard |
 | **Comments & Docstrings** | 🇬🇧 English | Universally readable, international developers |

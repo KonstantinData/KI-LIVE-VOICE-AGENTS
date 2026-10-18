@@ -2,7 +2,7 @@
 
 import os
 
-from src.agents.anna.knowledge import load_anna_knowledge, usable_public_fact
+from src.agents.mein_kuechenexperte.anna.knowledge import load_anna_knowledge, usable_public_fact
 from src.tenants.models import PhoneAgentProfile, TenantProfile
 
 

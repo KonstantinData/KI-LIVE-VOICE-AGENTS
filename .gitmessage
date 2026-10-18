@@ -13,12 +13,12 @@
 #   perf:     Performance improvement
 #
 # Scope (optional):
-#   lisa, max, anna, tom, sara (agents)
+#   kea, mia, anna (MKX agents)
 #   api, db, core, widget, dashboard (components)
 #   calendar, email, knowledge, memory (services)
 #
 # Examples:
-#   feat(lisa): add extract_lead_data tool with incremental scoring
+#   fix(kea): keep project summaries tenant-scoped
 #   fix(calendar): refresh token before creating event
 #   docs(readme): add bilingual setup instructions
 #   refactor(core): simplify agent loop error handling

@@ -4,8 +4,8 @@ from dataclasses import replace
 from fastapi.testclient import TestClient
 import pytest
 
-from src.agents.anna.calendar.app import create_app
-from src.agents.anna.calendar.config import CalendarConfig, CalendarError
+from src.agents.mein_kuechenexperte.anna.calendar.app import create_app
+from src.agents.mein_kuechenexperte.anna.calendar.config import CalendarConfig, CalendarError
 from src.telephony.calendar_tools import PhoneCalendarTools, calendar_enabled
 from src.telephony.mail import send_calendar_notification
 

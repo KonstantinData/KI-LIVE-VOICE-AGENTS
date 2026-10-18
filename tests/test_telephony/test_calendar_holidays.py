@@ -1,6 +1,6 @@
 from datetime import date
 
-from src.agents.anna.calendar.holidays import public_holidays
+from src.agents.mein_kuechenexperte.anna.calendar.holidays import public_holidays
 
 
 def test_all_twelve_baden_wuerttemberg_holidays_2026():

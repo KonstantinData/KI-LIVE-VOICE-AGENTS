@@ -1,5 +1,16 @@
 # MIA – erster gemeinsamer Produktentwurf
 
+> **Historischer Entwurf – Ablauf überholt.** Die spätere Nutzervorgabe ist
+> [Raster-first](RASTER_FIRST_DRAFT_DE.md): höchstens 120 Sekunden Erstgespräch,
+> keine Fragen zu Raum, Fenstern, Türen oder Anschlüssen vor dem ersten Entwurf,
+> für alle Besucher ein wunschbasierter Entwurf aus vorbereiteten Grundplanungen
+> mit begrenzten Anpassungen im Beispielraum. Raumübertragung folgt danach.
+> Die nachfolgende Raumaufnahme, der Beispielraum nur als Ausweichweg und die
+> frühere Zeitannahme sind als Entwurfsgeschichte erhalten, keine aktuelle
+> Arbeitsanweisung. Geräteintegration wird je Gerät erfragt; eine pauschale
+> Vollintegration gilt nicht. Kein Produkt- oder Laufzeitnachweis entsteht durch
+> diesen Text. Die Dokumentationsbereinigung vom 18. Oktober 2026 aktiviert MIA nicht.
+
 **Diskussionsstand vom 15. Oktober 2026.** Ausgearbeitet nach zwei Austauschrunden der sieben Fachagenten. Dieser Entwurf beschreibt das vorgeschlagene Kundenerlebnis. Gespräch, Darstellung, Geschwindigkeit und Übergabe sind damit noch nicht als funktionierendes Produkt nachgewiesen.
 
 ## 1. Die Idee: Ihre Küche entsteht im Gespräch

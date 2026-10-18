@@ -3,7 +3,7 @@
 from copy import deepcopy
 import os
 
-from src.agents.anna.prompt import build_anna_prompt
+from src.agents.mein_kuechenexperte.anna.prompt import build_anna_prompt
 from src.tenants.registry import get_tenant_profile
 from .calendar_tools import calendar_enabled, calendar_tool_definitions
 

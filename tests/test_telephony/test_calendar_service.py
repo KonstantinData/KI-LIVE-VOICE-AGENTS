@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 from cryptography.fernet import Fernet
 
-from src.agents.anna.calendar.service import CalendarService
+from src.agents.mein_kuechenexperte.anna.calendar.service import CalendarService
 
 
 class Graph:

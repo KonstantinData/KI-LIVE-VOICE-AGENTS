@@ -2,6 +2,12 @@
 
 Status: user-directed behavior requirements, 2026-10-15. The local conversation sketch contains scripted examples only. No MIA voice runtime, emotional classifier or audible laughter has been implemented or live-tested.
 
+Reconciled 2026-10-18: the later raster-first instruction takes precedence over
+the earlier measured-room-first workshop. See [the current product requirements](PRODUCT_REQUIREMENTS.md)
+and [raster-first draft](RASTER_FIRST_DRAFT_DE.md). Local offline prompt builders
+are conversation artifacts; they do not select furniture, render concepts or
+activate a MIA session/profile.
+
 ## Conversation leads
 
 MIA conducts a short personal conversation. It listens, retains useful preferences in structured state, and moves to one relevant next question. It does not recite a visitor's answer, read a running requirements summary aloud, or repeatedly ask visitors to prioritize their own quoted words.
@@ -61,19 +67,42 @@ The user's correction replaces a blanket fully-integrated-appliance default with
 
 Furniture-led design and discreet extraction remain possible design preferences, not universal customer requirements. Ovens and the cooktop may remain visible in this design direction. Ask about extraction separately only when relevant; an answer about the refrigerator or dishwasher does not determine it. Any unconfirmed visual choice used in the first draft is a changeable proposal, not a stated customer preference.
 
-For a selected wall, always show the interior-facing wall elevation and an unambiguous left-to-right direction. Missing dimensions remain unknown. Only ask exact opening widths/offsets when available and decision-relevant; do not turn the discovery conversation into an unbounded measuring exercise.
+Only after the first visible raster-room draft, when actual-room adaptation is
+chosen, show a selected wall's interior-facing elevation with an unambiguous
+left-to-right direction. Missing dimensions remain unknown. Ask exact opening
+widths/offsets only when available and decision-relevant at that later stage.
+Before the first draft, ask no room, window, door or connection questions;
+unsolicited room information is retained for later without opening measurement intake.
 
 The reference images are design inputs, not a verified dealer assortment or redistribution license. This change does not copy their photographs or catalog artwork into public assets.
 
-## Two-to-three-minute target
+## Current raster-first timing and discovery
 
-Following the [senior workshop](TEAM_WORKSHOP_RESULTS.md), the primary target is conversation start to the first visible personalized furnished concept, including visitor speech, pauses, planning and rendering. Discovery duration is a diagnostic subinterval, not a substitute for that outcome. Later revisions are measured separately. The earlier scripted examples do not establish this speed.
+The initial conversation is capped at 120 seconds, including both speakers,
+pauses and interaction. The regular first presentation for every visitor is a
+wish-driven draft in a neutral raster scene, using a prepared layout and bounded
+allowed adjustments. No free CAD planning or actual-room fit is implied.
 
 Adapt order to the visitor's answer and skip filled fields. Use one question per turn. Preserve short pauses and interruptions; avoid unnecessary confirmations, repeated paraphrases and a forced closing recap.
 
-Prioritize personal must-haves/must-avoids, coarse room feasibility, intended use, visual preferences and optional budget. After about 150 seconds, avoid opening optional detail topics. A short transition can be “Ich zeige Ihnen eine erste Idee. Danach können wir gezielt etwas verändern.”
+Prioritize cooking use, desired improvement, atmosphere and must-haves/retained
+devices. Known answers replace questions. Ask no room, window, door or connection
+questions before the first draft, including optional exceptions. Budget and
+device details are not additional mandatory qualification. The workshop's
+recommendation is to stop opening exploration topics around 90 seconds and
+transition early: “Ich zeige Ihnen eine erste Idee. Danach können wir gezielt
+etwas verändern.” This recommendation does not prove the 120-second cap.
 
-Measure actual discovery duration including visitor speech and pauses, and the complete first-result interval above. The time target and 70-80% perceived-match hypothesis remain unproven until real participant tests. Do not claim that a fixed script or fast tapping guarantees them. Reaching 150 seconds is not a reason to begin an unbounded rendering wait; the end-to-end time remains the primary measure.
+Measure initial dialogue, rendering wait and complete start-to-visible-result
+duration separately. The earlier 2-3-minute total-result target is historical
+workshop guidance, not a replacement for the current dialogue cap or a proven
+performance claim. Neither timing nor 70-80% perceived match has been validated.
+Do not hide an unlimited render wait or relabel continued discovery as refinement.
+
+Handling uninterrupted visitor speech past the cap remains unresolved; no hard
+audio cut is approved. The diagram's 10x10 m scene is an unconfirmed assumption,
+not a customer-room measurement or adopted scene constant. Both need decisions
+before corresponding runtime behavior is implemented.
 
 ## Acceptance checks
 

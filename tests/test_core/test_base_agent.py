@@ -3,8 +3,8 @@
 from unittest.mock import MagicMock
 import uuid
 
-from src.agents.lisa.agent import LisaAgent
-from src.agents.lisa.system_prompt import build_lisa_system_prompt
+from src.agents.mein_kuechenexperte.kea.agent import KeaAgent
+from src.agents.mein_kuechenexperte.kea.system_prompt import build_kea_system_prompt
 from src.agents._template.agent import TemplateAgent
 from src.api.services.voice_sessions import realtime_session_config
 from src.core.tool_registry import ToolRegistry
@@ -64,7 +64,7 @@ def test_kea_system_prompt_contains_controlled_intake_contract():
         config={},
     )
 
-    prompt = build_lisa_system_prompt(
+    prompt = build_kea_system_prompt(
         studio=studio,
         knowledge_snippets=[],
         lead_summary=None,
@@ -72,12 +72,13 @@ def test_kea_system_prompt_contains_controlled_intake_contract():
 
     assert "kontrollierte Projekt-Einordnung" in prompt
     assert "Fragen zu Angeboten" in prompt
-    assert "never promise" in prompt
+    assert "Erfinde keine Fakten" in prompt
+    assert "Du erstellst keine Küchenentwürfe" in prompt
     assert "KI-KUECHENBERATER" not in prompt
     assert "angrenzende Wohnräume" in prompt
-    assert "Kennenlernen und der" in prompt
-    assert "Bedarfsklärung" in prompt
-    assert "individuell vor der Beauftragung" in prompt
+    assert "Honorar und kostenloses Vorgespräch" in prompt
+    assert "Kennenlernen sowie der Klärung" in prompt
+    assert "individuelles Angebot" in prompt
     assert "15.000 und 30.000 EUR" not in prompt
     assert "Kostenloser Quick-Check" not in prompt
     assert "keine verbindliche Küchenberatung" in prompt
@@ -96,12 +97,12 @@ def test_kea_voice_config_uses_current_service_positioning():
 
     instructions = realtime_session_config(studio, conversation, [], None)["instructions"]
 
-    assert "angrenzende Wohnraeume" in instructions
-    assert "Weitergehende Leistungen sind kostenpflichtig" in instructions
-    assert "individuell vor der Beauftragung" in instructions
-    assert "keine kostenlose fachliche Prüfung" in instructions
+    assert "angrenzende Wohnräume" in instructions
+    assert "Zusätzliche Leistungen beginnen erst nach Ihrer Zustimmung" in instructions
+    assert "individuelles Angebot" in instructions
+    assert "Es enthält keine individuelle Planung, fachliche Prüfung" in instructions
     assert "erfolgt nach Freigabe" in instructions
-    assert "optionale Upload im Widget" in instructions
+    assert "optionalen Upload im Widget" in instructions
     assert "keine kostenlose fachliche Sichtung" in instructions
     assert "KI-KUECHENBERATER" not in instructions
     assert "Kostenloser Quick-Check" not in instructions
@@ -109,7 +110,7 @@ def test_kea_voice_config_uses_current_service_positioning():
 
 def test_kea_text_agent_disables_appointment_tool_for_mein_kuechenexperte():
     """KEA does not register local CRM-writing tools for mein-kuechenexperte."""
-    agent = LisaAgent(session=MagicMock())
+    agent = KeaAgent(session=MagicMock())
     studio = Studio(
         id=uuid.uuid4(),
         name="Mein Küchenexperte",
